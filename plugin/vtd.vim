@@ -8,7 +8,7 @@
 " Here's a list of reasons we might not want to load this script:
 "   1) We already did
 "   2) "compatible" mode (a.k.a. "crippled" mode) is set
-"   3) Vim too old (autoload starts in Vim 7)
+"   3) Vim too old (autoload was introduced in Vim 7)
 "   4) No python support
 if exists("g:loaded_vtd") || &cp || v:version < 700 || !has('python')
   finish
@@ -62,8 +62,20 @@ function! s:VTD_map(action, code, key)
   endif
 endfunction
 
-" VTD (h)ome: "command central" for VTD {{{2
+" VTD "Views" (Next Actions, Waiting, etc.) {{{2
+" VTD (h)ome: "command central" for VTD {{{3
 " This will provide an overview for your system: How many Next Actions, what
 " are you Waiting for, which Inboxes need to be emptied, what are your Big
 " Rocks for the day, etc.
 call s:VTD_map('Home', ':call vtd#VTD_Home()<CR>', 'h')
+
+" VTD (i)nboxes {{{3
+call s:VTD_map('Inboxes', ':call vtd#VTD_Inboxes()<CR>', 'i')
+
+" VTD "Actions" (Done, Send, etc.) {{{2
+" VTD (d)one: "smart" (context-dependent) checkoff {{{3
+" Q) What does it mean to "check off" an item?  
+" A) It depends entirely on the *nature* of that item.
+" For a "regular item", we mark it as done.
+" For a RECUR item or INBOX, we simply adjust the timestamp.
+call s:VTD_map('Done', ':call vtd#VTD_Done()<CR>', 'd')
