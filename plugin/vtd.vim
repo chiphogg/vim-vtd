@@ -15,13 +15,22 @@ if exists("g:loaded_vtd") || &cp || v:version < 700 || !has('python')
 endif
 let g:loaded_vtd = 1
 
-" Filenames {{{2
+" Settings variables {{{1
+
+" Wrapper function to set options, but only if the user didn't already.
+" Results in something like the following:
+" let g:vtd_<name> = <value>
 function! s:SetIfNew(name, value)
   let l:full_name = "g:vtd_".a:name
   if !exists(l:full_name)
     execute "let" l:full_name "= '".a:value."'"
   endif
 endfunction
+
+" 'View window' settings {{{2
+call s:SetIfNew("view_height", 10)
+
+" Filenames {{{2
 
 " Path names
 " g:vtd_wiki_path -- Path to the wiki (relative to ~)
