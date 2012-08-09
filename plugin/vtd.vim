@@ -15,6 +15,28 @@ if exists("g:loaded_vtd") || &cp || v:version < 700 || !has('python')
 endif
 let g:loaded_vtd = 1
 
+" Filenames {{{2
+function! s:SetIfNew(name, value)
+  let l:full_name = "g:vtd_".a:name
+  if !exists(l:full_name)
+    execute "let" l:full_name "= '".a:value."'"
+  endif
+endfunction
+
+" Path names
+" g:vtd_wiki_path -- Path to the wiki (relative to ~)
+call s:SetIfNew("wiki_path", "productivity/viki")
+
+" Individual filenames
+" g:vtd_file_inboxes -- filename which tracks our Inboxes
+call s:SetIfNew("file_inboxes", "Inboxes.wiki")
+" g:vtd_file_projects -- Project info and support material
+call s:SetIfNew("file_projects", "Projects.wiki")
+" g:vtd_file_somedaymaybe -- Stuff to do someday... maybe.
+call s:SetIfNew("file_somedaymaybe", "SomedayMaybe.wiki")
+" g:vtd_file_checklists -- Checklist templates
+call s:SetIfNew("file_checklists", "Checklists.wiki")
+
 " Key mappings {{{1
 
 " All VTD mappings start with a common prefix.  It defaults to
