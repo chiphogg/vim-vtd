@@ -34,7 +34,7 @@ call s:SetIfNew("view_height", 10)
 
 " Path names
 " g:vtd_wiki_path -- Path to the wiki (relative to ~)
-call s:SetIfNew("wiki_path", "productivity/viki")
+call s:SetIfNew("wiki_path", "~/productivity/viki")
 
 " Individual filenames
 " g:vtd_file_inboxes -- filename which tracks our Inboxes

@@ -46,15 +46,10 @@ endfunction
 function! vtd#VTD_Inboxes()
   call s:GotoClearPreview()
   call s:AppendToBufferNameBracketed("Inboxes")
-  let l:inbox_content = vtd#VTD_Inbox_content()
-  call append(line('$'), split(l:inbox_content, "\n"))
-endfunction
-
-function! vtd#VTD_Inbox_content()
   " Call python code which parses the Inboxes file for due (or overdue!)
   " inboxes, then fills a local variable with the resulting text.
   python parse_inboxes()
-  return l:inbox_content
+  call append(line('1'), split(l:inbox_content, "\n"))
 endfunction
 
 " VTD actions {{{1
