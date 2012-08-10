@@ -104,9 +104,13 @@ call s:VTD_map('Home', ':call vtd#VTD_Home()<CR>', 'h')
 call s:VTD_map('Inboxes', ':call vtd#VTD_Inboxes()<CR>', 'i')
 
 " VTD "Actions" (Done, Send, etc.) {{{2
+
 " VTD (d)one: "smart" (context-dependent) checkoff {{{3
 " Q) What does it mean to "check off" an item?  
 " A) It depends entirely on the *nature* of that item.
 " For a "regular item", we mark it as done.
 " For a RECUR item or INBOX, we simply adjust the timestamp.
 call s:VTD_map('Done', ':call vtd#VTD_Done()<CR>', 'd')
+
+" VTD (T)est: Check if the current line matches a keyword pattern {{{3
+call s:VTD_map('TestInbox', ':call vtd#VTDTEST_KeywordCollector("inbox")<CR>', 'Ti')

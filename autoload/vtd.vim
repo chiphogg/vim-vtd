@@ -37,12 +37,12 @@ endfunction
 
 " VTD views {{{1
 
-" vtd#VTD_Home(): Goto a "VTD Home" buffer for a system overview {{{2
+" th - vtd#VTD_Home(): Goto a "VTD Home" buffer for a system overview {{{2
 function! vtd#VTD_Home()
   echom "Ain't no place like home!"
 endfunction
 
-" vtd#VTD_Inboxes(): List all inboxes, and current status {{{2
+" ti - vtd#VTD_Inboxes(): List all inboxes, and current status {{{2
 function! vtd#VTD_Inboxes()
   call s:GotoClearPreview()
   call s:AppendToBufferNameBracketed("Inboxes")
@@ -59,6 +59,10 @@ endfunction
 
 " VTD actions {{{1
 
-" vtd#VTD_Done(): Context-dependent checkoff {{{2
+" td - vtd#VTD_Done(): Context-dependent checkoff {{{2
 
-
+" tT - vtd#VTDTEST_KeywordCollector(): {{{2
+function!vtd#VTDTEST_KeywordCollector(keyword)
+  python "CheckLine(".a:keyword.")"
+  echom l:linecheck_result
+endfunction

@@ -11,7 +11,49 @@ import os
 import datetime
 import string
 
-inbox_pattern = 'INBOX\s+(\d{4}-\d{2}-\d{2})(\s+(\d{2}:\d{2}))?\s+\+(\d)'
+#=============================================================================#
+# KeywordCollector - Collect lines of text which match a given keyword        #
+
+def KeywordCollectorFactory(keyword):
+    """Create a KeywordCollector of the given type
+    Arguments:
+    keyword -- The name of the keyword (e.g., 'INBOX')
+
+    """
+    if keyword == 'INBOX':
+        return KeywordCollector(keyword=keyword, keyword_re=keyword)
+    else:
+        return KeywordCollector(keyword=keyword, keyword_re=keyword)
+
+def CheckLine(keyword):
+    """Check whether the current line matches a keyword (TESTING PURPOSES)"""
+    vim.command("let l:inbox_content='%s'" %inbox_content.replace("'", "''"))
+    
+
+class KeywordCollector:
+    """Collects lines of text which match a keyword pattern"""
+
+    def __init__(self, keyword, keyword_re):
+        """
+        Arguments:
+        keyword -- The name of the keyword (e.g., 'INBOX')
+        keyword_re -- A regex describing what the keyword looks like
+
+        """
+        self._title = keyword
+        self._regex = keyword_re
+        self.items = []
+
+    def keyword_regex(self):
+        """The full regex (including date/time-strings) for this keyword)"""
+        regex = ''.join([r"(", self._regex, r")\s+(>\s*", datetime_re,
+            r")?(<\s*", datetime_re, r")?\s*$"])
+        return regex
+
+    def check(self, line):
+        match = re.search(self.keyword_regex(), line)
+        if !match:
+            return False
 
 class OutlineProcessor:
     """A processor for outline-structured datafiles"""
@@ -38,32 +80,6 @@ datetime_re = ''.join([r"(\d{4}-\d{2}(-\d{2})?)",   # date
                        r"(\d{2}:\d{2})?",           # time (optional)
                        r"(\s+[+-]\d+w?)?",          # offset (optional)
                        ''])
-
-class KeywordChecker:
-    """Keeps a list of lines of text which match a keyword"""
-
-    def __init__(self, keyword, keyword_re):
-        """
-        Arguments:
-        keyword -- The name of the keyword (e.g., 'INBOX')
-        keyword_re -- A regex describing what the keyword looks like
-
-        """
-        self._title = keyword
-        self._regex = keyword_re
-        self.items = []
-
-    def keyword_regex(self):
-        """The full regex (including date/time-strings) for this keyword)"""
-        regex = ''.join([r"(", self._regex, r")\s+(>\s*", datetime_re,
-            r")?(<\s*", datetime_re, r")?\s*$"])
-        return regex
-
-    def check(self, line):
-        match = re.search(self.keyword_regex(), line)
-        if !match:
-            return False
-
 
 
 class Inbox:
