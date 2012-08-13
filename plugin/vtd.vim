@@ -46,6 +46,13 @@ call s:SetIfNew("file_somedaymaybe", "SomedayMaybe.wiki")
 " g:vtd_file_checklists -- Checklist templates
 call s:SetIfNew("file_checklists", "Checklists.wiki")
 
+" Section header settings {{{2
+
+" Regex identifying Inboxes section
+call s:SetIfNew("section_inbox", '^= Inboxes =\s*$')
+" Regex identifying Thoughts section
+call s:SetIfNew("section_thoughts", '^= Thoughts =\s*$')
+
 " Key mappings {{{1
 
 " All VTD mappings start with a common prefix.  It defaults to

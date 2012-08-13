@@ -8,8 +8,13 @@
 import vim
 import re
 import os
-import datetime
+from datetime import datetime, timedelta
 import string
+
+def next_key(x):
+    if len(x) <= 0:
+        return 0
+    return len(x)
 
 def parse_and_strip_contexts(text):
     """Return (text, contexts) tuple with single-@ contexts stripped out"""
@@ -20,6 +25,54 @@ def parse_and_strip_contexts(text):
     stripped_text = re.sub(r"\s+@\w+", "", text)
     stripped_text = re.sub('^\s*[-*#@]\s*', '', stripped_text)
     return (stripped_text, contexts)
+
+class Plate:
+    """Keeps track of everything which is 'on your plate'"""
+    
+    def __init__(self):
+        self.inboxes = {}
+        self.next_actions = {}
+        self.recurs = {}
+        # Timestamp regexes for different types of objects
+        self._TS_inbox = (
+                r"\s+(?P<date>\d{4}-\d{2}-\d{2})" +
+                r"\s+(?P<time>\d{2}:\d{2})" +
+                r"\s+\+(?P<break>\d+),(?P<window>\d+)")
+
+
+    def read_inboxes(self):
+        """List all inboxes, and when they need to be done"""
+        # Parse Inboxes file to get our list of inboxes
+        with open(vtd_file('i')) as f:
+            line = f.readline()
+            while not re.match(line, vim.eval("g:vtd_section_inbox")):
+                line = f.readline()
+            line = f.readline()  # skip "Inboxes" section header
+            while not re.match(line, vim.eval("g:vtd_section_thoughts")):
+                m = re.search(self._TS_inbox, line)
+                if m:
+                    (text, contexts) = parse_and_strip_contexts(line)
+                    last_emptied = datetime.strptime(
+                            "%s %s" % m.group('date', 'time'), "%F %R")
+                    visible = last_emptied + timedelta(days=m.group('break'))
+                    due = visible + timedelta(days=m.group('window'))
+                    self.inboxes[next_key(self.inboxes)] = dict(
+                            name = re.sub(self._TS_inbox, '', text),
+                            TS_last = last_done,
+                            TS_vis  = visible,
+                            TS_due  = due,
+                            contexts = contexts)
+                line = f.readline()
+
+    def read_projects(self):
+        """Scan Projects lists for Next Actions, RECURs, etc."""
+
+    def read_all(self):
+        """Turn raw text from our wiki files into todo-list items"""
+        self.read_inboxes()
+        print self.inboxes
+        self.read_projects()
+
 def trunc_string(string, max_length):
     if not string[(max_length + 1):]:
         return string
