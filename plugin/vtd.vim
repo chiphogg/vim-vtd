@@ -103,6 +103,9 @@ call s:VTD_map('Home', ':call vtd#VTD_Home()<CR>', 'h')
 " VTD (i)nboxes {{{3
 call s:VTD_map('Inboxes', ':call vtd#VTD_Inboxes()<CR>', 'i')
 
+" VTD (n)ext actions {{{3
+call s:VTD_map('NextActions', ':call vtd#VTD_NextActions()<CR>', 'n')
+
 " VTD "Actions" (Done, Send, etc.) {{{2
 
 " VTD (d)one: "smart" (context-dependent) checkoff {{{3

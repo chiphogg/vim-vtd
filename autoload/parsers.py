@@ -19,6 +19,24 @@ def trunc_string(string, max_length):
 def vtd_dir():
     return re.sub(r"~", os.environ['HOME'], vim.eval("g:vtd_wiki_path"))
 
+def vtd_file(abbrev):
+    """Return the filename of the requested VTD sourcefile"""
+    lower = abbrev.lower()
+    if lower == 'i':
+        return vim.eval("g:vtd_file_inboxes")
+    elif lower == 'p':
+        return vim.eval("g:vtd_file_projects")
+    elif lower == 's':
+        return vim.eval("g:vtd_file_somedaymaybe")
+    elif lower == 'c':
+        return vim.eval("g:vtd_file_checklists")
+    return ''
+
+def vtd_fullpath(abbrev):
+    """Return the full pathname of the requested VTD sourcefile"""
+    fname = vtd_file(abbrev)
+    if (
+
 def parse_inboxes():
     inbox_fname = os.path.join(vtd_dir(), vim.eval("g:vtd_file_inboxes"))
     with open(inbox_fname) as inbox_file:
@@ -39,43 +57,75 @@ def opening_whitespace(string):
         return 0
     return match.end(1)
 
-def parse_NextActions_recurse(p_line, p_file):
-    master_indent = opening_whitespace(p_line)
-    # LOGIC:
-    # 1) Does it not even start with a list char?  Tack it on to the previous line and read the next one.
-    # 2) So it's a listy thing. Check the indentation level, and either return or recurse.
-    # 3) If it's a list, and it's at our indentation level, PROCESS.
-    while p_line:
-        linetype = re.match(r"\s*([-#@*])", p_line)
-        if not linetype:
+def is_next_action(line):
+    return re.match(r"\s*[-#*@]\s+\[\s*\]", line)
 
-        indent = opening_whitespace(p_line)
-        if indent < master_indent:
-            return (pline, p_file)
-        elif indent > master_indent:
-            (pline, p_file) = parse_NextActions_recurse(pline, p_file)
-        p_line = p_file.readline()
+def parse_next_actions_list(line, p_file, cur_proj):
+    master_indent = opening_whitespace(line)
+    master_linetype = list_start(line)
+    prev_line = ''
+    next_actions = []
+    while line:
+        linetype = list_start(line)
+        # If this line doesn't start a new list element, tack its content onto
+        # whatever came before.
+        if not linetype:
+            prev_line = prev_line + line
+            line = p_file.readline()
+        else:
+            prev_line = ''
+            indent = opening_whitespace(line)
+            # If this line is indented less than this list, we must be done
+            if indent < master_indent:
+                return (line, next_actions)
+            # If it's indented *more*, it's a new list; recursively parse it
+            elif indent > master_indent:
+                (line, new_actions) = parse_next_actions_list(
+                        line, p_file, prev_line)
+                next_actions.extend(new_actions)
+            # It must be a new element of the same list
+            else:
+                if is_next_action(line):
+                    next_actions.append((line, cur_proj))
+                line = p_file.readline()
+    return line, next_actions
 
 def list_start(line):
-    list_match = re.match(r"\s*(-#@*])", line)
+    """The list-denoting character (if this line starts a list element)"""
+    list_match = re.match(r"\s*([-#@*])\s", line)
     if list_match:
-        return list_match.end(1)
+        return list_match.group(1)
     return list_match
+
+def blank(line):
+    """Checks whether this line contains only whitespace"""
+    return re.match(r"\s*$", line)
+
+def proj_done(line):
+    """Checks whether this line represents a checked-off project"""
+    return re.search(r"DONE(\(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}\))?", line)
+
+def sec_header(line):
+    """Checks whether this line is a wiki section header"""
+    return re.match(r"=+\s+\w", line)
 
 def parse_next_actions():
     p_fname = os.path.join(vtd_dir(), vim.eval("g:vtd_file_projects"))
     with open(p_fname) as p_file:
         p_line = p_file.readline()
+        next_actions = []
         while p_line:
             listtype = list_start(p_line)
             if listtype:
-
-        next_actions = parse_NextActions_recurse(p_line, p_file)
-    # So now the "next_actions" variable has a list of matching lines.
-    # Okay; what to do with them?
-    # Well, perhaps it's better if it has not just the line, but the context (if
-    # any).  i.e., the Project it comes from.
-    # So it's a list of tuples (line, project) where project may be None.
+                (p_line, new_actions) = parse_next_actions_list(
+                        p_line, p_file, cur_proj)
+                next_actions.extend(new_actions)
+            else:
+                if blank(p_line) or proj_done(p_line) or sec_header(p_line):
+                    cur_proj = ''
+                else:
+                    cur_proj = p_line
+                p_line = p_file.readline()
     action_lines = []
     for (action, project) in next_actions:
         action_lines += "[] %s (%s)" % (

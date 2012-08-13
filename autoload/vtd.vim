@@ -8,6 +8,16 @@
 " Taken from gundo.vim: this helps vim find the python script
 let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
 
+" <CR> - Goes to the line in the original file: {{{2
+function! vtd#VTD_JumpToLine(...)
+  if a:0 >=# 1
+    echom "The line was supplied; it is:" a:1
+  else
+    let cur_line = line(".")
+    echom matchstr(cur_line, '\v<<([ipsc])(\d+)>>')
+  endif
+endfunction
+
 " s:GotoClearPreview(): Goto-and-clear preview window (create if needed) {{{2
 function! s:GotoClearPreview()
   " First, source the python scriptfile containing all the parsers.
@@ -52,12 +62,22 @@ function! vtd#VTD_Inboxes()
   call append(line('1'), split(l:inbox_content, "\n"))
 endfunction
 
+" tn - vtd#VTD_NextActions(): List all Next Actions for current context {{{2
+function! vtd#VTD_NextActions()
+  call s:GotoClearPreview()
+  call s:AppendToBufferNameBracketed("Next Actions")
+  python parse_next_actions()
+  call append(line('1'), split(l:actions, "\n"))
+endfunction
+
 " VTD actions {{{1
 
 " td - vtd#VTD_Done(): Context-dependent checkoff {{{2
 
 " tT - vtd#VTDTEST_KeywordCollector(): {{{2
-function!vtd#VTDTEST_KeywordCollector(keyword)
+function! vtd#VTDTEST_KeywordCollector(keyword)
   python "CheckLine(".a:keyword.")"
   echom l:linecheck_result
 endfunction
+
+" VTD-view buffer {{{1
