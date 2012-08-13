@@ -13,6 +13,7 @@ let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
 " s:ReadPython(): Ensure the python script has been read {{{3
 function! s:ReadPython()
   exe "pyfile" s:plugin_path."/parsers.py"
+  python FillMyPlate()
 endfunction
 
 " <CR> - Goes to the line in the original file: {{{2
@@ -57,8 +58,6 @@ endfunction
 " vtd#VTD_ReadAll(): Read/refresh the "list of everything that's on my plate" {{{2
 function! vtd#VTD_ReadAll()
   call s:ReadPython()
-  python my_plate = Plate()
-  python my_plate.read_all()
 endfunction
 
 " th - vtd#VTD_Home(): Goto a "VTD Home" buffer for a system overview {{{2
@@ -72,8 +71,7 @@ function! vtd#VTD_Inboxes()
   call s:AppendToBufferNameBracketed("Inboxes")
   " Call python code which parses the Inboxes file for due (or overdue!)
   " inboxes, then fills a local variable with the resulting text.
-  python parse_inboxes()
-  call append(line('1'), split(l:inbox_content, "\n"))
+  python my_plate.display_inboxes()
 endfunction
 
 " tn - vtd#VTD_NextActions(): List all Next Actions for current context {{{2

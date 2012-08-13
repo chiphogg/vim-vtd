@@ -40,6 +40,7 @@ class Plate:
     """Keeps track of everything which is 'on your plate'"""
     
     def __init__(self):
+        self._created = datetime.now()
         self.inboxes = {}
         self.next_actions = {}
         self.recurs = {}
@@ -50,6 +51,16 @@ class Plate:
                 # Mnemonic: "break" is how many days you get a break from seeing
                 # this, "window" is how long you see it before it's overdue.
                 r"\s+\+(?P<break>\d+),(?P<window>\d+)")
+
+    def stale(self):
+        """Check if wiki-files have been updated since we last read them"""
+        # Cycle through the files according to their keyboard shortcuts:
+        # (i)nboxes, (p)rojects, (s)omeday/maybe, (c)hecklists
+        for c in "ipsc":
+            last_mtime = os.path.getmtime(vtd_fullpath(c))
+            if datetime.fromtimestamp(last_mtime) > self._created:
+                return True
+        return False
 
 
     def read_inboxes(self):
@@ -221,3 +232,11 @@ def parse_next_actions():
     actions = ''.join(action_lines)
     vim.command("let l:actions='%s'" % actions.replace("'", "''"))
     return
+
+def FillMyPlate():
+    """Ensure 'my_plate' variable is up-to-date with everything on my plate"""
+    global my_plate
+    if 'my_plate' not in globals() or my_plate.stale():
+        my_plate = Plate()
+        my_plate.read_all()
+
