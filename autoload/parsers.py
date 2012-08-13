@@ -11,12 +11,22 @@ import os
 import datetime
 import string
 
+def parse_and_strip_contexts(text):
+    """Return (text, contexts) tuple with single-@ contexts stripped out"""
+    contexts = []
+    for match in re.finditer(r"\s+@{1,2}(?P<context>\w+)", text):
+        contexts.append(match.group('context'))
+    # First strip contexts, then strip opening list characters
+    stripped_text = re.sub(r"\s+@\w+", "", text)
+    stripped_text = re.sub('^\s*[-*#@]\s*', '', stripped_text)
+    return (stripped_text, contexts)
 def trunc_string(string, max_length):
     if not string[(max_length + 1):]:
         return string
     return string[:(max_length - 2)] + '..'
 
 def vtd_dir():
+    """The working directory holding all the wiki files"""
     return re.sub(r"~", os.environ['HOME'], vim.eval("g:vtd_wiki_path"))
 
 def vtd_file(abbrev):
@@ -58,6 +68,7 @@ def opening_whitespace(string):
     return match.end(1)
 
 def is_next_action(line):
+    """Check if a line of text is structured like a Next Action"""
     return re.match(r"\s*[-#*@]\s+\[\s*\]", line)
 
 def parse_next_actions_list(line, p_file, cur_proj):
