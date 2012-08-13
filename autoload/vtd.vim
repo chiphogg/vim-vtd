@@ -5,8 +5,15 @@
 
 " Utility functions {{{1
 
+" Loading the scriptfiles {{{2
+
 " Taken from gundo.vim: this helps vim find the python script
 let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
+
+" s:ReadPython(): Ensure the python script has been read {{{3
+function! s:ReadPython()
+  exe "pyfile" s:plugin_path."/parsers.py"
+endfunction
 
 " <CR> - Goes to the line in the original file: {{{2
 function! vtd#VTD_JumpToLine(...)
@@ -21,7 +28,7 @@ endfunction
 " s:GotoClearPreview(): Goto-and-clear preview window (create if needed) {{{2
 function! s:GotoClearPreview()
   " First, source the python scriptfile containing all the parsers.
-  exe "pyfile" s:plugin_path."/parsers.py"
+  call s:ReadPython()
   " We don't want to close/reopen the preview window if we're in it!  That
   " could be distracting if, e.g., the user adjusted the height.
   if &previewwindow == 0
@@ -46,6 +53,13 @@ function! s:AppendToBufferNameBracketed(string)
 endfunction
 
 " VTD views {{{1
+
+" vtd#VTD_ReadAll(): Read/refresh the "list of everything that's on my plate" {{{2
+function! vtd#VTD_ReadAll()
+  call s:ReadPython()
+  python my_plate = Plate()
+  python my_plate.read_all()
+endfunction
 
 " th - vtd#VTD_Home(): Goto a "VTD Home" buffer for a system overview {{{2
 function! vtd#VTD_Home()

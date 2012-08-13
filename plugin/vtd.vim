@@ -122,5 +122,3 @@ call s:VTD_map('NextActions', ':call vtd#VTD_NextActions()<CR>', 'n')
 " For a RECUR item or INBOX, we simply adjust the timestamp.
 call s:VTD_map('Done', ':call vtd#VTD_Done()<CR>', 'd')
 
-" VTD (T)est: Check if the current line matches a keyword pattern {{{3
-call s:VTD_map('TestInbox', ':call vtd#VTDTEST_KeywordCollector("inbox")<CR>', 'Ti')

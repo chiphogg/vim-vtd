@@ -11,6 +11,16 @@ import os
 from datetime import datetime, timedelta
 import string
 
+try:
+    AUTOLOAD_PARSERS_PY
+except NameError:
+    AUTOLOAD_PARSERS_PY = True;
+
+def read_and_count_lines(linenum, f):
+    """Read the next line from f, and increment line-number count"""
+    line = f.readline()
+    return (linenum + 1, line)
+
 def next_key(x):
     if len(x) <= 0:
         return 0
@@ -37,32 +47,42 @@ class Plate:
         self._TS_inbox = (
                 r"\s+(?P<date>\d{4}-\d{2}-\d{2})" +
                 r"\s+(?P<time>\d{2}:\d{2})" +
+                # Mnemonic: "break" is how many days you get a break from seeing
+                # this, "window" is how long you see it before it's overdue.
                 r"\s+\+(?P<break>\d+),(?P<window>\d+)")
 
 
     def read_inboxes(self):
         """List all inboxes, and when they need to be done"""
         # Parse Inboxes file to get our list of inboxes
-        with open(vtd_file('i')) as f:
-            line = f.readline()
-            while not re.match(line, vim.eval("g:vtd_section_inbox")):
-                line = f.readline()
-            line = f.readline()  # skip "Inboxes" section header
+        linenum = 0
+        with open(vtd_fullpath('i')) as f:
+            # Skip opening lines
+            (linenum, line) = read_and_count_lines(linenum, f)
+            while not re.match(vim.eval("g:vtd_section_inbox"), line):
+                (linenum, line) = read_and_count_lines(linenum, f)
+            # Also skip "Inboxes" section header:
+            (linenum, line) = read_and_count_lines(linenum, f)
+
+            # Read inboxes until we hit the "Thoughts" section
             while not re.match(line, vim.eval("g:vtd_section_thoughts")):
                 m = re.search(self._TS_inbox, line)
                 if m:
                     (text, contexts) = parse_and_strip_contexts(line)
+                    print "date(%s) time(%s)" % m.group('date', 'time')
                     last_emptied = datetime.strptime(
-                            "%s %s" % m.group('date', 'time'), "%F %R")
-                    visible = last_emptied + timedelta(days=m.group('break'))
-                    due = visible + timedelta(days=m.group('window'))
+                            "%s %s" % m.group('date', 'time'),
+                            "%Y-%m-%d %H:%M")
+                    vis = last_emptied + timedelta(days=int(m.group('break')))
+                    due = vis + timedelta(days=int(m.group('window')))
                     self.inboxes[next_key(self.inboxes)] = dict(
                             name = re.sub(self._TS_inbox, '', text),
-                            TS_last = last_done,
-                            TS_vis  = visible,
+                            TS_last = last_emptied,
+                            TS_vis  = vis,
                             TS_due  = due,
+                            jump_to = "i%d" % linenum,
                             contexts = contexts)
-                line = f.readline()
+                (linenum, line) = read_and_count_lines(linenum, f)
 
     def read_projects(self):
         """Scan Projects lists for Next Actions, RECURs, etc."""
@@ -70,6 +90,7 @@ class Plate:
     def read_all(self):
         """Turn raw text from our wiki files into todo-list items"""
         self.read_inboxes()
+        print "Next key for inboxes is <%d>" % next_key(self.inboxes)
         print self.inboxes
         self.read_projects()
 
@@ -98,10 +119,12 @@ def vtd_file(abbrev):
 def vtd_fullpath(abbrev):
     """Return the full pathname of the requested VTD sourcefile"""
     fname = vtd_file(abbrev)
-    if (
+    if len(fname) > 0:
+        return os.path.join(vtd_dir(), fname)
+    return None
 
 def parse_inboxes():
-    inbox_fname = os.path.join(vtd_dir(), vim.eval("g:vtd_file_inboxes"))
+    inbox_fname = vtd_fullpath('i')
     with open(inbox_fname) as inbox_file:
         inboxes = []
         i_line = inbox_file.readline()
