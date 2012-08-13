@@ -16,6 +16,63 @@ try:
 except NameError:
     AUTOLOAD_PARSERS_PY = True;
 
+def seconds_diff(a, b):
+    """The number of seconds which a occurs after b, neglecting microseconds
+
+    Arguments:
+    a - A datetime object
+    b - Another datetime object
+    """
+    dt = a - b
+    return dt.seconds + dt.days * 24 * 3600
+
+def pluralize(count, string, string_plural=None):
+    """Print 'count string(s)' with proper pluralization
+
+    Arguments:
+    count - some integer number
+    string - The singular form of the kind of thing we're counting
+    string_plural - The plural form (defaults to adding an 's' to string)
+    """
+    if string_plural == None:
+        string_plural = "%ss" % string
+    word = string_plural
+    if count == 1:
+        word = string
+    return "%d %s" % (count, word)
+
+def pretty_date(dt_secs):
+    """
+    Get a datetime object or a int() Epoch timestamp and return a
+    pretty string like 'an hour ago', 'Yesterday', '3 months ago',
+    'just now', etc
+
+    Adapted from http://stackoverflow.com/a/1551394/1523582
+    """
+    secs_per_day = 24 * 3600
+    day_diff = dt_secs // secs_per_day
+    second_diff = dt_secs - day_diff * secs_per_day
+    print "%d days, %d seconds" % (day_diff, second_diff)
+
+    if day_diff < 0:
+        return ''
+    if day_diff == 0:
+        if second_diff < 10:
+            return "just now"
+        if second_diff < 60:
+            return pluralize(second_diff, "second")
+        if second_diff < 3600:
+            return pluralize(second_diff / 60, "minute")
+        if second_diff < 86400:
+            return pluralize( second_diff / 3600, "hour")
+    if day_diff < 7:
+        return pluralize(day_diff, "day")
+    if day_diff < 31:
+        return pluralize(day_diff / 7, "week")
+    if day_diff < 365:
+        return pluralize(day_diff / 30, "month")
+    return pluralize(day_diff / 365, "year")
+
 def read_and_count_lines(linenum, f):
     """Read the next line from f, and increment line-number count"""
     line = f.readline()
