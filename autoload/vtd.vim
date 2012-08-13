@@ -71,7 +71,10 @@ function! vtd#VTD_Inboxes()
   call s:AppendToBufferNameBracketed("Inboxes")
   " Call python code which parses the Inboxes file for due (or overdue!)
   " inboxes, then fills a local variable with the resulting text.
-  python my_plate.display_inboxes()
+  python <<EOF
+vim.command("let l:inbox = '%s'" % my_plate.display_inboxes().replace("'", "''"))
+EOF
+  call append(line('1'), split(l:inbox, "\n"))
 endfunction
 
 " tn - vtd#VTD_NextActions(): List all Next Actions for current context {{{2

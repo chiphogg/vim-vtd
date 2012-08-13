@@ -91,6 +91,7 @@ def parse_and_strip_contexts(text):
     # First strip contexts, then strip opening list characters
     stripped_text = re.sub(r"\s+@\w+", "", text)
     stripped_text = re.sub('^\s*[-*#@]\s*', '', stripped_text)
+    stripped_text = re.sub('\n+$', '', stripped_text)
     return (stripped_text, contexts)
 
 class Plate:
@@ -98,6 +99,7 @@ class Plate:
     
     def __init__(self):
         self._created = datetime.now()
+        self.now = self._created
         self.inboxes = {}
         self.next_actions = {}
         self.recurs = {}
@@ -137,7 +139,6 @@ class Plate:
                 m = re.search(self._TS_inbox, line)
                 if m:
                     (text, contexts) = parse_and_strip_contexts(line)
-                    print "date(%s) time(%s)" % m.group('date', 'time')
                     last_emptied = datetime.strptime(
                             "%s %s" % m.group('date', 'time'),
                             "%Y-%m-%d %H:%M")
@@ -158,9 +159,41 @@ class Plate:
     def read_all(self):
         """Turn raw text from our wiki files into todo-list items"""
         self.read_inboxes()
-        print "Next key for inboxes is <%d>" % next_key(self.inboxes)
-        print self.inboxes
         self.read_projects()
+
+    def display_inbox_subset(self, indices, status, summarize):
+        if len(indices) < 1:
+            return ''
+        if summarize:
+            return "%s (%d items)  " % (status, len(indices))
+        else:
+            display = ''
+            for i in indices:
+                due_diff = seconds_diff(self.inboxes[i]["TS_due"], self.now)
+                display += "%s (%s %s) <<%s>>\n" % (self.inboxes[i]["name"],
+                        status, pretty_date(abs(due_diff)),
+                        self.inboxes[i]["jump_to"])
+            return display
+
+    def display_inboxes(self, summarize=True):
+        """
+        A string representing the currently relevant inboxes.
+        
+        Arguments:
+        summarize - If true, only print how many are overdue and vis,
+                    instead of printing everything out
+        """
+        self.now = datetime.now()
+        vis = set(i for i in self.inboxes if (
+            self.inboxes[i]["TS_vis"] < self.now and
+            self.inboxes[i]["TS_due"] > self.now))
+        due = set(i for i in self.inboxes if (
+            self.inboxes[i]["TS_due"] < self.now))
+        inboxes = ''
+        inboxes += self.display_inbox_subset(due, 'Overdue', summarize)
+        inboxes += self.display_inbox_subset(vis, 'Due', summarize)
+        return inboxes
+
 
 def trunc_string(string, max_length):
     if not string[(max_length + 1):]:
