@@ -74,7 +74,7 @@ def pretty_date(dt_secs):
 
 def read_and_count_lines(linenum, f):
     """Read the next line from f, and increment line-number count"""
-    line = f.readline()
+    line = re.sub(r"\n$", '', f.readline())
     return (linenum + 1, line)
 
 def next_key(x):
@@ -87,10 +87,10 @@ def parse_and_strip_contexts(text):
     contexts = []
     for match in re.finditer(r"\s+@{1,2}(?P<context>\w+)", text):
         contexts.append(match.group('context'))
-    # First strip contexts, then strip opening list characters
+    # First strip/unlabel contexts, then strip opening list characters
     stripped_text = re.sub(r"\s+@\w+", "", text)
+    stripped_text = re.sub('@@', '', stripped_text)
     stripped_text = re.sub('^\s*[-*#@]\s*', '', stripped_text)
-    stripped_text = re.sub('\n+$', '', stripped_text)
     return (stripped_text, contexts)
 
 class Plate:
@@ -154,6 +154,41 @@ class Plate:
 
     def read_projects(self):
         """Scan Projects lists for Next Actions, RECURs, etc."""
+        linenum = 0
+        with open(vtd_fullpath('p')) as f:
+            (linenum, line) = read_and_count_lines(linenum, f)
+            current_project = None
+            while line:
+                if re.match(r"\s*[-*#]\s", line):
+                    (linenum, line) = self.process_outline(
+                            linenum, line, f, current_project)
+                else:
+                    if re.match(r"\s*$", line):
+                        current_project = None
+                    else:
+                        current_project = line
+                    (linenum, line) = read_and_count_lines(linenum, f)
+
+    def process_outline(self, linenum, line, f, current_project):
+        master_indent = opening_whitespace(line)
+        list_type = list_start(line)
+        while line:
+            indent = opening_whitespace(line)
+            if indent < master_indent:
+                return (linenum, line)
+            vim.command("echom 'Here I should skip depending on the list type'")
+            if indent > master_indent:
+                linetype = list_start(line)
+                if linetype:
+                    (linenum, line) = self.process_outline(
+                            linenum, line, f, current_project)
+                else:
+                    print "Should append: '%s'" % line
+            else:
+                if is_next_action(line):
+                    print "Add new NextAction: '%s'" % line
+                elif is_recur(line):
+                    print "Add new RECUR:      '%s'" % line
 
     def read_all(self):
         """Turn raw text from our wiki files into todo-list items"""
@@ -245,36 +280,6 @@ def opening_whitespace(string):
 def is_next_action(line):
     """Check if a line of text is structured like a Next Action"""
     return re.match(r"\s*[-#*@]\s+\[\s*\]", line)
-
-def parse_next_actions_list(line, p_file, cur_proj):
-    master_indent = opening_whitespace(line)
-    master_linetype = list_start(line)
-    prev_line = ''
-    next_actions = []
-    while line:
-        linetype = list_start(line)
-        # If this line doesn't start a new list element, tack its content onto
-        # whatever came before.
-        if not linetype:
-            prev_line = prev_line + line
-            line = p_file.readline()
-        else:
-            prev_line = ''
-            indent = opening_whitespace(line)
-            # If this line is indented less than this list, we must be done
-            if indent < master_indent:
-                return (line, next_actions)
-            # If it's indented *more*, it's a new list; recursively parse it
-            elif indent > master_indent:
-                (line, new_actions) = parse_next_actions_list(
-                        line, p_file, prev_line)
-                next_actions.extend(new_actions)
-            # It must be a new element of the same list
-            else:
-                if is_next_action(line):
-                    next_actions.append((line, cur_proj))
-                line = p_file.readline()
-    return line, next_actions
 
 def list_start(line):
     """The list-denoting character (if this line starts a list element)"""
