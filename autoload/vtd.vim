@@ -41,13 +41,17 @@ function! s:ReadPython()
   python FillMyPlate()
 endfunction
 
+function! s:JumpToWindowNumber(n)
+  let l:cmd = "wincmd w"
+  if a:n != 1
+    let l:cmd = a:n.l:cmd
+  endif
+  execute l:cmd
+endfunction
+
 function! s:JumpToBaseWindow()
   if exists("g:vtd_base_window")
-    let l:cmd = "wincmd w"
-    if g:vtd_base_window != 1
-      let l:cmd = g:vtd_base_window.l:cmd
-    endif
-    exe l:cmd
+    call s:JumpToWindowNumber(g:vtd_base_window)
   endif
 endfunction
 
@@ -141,5 +145,52 @@ endfunction
 " VTD actions {{{1
 
 " td - vtd#VTD_Done(): Context-dependent checkoff {{{2
+function! vtd#VTD_Done()
+  " First off: check whether we're in the vtdview buffer
+  if &filetype == "vtdview"
+    let l:view_win = winnr()
+    call vtd#VTD_JumpToLine()
+  endif
+
+  " Now we're in the base file.
+  " Determine what kind of line it is; checkoff accordingly.
+  let l:line = getline(".")
+  let l:type = 'None'
+  " NextAction has an isolated '@' after a list-begin marker:
+  if l:line =~# '\v^\s*\S\s+\@\s'
+    let l:type = 'NextAction'
+  " Anything else: if it has a date, it's recurring
+  elseif l:line =~# '\v\d{4}-\d{2}-\d{2}(\s+\d{2}:\d{2})?'
+    let l:size = 10
+    let l:timedate_fmt = '%F'
+    " If this item has time as well as date, we'll need to update timestamp
+    if l:line =~# '\v(\s+\d{2}:\d{2})'
+      let l:size = 16
+      let l:timedate_fmt = l:timedate_fmt.' %R'
+    endif
+    if l:line =~# 'RECUR'
+      let l:type = 'Recurring'
+    else
+      let l:type = 'Inbox'
+    endif
+  " Any nonblank characters make this a "Project"
+  elseif l:line =~# '\v\S'
+    let l:type = 'Project'
+  endif
+
+  if l:type ==? 'NextAction' || l:type ==? 'Project'
+    execute "normal! A(DONE \<C-R>=strftime('%F %R')\<CR>)\<esc>"
+  elseif l:type ==? 'Recurring' || l:type ==? 'Inbox'
+    let l:date_regex = '\v\d{4}-\d{2}-\d{2}'
+    let l:cmd = "normal! 0/".l:date_regex."\<CR>c".l:size."l\<C-R>=strftime('"
+    let l:cmd = l:cmd . l:timedate_fmt . "')\<CR>\<esc>"
+    call s:Preserve(l:cmd)
+  endif
+
+  " If we started out in vtdview window, go back there
+  if exists("l:view_win")
+    call s:JumpToWindowNumber(l:view_win)
+  endif
+endfunction
 
 " VTD-view buffer {{{1
