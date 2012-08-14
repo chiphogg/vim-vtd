@@ -41,6 +41,16 @@ function! s:ReadPython()
   python FillMyPlate()
 endfunction
 
+function! s:JumpToBaseWindow()
+  if exists("g:vtd_base_window")
+    let l:cmd = "wincmd w"
+    if g:vtd_base_window != 1
+      let l:cmd = g:vtd_base_window.l:cmd
+    endif
+    exe l:cmd
+  endif
+endfunction
+
 " vtd#VTD_JumpToLine(): Goes to the line in the original file: {{{2
 function! vtd#VTD_JumpToLine(...)
   if a:0 >=# 1
@@ -55,9 +65,7 @@ function! vtd#VTD_JumpToLine(...)
   let l:file_id = matchstr(l:jump_to, '[ipsc]')
   let l:line_no = matchstr(l:jump_to, '\v\d+')
   " Go back to the old window
-  if exists("g:vtd_base_window")
-    exe g:vtd_base_window."wincmd w"
-  endif
+  call s:JumpToBaseWindow()
   " Jump to the file and line
   python <<EOF
 abbrev = vim.eval("l:file_id")
@@ -80,7 +88,6 @@ function! s:GotoClearPreview()
           \ noswapfile
     " Following line taken from fugitive: 'q' should close preview window
     nnoremap <buffer> <silent> q    :<C-U>bdelete<CR>
-  else
     " Save the current window number
     let g:vtd_base_window = winnr()
   endif
