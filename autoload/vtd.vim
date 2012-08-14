@@ -9,7 +9,7 @@
 " Adapted from:
 " https://gist.github.com/2973488/222649d4e7f547e16c96e1b9ba56a16c22afd8c7
 
-function! PreserveStart()
+function! s:PreserveStart()
   let b:PRESERVE_search = @/
   let b:PRESERVE_cursor = getpos(".")
   normal! H
@@ -17,17 +17,17 @@ function! PreserveStart()
   call setpos(".", b:PRESERVE_cursor)
 endfunction
 
-function! PreserveFinish()
+function! s:PreserveFinish()
   let @/ = b:PRESERVE_search
   call setpos(".", b:PRESERVE_window)
   normal! zt
   call setpos(".", b:PRESERVE_cursor)
 endfunction
 
-function! Preserve(command)
-  call PreserveStart()
+function! s:Preserve(command)
+  call s:PreserveStart()
   execute a:command
-  call PreserveFinish()
+  call s:PreserveFinish()
 endfunction
 
 " Loading the scriptfiles {{{2
