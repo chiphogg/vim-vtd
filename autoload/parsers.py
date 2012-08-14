@@ -193,7 +193,6 @@ class Plate:
         inboxes += self.display_inbox_subset(vis, 'Due', summarize)
         return inboxes
 
-
 def trunc_string(string, max_length):
     if not string[(max_length + 1):]:
         return string

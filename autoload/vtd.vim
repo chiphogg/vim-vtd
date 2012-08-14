@@ -63,9 +63,8 @@ function! vtd#VTD_JumpToLine(...)
 abbrev = vim.eval("l:file_id")
 vim.command("let l:file = '%s'" % vtd_fullpath(abbrev).replace("'", "''"))
 EOF
-  execute "edit" l:file
-  execute "normal!" l:line_no."ggzvzz"
-  echom "Good start, but try getting Ctrl-O to work"
+  execute "edit +".l:line_no l:file
+  execute "normal! zv"
 endfunction
 
 " s:GotoClearPreview(): Goto-and-clear preview window (create if needed) {{{2
