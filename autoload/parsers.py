@@ -52,7 +52,6 @@ def pretty_date(dt_secs):
     secs_per_day = 24 * 3600
     day_diff = dt_secs // secs_per_day
     second_diff = dt_secs - day_diff * secs_per_day
-    print "%d days, %d seconds" % (day_diff, second_diff)
 
     if day_diff < 0:
         return ''
@@ -175,7 +174,7 @@ class Plate:
                         self.inboxes[i]["jump_to"])
             return display
 
-    def display_inboxes(self, summarize=True):
+    def display_inboxes(self, summarize=False):
         """
         A string representing the currently relevant inboxes.
         

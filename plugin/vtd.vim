@@ -55,6 +55,8 @@ call s:SetIfNew("section_thoughts", '^= Thoughts =\s*$')
 
 " Key mappings {{{1
 
+" NOTE: Mappings for vtdview mode are in "ftplugin/vtdview.vim"
+
 " All VTD mappings start with a common prefix.  It defaults to
 " '<LocalLeader>t', which is usually ',t' or '\t'.
 " The user can set this manually by placing a line such as
@@ -115,10 +117,12 @@ call s:VTD_map('NextActions', ':call vtd#VTD_NextActions()<CR>', 'n')
 
 " VTD "Actions" (Done, Send, etc.) {{{2
 
-" VTD (d)one: "smart" (context-dependent) checkoff {{{3
+" (d)one: "smart" (context-dependent) checkoff {{{3
 " Q) What does it mean to "check off" an item?  
 " A) It depends entirely on the *nature* of that item.
 " For a "regular item", we mark it as done.
 " For a RECUR item or INBOX, we simply adjust the timestamp.
 call s:VTD_map('Done', ':call vtd#VTD_Done()<CR>', 'd')
 
+" (j)ump: Jump to a specified file and line {{{3
+call s:VTD_map('Jump', ':call vtd#VTD_JumpToLine()<CR>', 'j')

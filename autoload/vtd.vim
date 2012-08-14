@@ -5,6 +5,31 @@
 
 " Utility functions {{{1
 
+" Preserve cursor position, etc. {{{2
+" Adapted from:
+" https://gist.github.com/2973488/222649d4e7f547e16c96e1b9ba56a16c22afd8c7
+
+function! PreserveStart()
+  let b:PRESERVE_search = @/
+  let b:PRESERVE_cursor = getpos(".")
+  normal! H
+  let b:PRESERVE_window = getpos(".")
+  call setpos(".", b:PRESERVE_cursor)
+endfunction
+
+function! PreserveFinish()
+  let @/ = b:PRESERVE_search
+  call setpos(".", b:PRESERVE_window)
+  normal! zt
+  call setpos(".", b:PRESERVE_cursor)
+endfunction
+
+function! Preserve(command)
+  call PreserveStart()
+  execute a:command
+  call PreserveFinish()
+endfunction
+
 " Loading the scriptfiles {{{2
 
 " Taken from gundo.vim: this helps vim find the python script
@@ -16,14 +41,31 @@ function! s:ReadPython()
   python FillMyPlate()
 endfunction
 
-" <CR> - Goes to the line in the original file: {{{2
+" vtd#VTD_JumpToLine(): Goes to the line in the original file: {{{2
 function! vtd#VTD_JumpToLine(...)
   if a:0 >=# 1
-    echom "The line was supplied; it is:" a:1
+    if !match(a:1, '\v[ipsc]\d+')
+      echom "Error: jump string '".a:1."'does not have a valid format."
+      return 1
+    endif
+    let l:jump_to = a:1
   else
-    let cur_line = line(".")
-    echom matchstr(cur_line, '\v<<([ipsc])(\d+)>>')
+    let l:jump_to = matchstr(getline("."), '\v\<\<[ipsc]\d+\>\>')
   endif
+  let l:file_id = matchstr(l:jump_to, '[ipsc]')
+  let l:line_no = matchstr(l:jump_to, '\v\d+')
+  " Go back to the old window
+  if exists("g:vtd_base_window")
+    exe g:vtd_base_window."wincmd w"
+  endif
+  " Jump to the file and line
+  python <<EOF
+abbrev = vim.eval("l:file_id")
+vim.command("let l:file = '%s'" % vtd_fullpath(abbrev).replace("'", "''"))
+EOF
+  execute "edit" l:file
+  execute "normal!" l:line_no."ggzvzz"
+  echom "Good start, but try getting Ctrl-O to work"
 endfunction
 
 " s:GotoClearPreview(): Goto-and-clear preview window (create if needed) {{{2
@@ -35,9 +77,13 @@ function! s:GotoClearPreview()
   if &previewwindow == 0
     pclose  " Closing: easier than looping through every open window!
     execute g:vtd_view_height "wincmd n"
-    set previewwindow buftype=nofile filetype=vtdview winfixheight
+    setlocal previewwindow buftype=nofile filetype=vtdview winfixheight
+          \ noswapfile
     " Following line taken from fugitive: 'q' should close preview window
     nnoremap <buffer> <silent> q    :<C-U>bdelete<CR>
+  else
+    " Save the current window number
+    let g:vtd_base_window = winnr()
   endif
   " In any case: clear the buffer, then rename it to "VTD View":
   normal! ggdG
@@ -74,7 +120,8 @@ function! vtd#VTD_Inboxes()
   python <<EOF
 vim.command("let l:inbox = '%s'" % my_plate.display_inboxes().replace("'", "''"))
 EOF
-  call append(line('1'), split(l:inbox, "\n"))
+  call append(0, split(l:inbox, "\n"))
+  normal! gg
 endfunction
 
 " tn - vtd#VTD_NextActions(): List all Next Actions for current context {{{2
@@ -88,11 +135,5 @@ endfunction
 " VTD actions {{{1
 
 " td - vtd#VTD_Done(): Context-dependent checkoff {{{2
-
-" tT - vtd#VTDTEST_KeywordCollector(): {{{2
-function! vtd#VTDTEST_KeywordCollector(keyword)
-  python "CheckLine(".a:keyword.")"
-  echom l:linecheck_result
-endfunction
 
 " VTD-view buffer {{{1
