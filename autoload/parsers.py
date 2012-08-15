@@ -86,6 +86,35 @@ def next_key(x):
         return 0
     return len(x)
 
+def parse_datetime(string):
+    """Turn datestamp (followed by optional timestamp) into a datetime object
+
+    Arguments:
+    string - A string containing the date/time stamp
+    """
+    if len(string) == 10:
+        return datetime.strptime(string, "%Y-%m-%d")
+    if len(string) == 16:
+        return datetime.strptime(string, "%Y-%m-%d %H:%M")
+    return None
+
+def parse_and_strip_dates(text):
+    """Find any vis/due-dates, parse them, and strip them out"""
+    (vis, due) = (None, None)
+    date_pattern = r"\s+(?P<type>[<>])" + vim.eval("g:vtd_datetime_regex")
+    for match in re.finditer(date_pattern, text):
+        if match.group('type') == '>':
+            vis = parse_datetime(match.group('datetime'))
+        elif match.group('type') == '<':
+            due = parse_datetime(match.group('datetime'))
+
+    # It seems inefficient to do *another* regex search, since we know all the
+    # matches already.  But if I just removed each match inside the loop, that
+    # would change the start/end indices of *other* matches.  This seems
+    # conceptually clearer, and besides I don't performance being an issue.
+    stripped_text = re.sub(date_pattern, '', text)
+    return (stripped_text, vis, due)
+
 def parse_and_strip_contexts(text):
     """Return (text, contexts) tuple with single-@ contexts stripped out"""
     contexts = []
@@ -97,6 +126,35 @@ def parse_and_strip_contexts(text):
     stripped_text = re.sub('^\s*[-*#@]\s*', '', stripped_text)
     return (stripped_text, contexts)
 
+def list_counter(list_type):
+    """A counter telling how many elements to process from a list
+
+    Arguments:
+    list_type - The character used to mark list items
+
+    Here are the semantics for each type:
+        '*' - Project Support material.  Treat this as "comments";
+            skip 'em all (return 0)
+        '#' - Ordered list.  Skip everything after the first (return 1)
+        '-' - Unordered list.  Don't skip anything (return True)
+    """
+    if list_type == '*':
+        return 0
+    elif list_type == '#':
+        return 1
+    return True
+
+def update_list_counter(counter):
+    """Set counter to reflect that we have processed one more list element
+
+    Arguments:
+    counter - Like the return value of list_counter: either the number of list
+        items left to process, or 'True' if there is no limit.
+    """
+    if not counter or isinstance(counter, bool):
+        return counter
+    return counter - 1
+
 class Plate:
     """Keeps track of everything which is 'on your plate'"""
     
@@ -107,9 +165,7 @@ class Plate:
         self.next_actions = {}
         self.recurs = {}
         # Timestamp regexes for different types of objects
-        self._TS_inbox = (
-                r"\s+(?P<date>\d{4}-\d{2}-\d{2})" +
-                r"\s+(?P<time>\d{2}:\d{2})" +
+        self._TS_inbox = (vim.eval("g:vtd_datetime_regex") +
                 # Mnemonic: "break" is how many days you get a break from seeing
                 # this, "window" is how long you see it before it's overdue.
                 r"\s+\+(?P<break>\d+),(?P<window>\d+)")
@@ -124,6 +180,19 @@ class Plate:
                 return True
         return False
 
+    def add_NextAction(self, linenum, line):
+        """Parse 'line' and add a new NextAction to the list"""
+        if re.search('DONE', line):
+            return False
+        (line, contexts) = parse_and_strip_contexts(line)
+        (line, vis, due) = parse_and_strip_dates(line)
+        text = re.sub('^\s*@\s+', '', line)
+        self.next_actions[next_key(self.next_actions)] = dict(
+                name = text,
+                TS_vis = vis,
+                TS_due = due,
+                jump_to = "p%d" % linenum,
+                contexts = contexts)
 
     def read_inboxes(self):
         """List all inboxes, and when they need to be done"""
@@ -142,9 +211,7 @@ class Plate:
                 m = re.search(self._TS_inbox, line)
                 if m:
                     (text, contexts) = parse_and_strip_contexts(line)
-                    last_emptied = datetime.strptime(
-                            "%s %s" % m.group('date', 'time'),
-                            "%Y-%m-%d %H:%M")
+                    last_emptied = parse_datetime(m.group('datetime'))
                     vis = last_emptied + timedelta(days=int(m.group('break')))
                     due = vis + timedelta(days=int(m.group('window')))
                     self.inboxes[next_key(self.inboxes)] = dict(
@@ -176,11 +243,15 @@ class Plate:
     def process_outline(self, linenum, line, f, current_project):
         master_indent = opening_whitespace(line)
         list_type = list_start(line)
+        keep_going = list_counter(list_type)
         while linenum:
             indent = opening_whitespace(line)
             if indent < master_indent:
                 return (linenum, line)
-            vim.command("echom 'Here I should skip depending on the list type'")
+            if not keep_going:
+                (linenum, line) = read_and_count_lines(linenum, f)
+                continue
+            saw_new_element = True
             if indent > master_indent:
                 linetype = list_start(line)
                 if linetype:
@@ -188,13 +259,17 @@ class Plate:
                             linenum, line, f, current_project)
                 else:
                     print "Should append: '%s'" % line
+                    saw_new_element = False
                     (linenum, line) = read_and_count_lines(linenum, f)
             else:
                 if is_next_action(line):
-                    print "Add new NextAction: '%s'" % line
+                    if not self.add_NextAction(linenum, line):
+                        saw_new_element = False
                 elif is_recur(line):
                     print "Add new RECUR:      '%s'" % line
                 (linenum, line) = read_and_count_lines(linenum, f)
+            if saw_new_element:
+                keep_going = update_list_counter(keep_going)
         return (linenum, line)
 
     def read_all(self):
@@ -234,6 +309,33 @@ class Plate:
         inboxes += self.display_inbox_subset(due, 'Overdue', summarize)
         inboxes += self.display_inbox_subset(vis, 'Due', summarize)
         return inboxes
+
+    def display_action_subset(self, indices, status, summarize):
+        if len(indices) < 1:
+            return ''
+        if summarize:
+            return "%s (%d items)  " % (status, len(indices))
+        else:
+            display = ''
+            for i in indices:
+                due_diff = seconds_diff(self.next_actions[i]["TS_due"], self.now)
+                display += "%s (%s %s) <<%s>>\n" % (self.next_actions[i]["name"],
+                        status, pretty_date(abs(due_diff)),
+                        self.next_actions[i]["jump_to"])
+            return display
+
+    def display_NextActions(self, summarize=False):
+        """A string representing the current NextActions list"""
+        self.now = datetime.now()
+        vis = set(i for i in self.inboxes if (
+            self.inboxes[i]["TS_vis"] < self.now and
+            self.inboxes[i]["TS_due"] > self.now))
+        due = set(i for i in self.inboxes if (
+            self.inboxes[i]["TS_due"] < self.now))
+        actions = ''
+        actions += self.display_action_subset(due, 'Overdue', summarize)
+        actions += self.display_action_subset(vis, '', summarize)
+        return actions
 
 def trunc_string(string, max_length):
     if not string[(max_length + 1):]:
@@ -289,8 +391,19 @@ def is_recur(line):
     return re.match(r"RECUR", line)
 
 def is_next_action(line):
-    """Check if a line of text is structured like a Next Action"""
-    return re.match(r"\s*[-#*@]\s+\[\s*\]", line)
+    """Check if a line of text is structured like a Next Action
+
+    Arguments:
+    line - A line of text from a file (usually the Projects file)
+
+    A NextAction fulfils two criteria:
+        a) It's a "list"-type line (starts with a list marker),
+        b) It begins with an isolated '@' symbol
+    """
+    list_type = list_start(line)
+    if not list_type:
+        return False
+    return re.match(r"\s*[%s]\s+@\s" % list_type, line)
 
 def list_start(line):
     """The list-denoting character (if this line starts a list element)"""
@@ -343,4 +456,5 @@ def FillMyPlate():
     if 'my_plate' not in globals() or my_plate.stale():
         my_plate = Plate()
         my_plate.read_all()
+        print my_plate.next_actions
 

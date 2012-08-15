@@ -46,12 +46,16 @@ call s:SetIfNew("file_somedaymaybe", "SomedayMaybe.wiki")
 " g:vtd_file_checklists -- Checklist templates
 call s:SetIfNew("file_checklists", "Checklists.wiki")
 
-" Section header settings {{{2
+" Regex variables{{{2
 
 " Regex identifying Inboxes section
 call s:SetIfNew("section_inbox", '^= Inboxes =\s*$')
 " Regex identifying Thoughts section
 call s:SetIfNew("section_thoughts", '^= Thoughts =\s*$')
+
+" Datetime-stamp regex
+let s:default_datetime = '(?P<datetime>\d{4}-\d{2}-\d{2}(\s+\d{2}:\d{2})?)'
+call s:SetIfNew("datetime_regex", s:default_datetime)
 
 " Key mappings {{{1
 

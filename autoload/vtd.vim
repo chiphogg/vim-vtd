@@ -128,7 +128,8 @@ function! vtd#VTD_Inboxes()
   " Call python code which parses the Inboxes file for due (or overdue!)
   " inboxes, then fills a local variable with the resulting text.
   python <<EOF
-vim.command("let l:inbox = '%s'" % my_plate.display_inboxes().replace("'", "''"))
+inbox_text = my_plate.display_inboxes().replace("'", "''")
+vim.command("let l:inbox = '%s'" % inbox_text)
 EOF
   call append(0, split(l:inbox, "\n"))
   normal! gg
@@ -138,7 +139,10 @@ endfunction
 function! vtd#VTD_NextActions()
   call s:GotoClearPreview()
   call s:AppendToBufferNameBracketed("Next Actions")
-  python parse_next_actions()
+  python <<EOF
+action_text = my_plate.display_NextActions().replace("'", "''")
+vim.command("let l:actions = '%s'" % action_text)
+EOF
   call append(line('1'), split(l:actions, "\n"))
 endfunction
 
