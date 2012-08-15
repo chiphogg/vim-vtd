@@ -74,7 +74,11 @@ def pretty_date(dt_secs):
 
 def read_and_count_lines(linenum, f):
     """Read the next line from f, and increment line-number count"""
-    line = re.sub(r"\n$", '', f.readline())
+    line = f.readline()
+    if not line:
+        return (0, line)  # Either one will evaluate to false
+    # Remove trailing newline:
+    line = re.sub(r"\n$", '', line)
     return (linenum + 1, line)
 
 def next_key(x):
@@ -158,7 +162,7 @@ class Plate:
         with open(vtd_fullpath('p')) as f:
             (linenum, line) = read_and_count_lines(linenum, f)
             current_project = None
-            while line:
+            while linenum:
                 if re.match(r"\s*[-*#]\s", line):
                     (linenum, line) = self.process_outline(
                             linenum, line, f, current_project)
@@ -172,7 +176,7 @@ class Plate:
     def process_outline(self, linenum, line, f, current_project):
         master_indent = opening_whitespace(line)
         list_type = list_start(line)
-        while line:
+        while linenum:
             indent = opening_whitespace(line)
             if indent < master_indent:
                 return (linenum, line)
