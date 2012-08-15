@@ -163,11 +163,11 @@ class Plate:
             (linenum, line) = read_and_count_lines(linenum, f)
             current_project = None
             while linenum:
-                if re.match(r"\s*[-*#]\s", line):
+                if list_start(line):
                     (linenum, line) = self.process_outline(
                             linenum, line, f, current_project)
                 else:
-                    if re.match(r"\s*$", line):
+                    if blank(line):
                         current_project = None
                     else:
                         current_project = line
@@ -188,11 +188,14 @@ class Plate:
                             linenum, line, f, current_project)
                 else:
                     print "Should append: '%s'" % line
+                    (linenum, line) = read_and_count_lines(linenum, f)
             else:
                 if is_next_action(line):
                     print "Add new NextAction: '%s'" % line
                 elif is_recur(line):
                     print "Add new RECUR:      '%s'" % line
+                (linenum, line) = read_and_count_lines(linenum, f)
+        return (linenum, line)
 
     def read_all(self):
         """Turn raw text from our wiki files into todo-list items"""
@@ -280,6 +283,10 @@ def opening_whitespace(string):
     if not match:
         return 0
     return match.end(1)
+
+def is_recur(line):
+    """Check if a line of text is structured like a RECURring action"""
+    return re.match(r"RECUR", line)
 
 def is_next_action(line):
     """Check if a line of text is structured like a Next Action"""
