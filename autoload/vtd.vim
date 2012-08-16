@@ -5,6 +5,17 @@
 
 " Utility functions {{{1
 
+" Write, but only if a file is modified {{{2
+" This function helps autocommands for when we leave a buffer.  We check if
+" it's modified to avoid updating the timestamp for no reason, which would
+" cause the vtdview to think it's out of date and re-scan the files.
+function! vtd#WriteIfModified()
+  if &modified == 1
+    write
+  endif
+endfunction
+
+
 " Preserve cursor position, etc. {{{2
 " Adapted from:
 " https://gist.github.com/2973488/222649d4e7f547e16c96e1b9ba56a16c22afd8c7
