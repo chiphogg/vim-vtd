@@ -90,8 +90,8 @@ EOF
   execute "normal! zv"
 endfunction
 
-" s:GotoClearPreview(): Goto-and-clear preview window (create if needed) {{{2
-function! s:GotoClearPreview()
+" s:GotoClearVTDView(): Goto-and-clear preview window (create if needed) {{{2
+function! s:GotoClearVTDView()
   " First, source the python scriptfile containing all the parsers.
   call s:ReadPython()
   " If we're not already in the vtdview window, we need to go there
@@ -110,8 +110,21 @@ function! s:GotoClearPreview()
   endif
   " In any case: save position; clear buffer; rename to "VTD View":
   let b:cursor = getpos(".")
+  setlocal modifiable
   normal! ggdG
   silent file VTD\ View
+  setlocal nomodifiable
+endfunction
+
+" s:FillVTDView(): Fill a VTD-view buffer with content {{{2
+" Assumes we are already inside the VTD-view buffer
+function! s:FillVTDView(linenum, content)
+  setlocal modifiable
+  call append(a:linenum, split(a:content, "\n"))
+  setlocal nomodifiable
+  if exists("b:cursor")
+    call setpos(".", b:cursor )
+  endif
 endfunction
 
 " vtd#ViewForget(): Clear variables referencing the vtd view window/buffer {{{2
@@ -147,7 +160,7 @@ endfunction
 
 " ti - vtd#VTD_Inboxes(): List all inboxes, and current status {{{2
 function! vtd#VTD_Inboxes()
-  call s:GotoClearPreview()
+  call s:GotoClearVTDView()
   call s:AppendToBufferNameBracketed("Inboxes")
   " Call python code which parses the Inboxes file for due (or overdue!)
   " inboxes, then fills a local variable with the resulting text.
@@ -155,13 +168,12 @@ function! vtd#VTD_Inboxes()
 inbox_text = my_plate.display_inboxes().replace("'", "''")
 vim.command("let l:inbox = '%s'" % inbox_text)
 EOF
-  call append(0, split(l:inbox, "\n"))
-  call setpos(".", b:cursor )
+  call s:FillVTDView(0, l:inbox)
 endfunction
 
 " tn - vtd#VTD_NextActions(): List all Next Actions for current context {{{2
 function! vtd#VTD_NextActions()
-  call s:GotoClearPreview()
+  call s:GotoClearVTDView()
   call s:AppendToBufferNameBracketed("Next Actions")
   python <<EOF
 action_text = my_plate.display_NextActions().replace("'", "''")
