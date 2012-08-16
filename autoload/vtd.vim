@@ -66,8 +66,8 @@ function! s:JumpToBaseWindow()
   endif
 endfunction
 
-" vtd#VTD_JumpToLine(): Goes to the line in the original file: {{{2
-function! vtd#VTD_JumpToLine(...)
+" vtd#JumpToLine(): Goes to the line in the original file: {{{2
+function! vtd#JumpToLine(...)
   if a:0 >=# 1
     if !match(a:1, '\v[ipsc]\d+')
       echom "Error: jump string '".a:1."'does not have a valid format."
@@ -148,18 +148,18 @@ endfunction
 
 " VTD views {{{1
 
-" vtd#VTD_ReadAll(): Read/refresh the "list of everything that's on my plate" {{{2
-function! vtd#VTD_ReadAll()
+" vtd#ReadAll(): Read/refresh the "list of everything that's on my plate" {{{2
+function! vtd#ReadAll()
   call s:ReadPython()
 endfunction
 
-" th - vtd#VTD_Home(): Goto a "VTD Home" buffer for a system overview {{{2
-function! vtd#VTD_Home()
+" th - vtd#Home(): Goto a "VTD Home" buffer for a system overview {{{2
+function! vtd#Home()
   echom "Ain't no place like home!"
 endfunction
 
-" ti - vtd#VTD_Inboxes(): List all inboxes, and current status {{{2
-function! vtd#VTD_Inboxes()
+" ti - vtd#Inboxes(): List all inboxes, and current status {{{2
+function! vtd#Inboxes()
   call s:GotoClearVTDView()
   call s:AppendToBufferNameBracketed("Inboxes")
   " Call python code which parses the Inboxes file for due (or overdue!)
@@ -171,8 +171,8 @@ EOF
   call s:FillVTDView(0, l:inbox)
 endfunction
 
-" tn - vtd#VTD_NextActions(): List all Next Actions for current context {{{2
-function! vtd#VTD_NextActions()
+" tn - vtd#NextActions(): List all Next Actions for current context {{{2
+function! vtd#NextActions()
   call s:GotoClearVTDView()
   call s:AppendToBufferNameBracketed("Next Actions")
   python <<EOF
@@ -184,12 +184,12 @@ endfunction
 
 " VTD actions {{{1
 
-" td - vtd#VTD_Done(): Context-dependent checkoff {{{2
-function! vtd#VTD_Done()
+" td - vtd#Done(): Context-dependent checkoff {{{2
+function! vtd#Done()
   " First off: check whether we're in the vtdview buffer
   if &filetype == "vtdview"
     let l:view_win = winnr()
-    call vtd#VTD_JumpToLine()
+    call vtd#JumpToLine()
   endif
 
   " Now we're in the base file.

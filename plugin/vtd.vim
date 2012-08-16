@@ -111,13 +111,13 @@ endfunction
 " This will provide an overview for your system: How many Next Actions, what
 " are you Waiting for, which Inboxes need to be emptied, what are your Big
 " Rocks for the day, etc.
-call s:VTD_map('Home', ':call vtd#VTD_Home()<CR>', 'h')
+call s:VTD_map('Home', ':call vtd#Home()<CR>', 'h')
 
 " VTD (i)nboxes {{{3
-call s:VTD_map('Inboxes', ':call vtd#VTD_Inboxes()<CR>', 'i')
+call s:VTD_map('Inboxes', ':call vtd#Inboxes()<CR>', 'i')
 
 " VTD (n)ext actions {{{3
-call s:VTD_map('NextActions', ':call vtd#VTD_NextActions()<CR>', 'n')
+call s:VTD_map('NextActions', ':call vtd#NextActions()<CR>', 'n')
 
 " VTD "Actions" (Done, Send, etc.) {{{2
 
@@ -126,7 +126,7 @@ call s:VTD_map('NextActions', ':call vtd#VTD_NextActions()<CR>', 'n')
 " A) It depends entirely on the *nature* of that item.
 " For a "regular item", we mark it as done.
 " For a RECUR item or INBOX, we simply adjust the timestamp.
-call s:VTD_map('Done', ':call vtd#VTD_Done()<CR>', 'd')
+call s:VTD_map('Done', ':call vtd#Done()<CR>', 'd')
 
 " (j)ump: Jump to a specified file and line {{{3
-call s:VTD_map('Jump', ':call vtd#VTD_JumpToLine()<CR>', 'j')
+call s:VTD_map('Jump', ':call vtd#JumpToLine()<CR>', 'j')
