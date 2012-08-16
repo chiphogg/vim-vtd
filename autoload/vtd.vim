@@ -94,24 +94,37 @@ endfunction
 function! s:GotoClearPreview()
   " First, source the python scriptfile containing all the parsers.
   call s:ReadPython()
-  " We don't want to close/reopen the preview window if we're in it!  That
-  " could be distracting if, e.g., the user adjusted the height.
-  if &previewwindow == 0
-    pclose  " Closing: easier than looping through every open window!
-    execute g:vtd_view_height "wincmd n"
-    setlocal previewwindow buftype=nofile filetype=vtdview winfixheight
-          \ noswapfile
-    " Following line taken from fugitive: 'q' should close preview window
-    nnoremap <buffer> <silent> q    :<C-U>bdelete<CR>
-    " Save the current window number
+  " If we're not already in the vtdview window, we need to go there
+  if &filetype !=? 'vtdview'
+    " Save the current window number (to jump back to later)
     let g:vtd_base_window = winnr()
+    if exists("g:vtd_view_bufnr") && bufexists(g:vtd_view_bufnr)
+      call s:JumpToWindowNumber(bufwinnr(g:vtd_view_bufnr))
+    else
+      execute g:vtd_view_height "wincmd n"
+      setlocal buftype=nofile filetype=vtdview winfixheight noswapfile
+      call vtd#ViewRemember()
+      " Following line taken from fugitive: 'q' should close vtdview window
+      nnoremap <buffer> <silent> q    :<C-U>bdelete<CR>
+    endif
   endif
-  " In any case: clear the buffer, then rename it to "VTD View":
+  " In any case: save position; clear buffer; rename to "VTD View":
+  let b:cursor = getpos(".")
   normal! ggdG
   silent file VTD\ View
 endfunction
 
-" Append a string to the current buffer name
+" vtd#ViewForget(): Clear variables referencing the vtd view window/buffer {{{2
+function! vtd#ViewForget()
+  unlet g:vtd_view_bufnr
+endfunction
+
+" vtd#ViewRemember(): Clear variables referencing the vtd view window/buffer {{{2
+function! vtd#ViewRemember()
+  let g:vtd_view_bufnr = bufnr("%")
+endfunction
+
+" Append a string to the current buffer name {{{2
 function! s:AppendToBufferName(string)
   silent execute "file" substitute(bufname("%").a:string, ' ', '\\ ', 'g')
 endfunction
@@ -143,7 +156,7 @@ inbox_text = my_plate.display_inboxes().replace("'", "''")
 vim.command("let l:inbox = '%s'" % inbox_text)
 EOF
   call append(0, split(l:inbox, "\n"))
-  normal! gg
+  call setpos(".", b:cursor )
 endfunction
 
 " tn - vtd#VTD_NextActions(): List all Next Actions for current context {{{2
