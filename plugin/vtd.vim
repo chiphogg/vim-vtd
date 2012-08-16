@@ -36,7 +36,7 @@ call s:SetIfNew("view_height", 10)
 " g:vtd_wiki_path -- Path to the wiki (relative to ~)
 call s:SetIfNew("wiki_path", "~/productivity/viki")
 
-" Individual filenames
+" Individual wiki-file names
 " g:vtd_file_inboxes -- filename which tracks our Inboxes
 call s:SetIfNew("file_inboxes", "Inboxes.wiki")
 " g:vtd_file_projects -- Project info and support material
@@ -45,6 +45,9 @@ call s:SetIfNew("file_projects", "Projects.wiki")
 call s:SetIfNew("file_somedaymaybe", "SomedayMaybe.wiki")
 " g:vtd_file_checklists -- Checklist templates
 call s:SetIfNew("file_checklists", "Checklists.wiki")
+
+" g:vtd_contexts_file -- (semi-)permanent local contexts for this computer
+call s:SetIfNew("contexts_file", "~/.vtd_local_contexts")
 
 " Regex variables{{{2
 
@@ -107,6 +110,15 @@ function! s:VTD_map(action, code, key)
 endfunction
 
 " VTD "Views" (Next Actions, Waiting, etc.) {{{2
+
+" VTD (c)ontexts: which items are relevant? {{{3
+
+" Permanent contexts: local to each computer; changed rarely
+call s:VTD_map('ContextsPermanent', ':call vtd#ContextsPermanent()<CR>', '@p')
+" "Right-now" contexts: what do you care about, *right now*?
+" (Does not persist across sessions)
+call s:VTD_map('ContextsRightNow', ':call vtd#ContextsRightNow()<CR>', '@R')
+
 " VTD (h)ome: "command central" for VTD {{{3
 " This will provide an overview for your system: How many Next Actions, what
 " are you Waiting for, which Inboxes need to be emptied, what are your Big

@@ -5,6 +5,9 @@
 
 " Utility functions {{{1
 
+" Working directory for the script {{{2
+let s:autoload_dir = expand('<sfile>:p:h')
+
 " Write, but only if a file is modified {{{2
 " This function helps autocommands for when we leave a buffer.  We check if
 " it's modified to avoid updating the timestamp for no reason, which would
@@ -143,6 +146,29 @@ endfunction
 " vtd#ReadAll(): Read/refresh the "list of everything that's on my plate" {{{2
 function! vtd#ReadAll()
   call s:ReadPython()
+endfunction
+
+" vtd#ContextsPermanent(): Edit the "permanent contexts" file {{{2
+function! vtd#ContextsPermanent()
+  call s:GotoClearVTDView("Permanent contexts")
+  setlocal modifiable
+  setlocal filetype=vtdcontext
+  setlocal statusline+=%=[hit\ 'q'\ to\ finish]
+  call s:ReadContextsPermanent()
+endfunction
+
+function! s:ReadContextsPermanent()
+  if !filereadable(g:vtd_contexts_file)
+    let l:template = readfile(s:autoload_dir."/context_template.vtdc", "b")
+    call writefile(l:template, expand(g:vtd_contexts_file), "b")
+  endif
+  execute "read" expand(g:vtd_contexts_file)
+  execute "normal! ggdd"
+endfunction
+
+function! vtd#WriteContextsPermanent()
+  let l:content = getline(1, '$')
+  call writefile(l:content, expand(g:vtd_contexts_file), "b")
 endfunction
 
 " th - vtd#Home(): Goto a "VTD Home" buffer for a system overview {{{2

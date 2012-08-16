@@ -1,0 +1,11 @@
+# Template contexts file for VTD: Vimming Things Done
+
+# Lines starting with a '#' are ignored (as are blank lines).
+# Place contexts-to-include on a single line.
+# Contexts-to-exclude start with a minus sign.
+
+# Example: for my work computer, I might uncomment the following lines:
+#work
+#-home
+# This would mean anything with '@work' would be included,
+# while any line with '@home' will be skipped.
