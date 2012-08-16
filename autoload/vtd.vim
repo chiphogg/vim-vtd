@@ -91,7 +91,7 @@ EOF
 endfunction
 
 " s:GotoClearVTDView(): Goto-and-clear preview window (create if needed) {{{2
-function! s:GotoClearVTDView()
+function! s:GotoClearVTDView(bufname)
   " First, source the python scriptfile containing all the parsers.
   call s:ReadPython()
   " If we're not already in the vtdview window, we need to go there
@@ -112,7 +112,8 @@ function! s:GotoClearVTDView()
   let b:cursor = getpos(".")
   setlocal modifiable
   normal! ggdG
-  silent file VTD\ View
+  silent execute "file" substitute("VTD View (".a:bufname.")", ' ', '\\ ', 'g')
+  setlocal statusline=%F
   setlocal nomodifiable
 endfunction
 
@@ -137,15 +138,6 @@ function! vtd#ViewRemember()
   let g:vtd_view_bufnr = bufnr("%")
 endfunction
 
-" Append a string to the current buffer name {{{2
-function! s:AppendToBufferName(string)
-  silent execute "file" substitute(bufname("%").a:string, ' ', '\\ ', 'g')
-endfunction
-
-function! s:AppendToBufferNameBracketed(string)
-  call s:AppendToBufferName(" (".a:string.")")
-endfunction
-
 " VTD views {{{1
 
 " vtd#ReadAll(): Read/refresh the "list of everything that's on my plate" {{{2
@@ -160,8 +152,7 @@ endfunction
 
 " ti - vtd#Inboxes(): List all inboxes, and current status {{{2
 function! vtd#Inboxes()
-  call s:GotoClearVTDView()
-  call s:AppendToBufferNameBracketed("Inboxes")
+  call s:GotoClearVTDView("Inboxes")
   " Call python code which parses the Inboxes file for due (or overdue!)
   " inboxes, then fills a local variable with the resulting text.
   python <<EOF
@@ -173,8 +164,7 @@ endfunction
 
 " tn - vtd#NextActions(): List all Next Actions for current context {{{2
 function! vtd#NextActions()
-  call s:GotoClearVTDView()
-  call s:AppendToBufferNameBracketed("Next Actions")
+  call s:GotoClearVTDView("Next Actions")
   python <<EOF
 action_text = my_plate.display_NextActions().replace("'", "''")
 vim.command("let l:actions = '%s'" % action_text)
