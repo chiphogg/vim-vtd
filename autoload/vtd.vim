@@ -93,6 +93,12 @@ EOF
   execute "normal! zv"
 endfunction
 
+" s:PrepareViewWindow(): Create a new window to hold vtdviews {{{2
+function! s:PrepareViewWindow()
+  execute g:vtd_view_height "wincmd n"
+  setlocal buftype=nofile filetype=vtdview winfixheight noswapfile
+endfunction
+
 " s:GotoClearVTDView(): Goto-and-clear preview window (create if needed) {{{2
 function! s:GotoClearVTDView(bufname)
   " First, source the python scriptfile containing all the parsers.
@@ -102,10 +108,15 @@ function! s:GotoClearVTDView(bufname)
     " Save the current window number (to jump back to later)
     let g:vtd_base_window = winnr()
     if exists("g:vtd_view_bufnr") && bufexists(g:vtd_view_bufnr)
-      call s:JumpToWindowNumber(bufwinnr(g:vtd_view_bufnr))
+      let l:winnr = bufwinnr(g:vtd_view_bufnr)
+      if l:winnr != winnr() && l:winnr != -1
+        call s:JumpToWindowNumber(l:winnr)
+      else
+        call s:PrepareViewWindow()
+        execute "buffer" g:vtd_view_bufnr
+      endif
     else
-      execute g:vtd_view_height "wincmd n"
-      setlocal buftype=nofile filetype=vtdview winfixheight noswapfile
+      call s:PrepareViewWindow()
       call vtd#ViewRemember()
       " Following line taken from fugitive: 'q' should close vtdview window
       nnoremap <buffer> <silent> q    :<C-U>bdelete<CR>
