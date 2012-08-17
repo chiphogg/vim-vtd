@@ -182,21 +182,35 @@ class Plate:
 
     def update_time_and_contexts(self):
         self.now = datetime.now()
-        self.contexts = []
+        self.contexts_use = []
+        self.contexts_avoid = []
         context_file = vim.eval("g:vtd_contexts_file")
+        context_file = re.sub(r"~", os.environ['HOME'], context_file)
+        self.context_whitelist = False
         with open(context_file) as f:
-            while line = f.readline():
-                line = re.sub(r"\s*#.*$", '', line)
+            for line in f:
+                line = re.sub(r"#.*$", '', line)
                 if re.match(r"\s*$", line):
                     continue
-                contexts = re.split(r"\W+", line)
-                self.contexts.extend(contexts)
-                print "I should check for + or -"
+                contexts = line.split()
+                for context in contexts:
+                    if context == '-ALL':
+                        self.context_whitelist = True
+                    elif context[0] == '-':
+                        self.contexts_avoid.append(context[1:])
+                    else:
+                        self.contexts_use.append(context)
 
     def contexts_ok(self, contexts):
         """Check if the supplied context list means this item should be shown
         """
-        return True
+        matches_context = False
+        for context in contexts:
+            if context in self.contexts_avoid:
+                return False
+            elif context in self.contexts_use:
+                matches_context = True
+        return matches_context or not self.context_whitelist
 
     def add_NextAction(self, linenum, line):
         """Parse 'line' and add a new NextAction to the list"""
@@ -317,13 +331,14 @@ class Plate:
         summarize - If true, only print how many are overdue and vis,
                     instead of printing everything out
         """
-        self.now = datetime.now()
+        self.update_time_and_contexts()
         vis = set(i for i in self.inboxes if (
             self.inboxes[i]["TS_vis"] < self.now and
             self.inboxes[i]["TS_due"] > self.now and
             self.contexts_ok(self.inboxes[i]["contexts"])))
         due = set(i for i in self.inboxes if (
-            self.inboxes[i]["TS_due"] < self.now))
+            self.inboxes[i]["TS_due"] < self.now and
+            self.contexts_ok(self.inboxes[i]["contexts"])))
         inboxes = ''
         inboxes += self.display_inbox_subset(due, 'Overdue', summarize)
         inboxes += self.display_inbox_subset(vis, 'Due', summarize)
@@ -345,7 +360,7 @@ class Plate:
 
     def display_NextActions(self, summarize=False):
         """A string representing the current NextActions list"""
-        self.now = datetime.now()
+        self.update_time_and_contexts()
         vis = set(i for i in self.inboxes if (
             self.inboxes[i]["TS_vis"] < self.now and
             self.inboxes[i]["TS_due"] > self.now))
