@@ -180,6 +180,24 @@ class Plate:
                 return True
         return False
 
+    def update_time_and_contexts(self):
+        self.now = datetime.now()
+        self.contexts = []
+        context_file = vim.eval("g:vtd_contexts_file")
+        with open(context_file) as f:
+            while line = f.readline():
+                line = re.sub(r"\s*#.*$", '', line)
+                if re.match(r"\s*$", line):
+                    continue
+                contexts = re.split(r"\W+", line)
+                self.contexts.extend(contexts)
+                print "I should check for + or -"
+
+    def contexts_ok(self, contexts):
+        """Check if the supplied context list means this item should be shown
+        """
+        return True
+
     def add_NextAction(self, linenum, line):
         """Parse 'line' and add a new NextAction to the list"""
         if re.search('DONE', line):
@@ -302,7 +320,8 @@ class Plate:
         self.now = datetime.now()
         vis = set(i for i in self.inboxes if (
             self.inboxes[i]["TS_vis"] < self.now and
-            self.inboxes[i]["TS_due"] > self.now))
+            self.inboxes[i]["TS_due"] > self.now and
+            self.contexts_ok(self.inboxes[i]["contexts"])))
         due = set(i for i in self.inboxes if (
             self.inboxes[i]["TS_due"] < self.now))
         inboxes = ''
