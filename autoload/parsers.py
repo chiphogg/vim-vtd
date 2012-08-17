@@ -180,6 +180,29 @@ class Plate:
                 return True
         return False
 
+    def visible(self, vis):
+        """Tells whether we should see an item which is visible after 'vis'
+
+        Arguments:
+        vis - A datetime object representing the "visible-time" for some item;
+        could also be None, in which case the item is *always* visible
+        """
+        if vis is None:
+            return True
+        return vis < self.now
+
+    def overdue(self, due):
+        """Tells whether an item due on 'due' is overdue
+
+        Arguments:
+        due - A datetime object representing the "due-time" for some item; could
+        also be None, in which case the item is *never* overdue
+        """
+        if due is None:
+            return False
+        return due < self.now
+
+
     def update_time_and_contexts(self):
         self.now = datetime.now()
         self.contexts_use = []
@@ -318,7 +341,7 @@ class Plate:
             display = ''
             for i in indices:
                 due_diff = seconds_diff(self.inboxes[i]["TS_due"], self.now)
-                display += "%s (%s %s) <<%s>>\n" % (self.inboxes[i]["name"],
+                display += "  - %s (%s %s) <<%s>>\n" % (self.inboxes[i]["name"],
                         status, pretty_date(abs(due_diff)),
                         self.inboxes[i]["jump_to"])
             return display
@@ -333,13 +356,13 @@ class Plate:
         """
         self.update_time_and_contexts()
         vis = set(i for i in self.inboxes if (
-            self.inboxes[i]["TS_vis"] < self.now and
-            self.inboxes[i]["TS_due"] > self.now and
+            self.visible(self.inboxes[i]["TS_vis"]) and
+            not self.overdue(self.inboxes[i]["TS_due"]) and
             self.contexts_ok(self.inboxes[i]["contexts"])))
         due = set(i for i in self.inboxes if (
-            self.inboxes[i]["TS_due"] < self.now and
+            self.overdue(self.inboxes[i]["TS_due"]) and
             self.contexts_ok(self.inboxes[i]["contexts"])))
-        inboxes = ''
+        inboxes = "Inboxes\n"
         inboxes += self.display_inbox_subset(due, 'Overdue', summarize)
         inboxes += self.display_inbox_subset(vis, 'Due', summarize)
         return inboxes
@@ -352,23 +375,27 @@ class Plate:
         else:
             display = ''
             for i in indices:
-                due_diff = seconds_diff(self.next_actions[i]["TS_due"], self.now)
-                display += "%s (%s %s) <<%s>>\n" % (self.next_actions[i]["name"],
-                        status, pretty_date(abs(due_diff)),
-                        self.next_actions[i]["jump_to"])
+                due_tag = ''
+                if self.next_actions[i]["TS_due"]:
+                    due_diff = seconds_diff(self.next_actions[i]["TS_due"], self.now)
+                    due_tag = " (%s %s)" % (status, pretty_date(abs(due_diff)))
+                display += "  - %s %s<<%s>>\n" % (self.next_actions[i]["name"],
+                        due_tag, self.next_actions[i]["jump_to"])
             return display
 
     def display_NextActions(self, summarize=False):
         """A string representing the current NextActions list"""
         self.update_time_and_contexts()
-        vis = set(i for i in self.inboxes if (
-            self.inboxes[i]["TS_vis"] < self.now and
-            self.inboxes[i]["TS_due"] > self.now))
-        due = set(i for i in self.inboxes if (
-            self.inboxes[i]["TS_due"] < self.now))
-        actions = ''
+        vis = set(i for i in self.next_actions if (
+            self.visible(self.next_actions[i]["TS_vis"]) and
+            not self.overdue(self.next_actions[i]["TS_due"]) and
+            self.contexts_ok(self.next_actions[i]["contexts"])))
+        due = set(i for i in self.next_actions if (
+            self.overdue(self.next_actions[i]["TS_due"]) and
+            self.contexts_ok(self.next_actions[i]["contexts"])))
+        actions = "Next Actions\n"
         actions += self.display_action_subset(due, 'Overdue', summarize)
-        actions += self.display_action_subset(vis, '', summarize)
+        actions += self.display_action_subset(vis, 'Due', summarize)
         return actions
 
 def trunc_string(string, max_length):

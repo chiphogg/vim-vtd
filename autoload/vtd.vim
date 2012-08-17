@@ -189,7 +189,15 @@ endfunction
 
 " th - vtd#Home(): Goto a "VTD Home" buffer for a system overview {{{2
 function! vtd#Home()
-  echom "Ain't no place like home!"
+  call s:GotoClearVTDView("Inboxes")
+  python <<EOF
+inbox_text = my_plate.display_inboxes().replace("'", "''")
+vim.command("let l:inbox = '%s'" % inbox_text)
+action_text = my_plate.display_NextActions().replace("'", "''")
+vim.command("let l:actions = '%s'" % action_text)
+EOF
+  call s:FillVTDView(0, l:inbox)
+  call s:FillVTDView(line('$'), l:actions)
 endfunction
 
 " ti - vtd#Inboxes(): List all inboxes, and current status {{{2
@@ -211,7 +219,7 @@ function! vtd#NextActions()
 action_text = my_plate.display_NextActions().replace("'", "''")
 vim.command("let l:actions = '%s'" % action_text)
 EOF
-  call append(line('1'), split(l:actions, "\n"))
+  call s:FillVTDView(0, l:actions)
 endfunction
 
 " VTD actions {{{1
@@ -251,7 +259,7 @@ function! vtd#Done()
   endif
 
   if l:type ==? 'NextAction' || l:type ==? 'Project'
-    execute "normal! A(DONE \<C-R>=strftime('%F %R')\<CR>)\<esc>"
+    execute "normal! A (DONE \<C-R>=strftime('%F %R')\<CR>)\<esc>"
   elseif l:type ==? 'Recurring' || l:type ==? 'Inbox'
     let l:date_regex = '\v\d{4}-\d{2}-\d{2}'
     let l:cmd = "normal! 0/".l:date_regex."\<CR>c".l:size."l\<C-R>=strftime('"
