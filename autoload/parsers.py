@@ -233,13 +233,13 @@ class Plate:
         with open(vtd_fullpath('i')) as f:
             # Skip opening lines
             (linenum, line) = read_and_count_lines(linenum, f)
-            while not re.match(vim.eval("g:vtd_section_inbox"), line):
+            while linenum and not re.match(vim.eval("g:vtd_section_inbox"), line):
                 (linenum, line) = read_and_count_lines(linenum, f)
             # Also skip "Inboxes" section header:
             (linenum, line) = read_and_count_lines(linenum, f)
 
             # Read inboxes until we hit the "Thoughts" section
-            while not re.match(vim.eval("g:vtd_section_thoughts"), line):
+            while linenum and not re.match(vim.eval("g:vtd_section_thoughts"), line):
                 m = re.search(self._TS_inbox, line)
                 if m:
                     (text, contexts) = parse_and_strip_contexts(line)
