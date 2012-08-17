@@ -158,17 +158,22 @@ function! vtd#ContextsPermanent()
 endfunction
 
 function! s:ReadContextsPermanent()
-  if !filereadable(g:vtd_contexts_file)
+  let l:cfile = expand(g:vtd_contexts_file)
+  " If the user lacks a context file, create one from a template that gives
+  " instructions:
+  if !filereadable(l:cfile)
     let l:template = readfile(s:autoload_dir."/context_template.vtdc", "b")
-    call writefile(l:template, expand(g:vtd_contexts_file), "b")
+    call writefile(l:template, l:cfile, "b")
   endif
-  execute "read" expand(g:vtd_contexts_file)
+  execute "read" l:cfile
+  " It pastes *after* line 1, so delete line 1
   execute "normal! ggdd"
 endfunction
 
 function! vtd#WriteContextsPermanent()
   let l:content = getline(1, '$')
   call writefile(l:content, expand(g:vtd_contexts_file), "b")
+  bdelete
 endfunction
 
 " th - vtd#Home(): Goto a "VTD Home" buffer for a system overview {{{2

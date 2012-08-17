@@ -105,7 +105,7 @@ function! s:VTD_map(action, code, key)
   let l:action_deco = '<Plug>VTD_'.a:action 
   execute 'nnoremap' l:action_deco a:code
   if !hasmapto(l:action_deco, 'n')
-    execute "nmap" g:vtd_map_prefix.a:key l:action_deco
+    execute "nmap <silent>" g:vtd_map_prefix.a:key l:action_deco
   endif
 endfunction
 
@@ -114,10 +114,12 @@ endfunction
 " VTD (c)ontexts: which items are relevant? {{{3
 
 " Permanent contexts: local to each computer; changed rarely
-call s:VTD_map('ContextsPermanent', ':call vtd#ContextsPermanent()<CR>', '@p')
-" "Right-now" contexts: what do you care about, *right now*?
+let s:cmd_contexts_perm = ':call vtd#ContextsPermanent()<CR>'
+call s:VTD_map('ContextsPermanent', s:cmd_contexts_perm, '@p')
+" 'Right-now' contexts: what do you care about, *right now*?
 " (Does not persist across sessions)
-call s:VTD_map('ContextsRightNow', ':call vtd#ContextsRightNow()<CR>', '@R')
+let s:cmd_contexts_temp = ':call vtd#ContextsRightNow()<CR>'
+call s:VTD_map('ContextsRightNow', s:cmd_contexts_temp, '@R')
 
 " VTD (h)ome: "command central" for VTD {{{3
 " This will provide an overview for your system: How many Next Actions, what
