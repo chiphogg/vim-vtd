@@ -22,6 +22,22 @@ endfunction
 " End Initialization }}}1
 
 " Utility functions {{{1
+" SECTION: Bitwise 'and' {{{2
+function! s:BitwiseAnd(a, b)
+  return s:BitwiseAnd_recurse(a:a, a:b, 1)
+endfunction
+
+function! s:BitwiseAnd_recurse(a, b, weight)
+  if a:a < 1 || a:b < 1
+    return 0
+  endif
+  let l:a_2 = a:a / 2
+  let l:b_2 = a:b / 2
+  let l:higher_digits = s:BitwiseAnd_recurse(l:a_2, l:b_2, a:weight * 2)
+  let l:this_digit = ((a:a % 2) + (a:b % 2) == 2)
+  return (a:weight * l:this_digit) + l:higher_digits
+endfunction
+
 " SECTION: Preserve cursor position, etc. {{{2
 
 " Adapted from:
@@ -77,20 +93,6 @@ vim.command("let l:file = '%s'" % vtd_fullpath(abbrev).replace("'", "''"))
 EOF
   execute "edit +".l:line_no l:file
   execute "normal! zv"
-endfunction
-
-" FUNCTION: s:JumpToWindowNumber(n) {{{2
-" Jump to the specified window number.  This should be easy, but vim's syntax
-" is inconsistent if the window number is 1.
-"
-" Args:
-" n: The window number to jump to
-function! s:JumpToWindowNumber(n)
-  let l:cmd = "wincmd w"
-  if a:n != 1
-    let l:cmd = a:n.l:cmd
-  endif
-  silent execute l:cmd
 endfunction
 
 " FUNCTION: vtd#WriteIfModified() {{{2
@@ -186,10 +188,21 @@ let s:vtdview_name = "__VTD_VIEW_BUFFER__"
 
 " Content state variables, i.e., "what gets displayed" {{{3
 
-" Summary variables: show all the content, or just a summary?
-" Defaults to 1 (Summarize).
+" Constants determining whether to show a given section in the VTD view.
+" Used as bitwise logical operators.
+let s:INBOX = 1
+let s:RECUR = 2
+let s:NEXTACT = 4
+" Show 'em all by default (corresponds to 'Home view'):
+let s:vtdview_show = s:INBOX + s:RECUR + s:NEXTACT
+
+" Summary variables: show all content for this category, or just a summary?
+" Default to 1 ("Summarize").
 let s:vtdview_summarize_inbox = 1
+let s:vtdview_summarize_nextActions = 1
 let s:vtdview_summarize_recur = 1
+
+let s:vtdview_show_help = 0
 
 " End Variables and settings }}}2
 
@@ -211,6 +224,9 @@ endfunction
 " FUNCTION: s:CreateOrSwitchtoViewWin() {{{3
 " End up in the vtdview window: switch to it if it exists; create it if not.
 function! s:CreateOrSwitchtoViewWin()
+  " Save current buffer name and position
+  call s:UpdatePreviousBufInfo()
+
   " This should always succeed, since it creates the buffer if it doesn't
   " already exist:
   let l:view_bufnr = s:ConfidentViewBufNumber()
@@ -226,7 +242,7 @@ function! s:CreateOrSwitchtoViewWin()
     " window has its options setup properly.  (In fact, this should have been
     " done by the exact code in the other branch of this if-block.)  So just go
     " to that window and be done with it!
-    silent execute s:JumpToWindowNumber(l:winnr)
+    silent execute l:winnr "wincmd w"
   endif
 endfunction
 
@@ -237,7 +253,7 @@ function! s:DisplayHelp()
   let l:old_h = @h
   let @h = ''
 
-  if b:vtdview_show_help == 1
+  if s:vtdview_show_help == 1
     let @h=@h."> Nope: no help yet.\n"
   else
     let @h=@h."> Someday, pressing '?' will print a help message!\n"
@@ -247,6 +263,20 @@ function! s:DisplayHelp()
   let @h = l:old_h
 endfunction
 
+" FUNCTION: s:DisplayViewContent() {{{3
+" Display the "meat" of the VTD view: inboxes, next actions, etc.
+function! s:DisplayViewContent()
+  let l:old_c = @c
+  let @c = ''
+
+  let @c=@c.s:View_ContentInboxes()
+  let @c=@c.s:View_ContentRecurs()
+  let @c=@c.s:View_ContentNextActions()
+  silent put c
+
+  let @c = l:old_c
+endfunction
+
 " FUNCTION: s:FillViewBuffer() {{{3
 function! s:FillViewBuffer()
   " Not very elegant; then again, I don't expect this should ever happen.
@@ -254,11 +284,71 @@ function! s:FillViewBuffer()
     throw "ERROR: Trying to put VTDview contents in non-VTDview buffer!"
   endif
 
+  " Save current position and make buffer writable
+  let l:old_position = getpos(".")
+  let l:top_line = line("w0")
+  setlocal modifiable
+
   " Delete buffer contents without clobbering register
   " (thanks scrooloose for the elegant, expressive syntax)
-  silent 1,$delete _
+  silent 1,$ delete _
 
+  " Add the actual content
   call s:DisplayHelp()
+  call s:DisplayViewContent()
+  call s:View_SetStatusline()
+
+  " Delete the blank line at the top
+  silent 1,1 delete _
+
+  " Make buffer nonwritable and restore old position
+  setlocal nomodifiable
+  call cursor(l:top_line, 1)
+  normal! zt
+  call setpos(".", l:old_position)
+endfunction
+
+" FUNCTION: s:InVTDViewWindow() {{{3
+" (bool): Are we currently in the vtd view window?
+"
+" Return:
+" 1 if yes, 0 if no.
+function! s:InVTDViewWindow()
+  return bufname("%") ==# s:vtdview_name
+endfunction
+
+" FUNCTION: s:RestorePreviousBufCurrentWin() {{{3
+" Recall that s:CreateOrSwitchtoViewWin() saved the info about the buffer we
+" were editing when we *last* jumped to the view window.  This function
+" restores that buffer state in the CURRENT window (i.e., it assumes the caller
+" has already gone to the desired window).
+function! s:RestorePreviousBufCurrentWin()
+  " It would be surprising for the buffer to no longer exist, but if it
+  " happens I'd want to know about it:
+  if !bufexists(s:vtdview_previous_bufname)
+    let l:msg = "Cannot restore previous buffer '"
+    let l:msg=l:msg.s:vtdview_previous_bufname
+    let l:msg=l:msg."'; it no longer exists!"
+    throw l:msg
+  endif
+
+  " Open the buffer and restore the position
+  silent execute "buffer" s:vtdview_previous_bufname
+  silent cursor(s:vtdview_previous_topline, 1)
+  silent normal! zt
+  silent setpos(".", s:vtdview_previous_position)
+
+  " Forget these variables
+  unlet s:vtdview_previous_bufname
+  unlet s:vtdview_previous_topline
+  unlet s:vtdview_previous_position
+endfunction
+
+" FUNCTION: vtd#SafeName() {{{3
+" Statusline-safe (i.e., spaces escaped) version of the VTD view name
+function! vtd#SafeName()
+  return s:vtdview_type_name
+  return substitute(s:vtdview_type_name, ' ', '\\ ', 'g')
 endfunction
 
 " FUNCTION: s:SetViewBufOptions() {{{3
@@ -272,12 +362,130 @@ function! s:SetViewBufOptions()
   setlocal nofoldenable
   setlocal nobuflisted
   setlocal nospell
+  silent! exec "file" s:vtdview_name
 
   setfiletype vtdview
 endfunction
 
 
+" FUNCTION: s:ShouldDisplay(category) {{{3
+" Should we display a given category?
+function! s:ShouldDisplay(category)
+  return s:BitwiseAnd(a:category, s:vtdview_show)
+endfunction
+
+
+" FUNCTION: s:UpdatePreviousBufInfo() {{{3
+" When we enter the VTD view buffer, we want to be able to jump back where we
+" came from.  So, this function saves the buffer name and position... *unless*
+" we're already *in* the VTD view buffer, in which case it does nothing.
+function! s:UpdatePreviousBufInfo()
+  if !s:InVTDViewWindow()
+    let s:vtdview_previous_bufname = bufname("%")
+    let s:vtdview_previous_position = getpos(".")
+    let s:vtdview_previous_topline = line("w0")
+  endif
+endfunction
+
+" FUNCTION: s:View_ContentInboxes() {{{3
+" The current content about inboxes.
+"
+" Return: A string (possibly empty) describing inboxes currently visible to the
+" user.  Information shown depends on value of s:vtdview_summarize_inbox.
+function! s:View_ContentInboxes()
+  let l:str=''
+  if s:ShouldDisplay(s:INBOX)
+    let l:str=l:str."\n▸ Inboxes\n"
+  endif
+  return l:str
+endfunction
+
+" FUNCTION: s:View_ContentNextActions() {{{3
+" The current content about Next Actions.
+"
+" Return: A string (possibly empty) describing Next Actions currently visible
+" to the user.  Information shown depends on value of
+" s:vtdview_summarize_nextActions.
+function! s:View_ContentNextActions()
+  let l:str=''
+  if s:ShouldDisplay(s:NEXTACT)
+    let l:str=l:str."\n▸ Next Actions\n"
+  endif
+  return l:str
+endfunction
+
+" FUNCTION: s:View_ContentRecurs() {{{3
+" The current content about recurring actions.
+"
+" Return: A string (possibly empty) describing recurring actions currently
+" visible to the user.  Information shown depends on value of
+" s:vtdview_summarize_recur.
+function! s:View_ContentRecurs()
+  let l:str=''
+  if s:ShouldDisplay(s:RECUR)
+    let l:str=l:str."\n▸ Recurring Actions\n"
+  endif
+  return l:str
+endfunction
+
+" FUNCTION: s:View_SetStatusline() {{{3
+" Set the statusline for the view window depending on what's on our plate
+function! s:View_SetStatusline()
+  setlocal statusline=VTD\ View\ (
+  setlocal statusline+=%{vtd#SafeName()}
+  setlocal statusline+=)
+endfunction
+
 " End Utility functions }}}2
+
+" VTD view: Public functions {{{2
+" FUNCTION: vtd#View_EnterAndRefresh() {{{3
+" Enter the VTD view window and refresh its contents.
+function! vtd#View_EnterAndRefresh()
+  call s:CreateOrSwitchtoViewWin()
+  call s:FillViewBuffer()
+endfunction
+
+" FUNCTION: vtd#View_Home() {{{3
+" Goto a 'VTD Home' buffer for a system overview.
+function! vtd#View_Home()
+  let s:vtdview_show = s:INBOX + s:RECUR + s:NEXTACT
+  let s:vtdview_type_name = "Home"
+  call vtd#View_EnterAndRefresh()
+endfunction
+
+" FUNCTION: vtd#View_Inboxes() {{{3
+" List all visible inboxes and their current status.
+function! vtd#View_Inboxes()
+  let s:vtdview_show = s:INBOX
+  let s:vtdview_type_name = "Inboxes"
+  call vtd#View_EnterAndRefresh()
+endfunction
+
+" FUNCTION: vtd#View_NextActions() {{{3
+" List all Next Actions for current context.
+function! vtd#View_NextActions()
+  let s:vtdview_show = s:NEXTACT
+  let s:vtdview_type_name = "Next Actions"
+  call vtd#View_EnterAndRefresh()
+endfunction
+
+" FUNCTION: vtd#View_Refresh() {{{3
+" Refresh VTD view window's contents.
+" Based on the function names, you might think this would be called by
+" vtd#View_EnterAndRefresh, but it's the other way around!  The reason is that
+" we refresh a buffer by entering it, deleting its contents, and writing in the
+" new contents.  So the other function is actually the more basic one.
+function! vtd#View_Refresh()
+  let l:already_there = s:InVTDViewWindow()
+  call vtd#View_EnterAndRefresh()
+  if !l:already_there
+    wincmd p
+    call s:RestorePreviousBufCurrentWin()
+  endif
+endfunction
+
+" End Public functions }}}2
 
 " End VTD View buffer }}}1
 
@@ -314,41 +522,6 @@ function! vtd#WriteContextsPermanent()
   let l:content = getline(1, '$')
   call writefile(l:content, expand(g:vtd_contexts_file), "b")
   bdelete
-endfunction
-
-" th - vtd#Home(): Goto a "VTD Home" buffer for a system overview {{{2
-function! vtd#Home()
-  call s:GotoClearVTDView("Inboxes")
-  python <<EOF
-inbox_text = my_plate.display_inboxes().replace("'", "''")
-vim.command("let l:inbox = '%s'" % inbox_text)
-action_text = my_plate.display_NextActions().replace("'", "''")
-vim.command("let l:actions = '%s'" % action_text)
-EOF
-  call s:FillVTDView(0, l:inbox)
-  call s:FillVTDView(line('$'), l:actions)
-endfunction
-
-" ti - vtd#Inboxes(): List all inboxes, and current status {{{2
-function! vtd#Inboxes()
-  call s:GotoClearVTDView("Inboxes")
-  " Call python code which parses the Inboxes file for due (or overdue!)
-  " inboxes, then fills a local variable with the resulting text.
-  python <<EOF
-inbox_text = my_plate.display_inboxes().replace("'", "''")
-vim.command("let l:inbox = '%s'" % inbox_text)
-EOF
-  call s:FillVTDView(0, l:inbox)
-endfunction
-
-" tn - vtd#NextActions(): List all Next Actions for current context {{{2
-function! vtd#NextActions()
-  call s:GotoClearVTDView("Next Actions")
-  python <<EOF
-action_text = my_plate.display_NextActions().replace("'", "''")
-vim.command("let l:actions = '%s'" % action_text)
-EOF
-  call s:FillVTDView(0, l:actions)
 endfunction
 
 " VTD actions {{{1
@@ -401,4 +574,6 @@ function! vtd#Done()
     call s:JumpToWindowNumber(l:view_win)
   endif
 endfunction
+
+" End VTD actions }}}1
 

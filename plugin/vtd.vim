@@ -15,6 +15,8 @@ if exists("g:loaded_vtd") || &cp || v:version < 700 || !has('python')
 endif
 let g:loaded_vtd = 1
 
+" End Load guard }}}1
+
 " Settings variables {{{1
 
 " Wrapper function to set options, but only if the user didn't already.
@@ -59,6 +61,8 @@ call s:SetIfNew("section_thoughts", '^= Thoughts =\s*$')
 " Datetime-stamp regex
 let s:default_datetime = '(?P<datetime>\d{4}-\d{2}-\d{2}(\s+\d{2}:\d{2})?)'
 call s:SetIfNew("datetime_regex", s:default_datetime)
+
+" End Settings variables }}}1
 
 " Key mappings {{{1
 
@@ -125,13 +129,13 @@ call s:VTD_map('ContextsRightNow', s:cmd_contexts_temp, '@R')
 " This will provide an overview for your system: How many Next Actions, what
 " are you Waiting for, which Inboxes need to be emptied, what are your Big
 " Rocks for the day, etc.
-call s:VTD_map('Home', ':call vtd#Home()<CR>', 'h')
+call s:VTD_map('Home', ':call vtd#View_Home()<CR>', 'h')
 
 " VTD (i)nboxes {{{3
-call s:VTD_map('Inboxes', ':call vtd#Inboxes()<CR>', 'i')
+call s:VTD_map('Inboxes', ':call vtd#View_Inboxes()<CR>', 'i')
 
 " VTD (n)ext actions {{{3
-call s:VTD_map('NextActions', ':call vtd#NextActions()<CR>', 'n')
+call s:VTD_map('NextActions', ':call vtd#View_NextActions()<CR>', 'n')
 
 " VTD (q)uit: close the view window {{{3
 let s:cmd_quit = ':call vtd#CloseViewWindow()<CR>'
@@ -148,3 +152,4 @@ call s:VTD_map('Done', ':call vtd#Done()<CR>', 'd')
 
 " (j)ump: Jump to a specified file and line {{{3
 call s:VTD_map('Jump', ':call vtd#JumpToLine()<CR>', 'j')
+" End Key mappings }}}1
