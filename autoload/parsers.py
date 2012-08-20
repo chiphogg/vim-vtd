@@ -1,3 +1,5 @@
+# This Python file uses the following encoding: utf-8
+
 # ============================================================================
 # File:        autoload/parsers.py
 # Description: Parsers for VTD lists
@@ -15,6 +17,17 @@ try:
     AUTOLOAD_PARSERS_PY
 except NameError:
     AUTOLOAD_PARSERS_PY = True;
+
+def vtdview_section_marker(summarize):
+    """ Marker for the beginning of a vtdview section
+
+    Depends on whether the section is summarized or not
+    """
+    if summarize:
+        return "▸"
+    else:
+        return "▾"
+        
 
 def seconds_diff(a, b):
     """The number of seconds which a occurs after b, neglecting microseconds
@@ -341,12 +354,12 @@ class Plate:
             display = ''
             for i in indices:
                 due_diff = seconds_diff(self.inboxes[i]["TS_due"], self.now)
-                display += "  - %s (%s %s) <<%s>>\n" % (self.inboxes[i]["name"],
+                display += "  - %s (%s %s) <<%s>>" % (self.inboxes[i]["name"],
                         status, pretty_date(abs(due_diff)),
                         self.inboxes[i]["jump_to"])
             return display
 
-    def display_inboxes(self, summarize=False):
+    def display_inboxes(self):
         """
         A string representing the currently relevant inboxes.
         
@@ -354,6 +367,7 @@ class Plate:
         summarize - If true, only print how many are overdue and vis,
                     instead of printing everything out
         """
+        summarize = (vim.eval("s:vtdview_summarize_inbox") == "1")
         self.update_time_and_contexts()
         vis = set(i for i in self.inboxes if (
             self.visible(self.inboxes[i]["TS_vis"]) and
@@ -362,9 +376,10 @@ class Plate:
         due = set(i for i in self.inboxes if (
             self.overdue(self.inboxes[i]["TS_due"]) and
             self.contexts_ok(self.inboxes[i]["contexts"])))
-        inboxes = "Inboxes\n"
-        inboxes += self.display_inbox_subset(due, 'Overdue', summarize)
-        inboxes += self.display_inbox_subset(vis, 'Due', summarize)
+        inboxes = "%s Inboxes %s%s\n" % (
+                vtdview_section_marker(summarize),
+                self.display_inbox_subset(due, 'Overdue', summarize),
+                self.display_inbox_subset(vis, 'Due', summarize))
         return inboxes
 
     def display_action_subset(self, indices, status, summarize):
@@ -383,8 +398,9 @@ class Plate:
                         due_tag, self.next_actions[i]["jump_to"])
             return display
 
-    def display_NextActions(self, summarize=False):
+    def display_NextActions(self):
         """A string representing the current NextActions list"""
+        summarize = (vim.eval("s:vtdview_summarize_nextActions") == "1")
         self.update_time_and_contexts()
         vis = set(i for i in self.next_actions if (
             self.visible(self.next_actions[i]["TS_vis"]) and
@@ -393,9 +409,10 @@ class Plate:
         due = set(i for i in self.next_actions if (
             self.overdue(self.next_actions[i]["TS_due"]) and
             self.contexts_ok(self.next_actions[i]["contexts"])))
-        actions = "Next Actions\n"
-        actions += self.display_action_subset(due, 'Overdue', summarize)
-        actions += self.display_action_subset(vis, 'Due', summarize)
+        actions = "%s Next Actions %s%s\n" % (
+                vtdview_section_marker(summarize),
+                self.display_action_subset(due, 'Overdue', summarize),
+                self.display_action_subset(vis, 'Due', summarize))
         return actions
 
 def trunc_string(string, max_length):
@@ -517,5 +534,4 @@ def FillMyPlate():
     if 'my_plate' not in globals() or my_plate.stale():
         my_plate = Plate()
         my_plate.read_all()
-        print my_plate.next_actions
 

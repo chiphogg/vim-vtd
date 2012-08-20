@@ -224,6 +224,9 @@ endfunction
 " FUNCTION: s:CreateOrSwitchtoViewWin() {{{3
 " End up in the vtdview window: switch to it if it exists; create it if not.
 function! s:CreateOrSwitchtoViewWin()
+  " Ensure the python code has been read
+  call s:ReadPython()
+
   " Save current buffer name and position
   call s:UpdatePreviousBufInfo()
 
@@ -395,7 +398,10 @@ endfunction
 function! s:View_ContentInboxes()
   let l:str=''
   if s:ShouldDisplay(s:INBOX)
-    let l:str=l:str."\n▸ Inboxes\n"
+    python <<EOF
+content = my_plate.display_inboxes()
+vim.command("let l:str=l:str.'\n%s'" % content.replace("'", "''"))
+EOF
   endif
   return l:str
 endfunction
@@ -409,7 +415,10 @@ endfunction
 function! s:View_ContentNextActions()
   let l:str=''
   if s:ShouldDisplay(s:NEXTACT)
-    let l:str=l:str."\n▸ Next Actions\n"
+    python <<EOF
+content = my_plate.display_NextActions()
+vim.command("let l:str=l:str.'\n%s'" % content.replace("'", "''"))
+EOF
   endif
   return l:str
 endfunction
