@@ -3,23 +3,27 @@
 " Last Change: 2012-08-06
 " URL: https://github.com/chiphogg/vim-vtd
 
-" Utility functions {{{1
-
+" Initialization {{{1
+"
 " Working directory for the script {{{2
 let s:autoload_dir = expand('<sfile>:p:h')
 
-" Write, but only if a file is modified {{{2
-" This function helps autocommands for when we leave a buffer.  We check if
-" it's modified to avoid updating the timestamp for no reason, which would
-" cause the vtdview to think it's out of date and re-scan the files.
-function! vtd#WriteIfModified()
-  if &modified == 1
-    write
-  endif
+" Loading the scriptfiles {{{2
+
+" Taken from gundo.vim: this helps vim find the python script
+let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
+
+" s:ReadPython(): Ensure the python script has been read {{{3
+function! s:ReadPython()
+  exe "pyfile" s:plugin_path."/parsers.py"
+  python FillMyPlate()
 endfunction
 
+" End Initialization }}}1
 
-" Preserve cursor position, etc. {{{2
+" Utility functions {{{1
+" SECTION: Preserve cursor position, etc. {{{2
+
 " Adapted from:
 " https://gist.github.com/2973488/222649d4e7f547e16c96e1b9ba56a16c22afd8c7
 
@@ -44,32 +48,14 @@ function! s:Preserve(command)
   call s:PreserveFinish()
 endfunction
 
-" Loading the scriptfiles {{{2
-
-" Taken from gundo.vim: this helps vim find the python script
-let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
-
-" s:ReadPython(): Ensure the python script has been read {{{3
-function! s:ReadPython()
-  exe "pyfile" s:plugin_path."/parsers.py"
-  python FillMyPlate()
-endfunction
-
-function! s:JumpToWindowNumber(n)
-  let l:cmd = "wincmd w"
-  if a:n != 1
-    let l:cmd = a:n.l:cmd
-  endif
-  execute l:cmd
-endfunction
-
-function! s:JumpToBaseWindow()
-  if exists("g:vtd_base_window")
-    call s:JumpToWindowNumber(g:vtd_base_window)
-  endif
-endfunction
-
-" vtd#JumpToLine(): Goes to the line in the original file: {{{2
+" FUNCTION: vtd#JumpToLine() {{{2
+" Goes to the named line in the original file.  If no line/file is given, look
+" for a marker in the current line of the current buffer.
+"
+" Args:
+" a:1: A string starting with the one-letter abbreviation of a VTD wiki file
+"    (i=inboxes, p=projects, etc.) followed by one or more digits representing
+"    the line number within that file.
 function! vtd#JumpToLine(...)
   if a:0 >=# 1
     if !match(a:1, '\v[ipsc]\d+')
@@ -93,13 +79,45 @@ EOF
   execute "normal! zv"
 endfunction
 
-" s:PrepareViewWindow(): Create a new window to hold vtdviews {{{2
-function! s:PrepareViewWindow()
-  execute g:vtd_view_height "wincmd n"
-  setlocal buftype=nofile filetype=vtdview winfixheight noswapfile
+" FUNCTION: s:JumpToWindowNumber(n) {{{2
+" Jump to the specified window number.  This should be easy, but vim's syntax
+" is inconsistent if the window number is 1.
+"
+" Args:
+" n: The window number to jump to
+function! s:JumpToWindowNumber(n)
+  let l:cmd = "wincmd w"
+  if a:n != 1
+    let l:cmd = a:n.l:cmd
+  endif
+  silent execute l:cmd
 endfunction
 
-" s:GotoClearVTDView(): Goto-and-clear preview window (create if needed) {{{2
+" FUNCTION: vtd#WriteIfModified() {{{2
+" Write, but only if a file is modified.
+"
+" This function helps autocommands for when we leave a buffer.  We check if
+" it's modified to avoid updating the timestamp for no reason, which would
+" cause the vtdview to think it's out of date and re-scan the files.
+function! vtd#WriteIfModified()
+  if &modified == 1
+    write
+  endif
+endfunction
+
+" End Utility functions }}}1
+
+" Old utility functions (not vetted after 2012-08-20) {{{1
+" These should be blessed-and-migrated, or else deleted.
+
+" s:JumpToBaseWindow() {{{2
+function! s:JumpToBaseWindow()
+  if exists("g:vtd_base_window")
+    call s:JumpToWindowNumber(g:vtd_base_window)
+  endif
+endfunction
+
+" s:GotoClearVTDView(): Goto-and-clear vtdview window (create if needed) {{{2
 function! s:GotoClearVTDView(bufname)
   " First, source the python scriptfile containing all the parsers.
   call s:ReadPython()
@@ -151,8 +169,119 @@ endfunction
 function! vtd#ViewRemember()
   let g:vtd_view_bufnr = bufnr("%")
 endfunction
+" End Old utility functions }}}1
 
-" VTD views {{{1
+" The VTD View buffer {{{1
+
+" Notes about the VTD View buffer:
+" 1) There will be only one buffer for the VTD View, identifiable by its name:
+"    "__VTD_VIEW_BUFFER__"
+" 2) This buffer is read-only, has no swap file, and has filetype "vtdview"
+
+" VTD view: Variables and settings {{{2
+" Buffer name {{{3
+" Don't be stupid and give another buffer this name; I don't know
+" what would happen.
+let s:vtdview_name = "__VTD_VIEW_BUFFER__"
+
+" Content state variables, i.e., "what gets displayed" {{{3
+
+" Summary variables: show all the content, or just a summary?
+" Defaults to 1 (Summarize).
+let s:vtdview_summarize_inbox = 1
+let s:vtdview_summarize_recur = 1
+
+" End Variables and settings }}}2
+
+" VTD view: Utility functions {{{2
+" FUNCTION: s:ConfidentViewBufNumber() {{{3
+" Return the buffer number of the VTD view buffer.  Creates it if it doesn't
+" already exist (this is the 'Confident' part).
+"
+" Return: 
+" The buffer number of the VTD view buffer.
+function! s:ConfidentViewBufNumber()
+  " If it doesn't already exist, create it:
+  if !bufexists(s:vtdview_name)
+    silent! execute "badd" s:vtdview_name
+  endif
+  return bufnr(s:vtdview_name)
+endfunction
+
+" FUNCTION: s:CreateOrSwitchtoViewWin() {{{3
+" End up in the vtdview window: switch to it if it exists; create it if not.
+function! s:CreateOrSwitchtoViewWin()
+  " This should always succeed, since it creates the buffer if it doesn't
+  " already exist:
+  let l:view_bufnr = s:ConfidentViewBufNumber()
+
+  let l:winnr = bufwinnr(l:view_bufnr) 
+  if l:winnr == -1
+    " Create a window for the buffer if it doesn't already have one
+    silent execute "topleft" g:vtd_view_height "wincmd n"
+    setlocal winfixheight
+    call s:SetViewBufOptions()
+  else
+    " If the vtdview buffer already has a window, go ahead and assume that
+    " window has its options setup properly.  (In fact, this should have been
+    " done by the exact code in the other branch of this if-block.)  So just go
+    " to that window and be done with it!
+    silent execute s:JumpToWindowNumber(l:winnr)
+  endif
+endfunction
+
+" FUNCTION: s:DisplayHelp() {{{3
+" Writes help message to the current buffer.  *Heavily* influenced -- almost to
+" the point of copy-pasting -- by scrooloose's NERDtree plugin.
+function! s:DisplayHelp()
+  let l:old_h = @h
+  let @h = ''
+
+  if b:vtdview_show_help == 1
+    let @h=@h."> Nope: no help yet.\n"
+  else
+    let @h=@h."> Someday, pressing '?' will print a help message!\n"
+  endif
+  silent! put h
+
+  let @h = l:old_h
+endfunction
+
+" FUNCTION: s:FillViewBuffer() {{{3
+function! s:FillViewBuffer()
+  " Not very elegant; then again, I don't expect this should ever happen.
+  if bufname("%") !=# s:vtdview_name
+    throw "ERROR: Trying to put VTDview contents in non-VTDview buffer!"
+  endif
+
+  " Delete buffer contents without clobbering register
+  " (thanks scrooloose for the elegant, expressive syntax)
+  silent 1,$delete _
+
+  call s:DisplayHelp()
+endfunction
+
+" FUNCTION: s:SetViewBufOptions() {{{3
+" Set the common options for the vtdview buffer
+function! s:SetViewBufOptions()
+  " Buffer options: this buffer should be very lightweight, just a "view"
+  " (no swapfile, no file on disk, no spell-check, etc.)
+  setlocal noswapfile
+  setlocal buftype=nofile 
+  setlocal bufhidden=hide 
+  setlocal nofoldenable
+  setlocal nobuflisted
+  setlocal nospell
+
+  setfiletype vtdview
+endfunction
+
+
+" End Utility functions }}}2
+
+" End VTD View buffer }}}1
+
+" old unorganized stuff {{{1
 
 " vtd#ReadAll(): Read/refresh the "list of everything that's on my plate" {{{2
 function! vtd#ReadAll()
@@ -273,4 +402,3 @@ function! vtd#Done()
   endif
 endfunction
 
-" VTD-view buffer {{{1
