@@ -138,7 +138,7 @@ call s:VTD_map('Inboxes', ':call vtd#View_Inboxes()<CR>', 'i')
 call s:VTD_map('NextActions', ':call vtd#View_NextActions()<CR>', 'n')
 
 " VTD (q)uit: close the view window {{{3
-let s:cmd_quit = ':call vtd#CloseViewWindow()<CR>'
+let s:cmd_quit = ':call vtd#View_Close()<CR>'
 call s:VTD_map('QuitView', s:cmd_quit, 'q')
 
 " VTD "Actions" (Done, Send, etc.) {{{2

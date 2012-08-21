@@ -7,7 +7,10 @@ nnoremap <buffer> <CR> :call vtd#JumpToLine()<CR>
 " That means a one-time thing, like a NextAction or Project, gets tagged as
 " DONE, but a recurring thing, like an INBOX or a RECUR, gets its last-done
 " time updated.  Timestamping is automatic in any case.
-nnoremap <buffer> D :call vtd#Done()<CR>
+nnoremap <silent> <buffer> D :call vtd#Done()<CR>
+
+" q - Quit: close the VTD view window {{{2
+nnoremap <silent> <buffer> q :call vtd#View_Close()<CR>
 
 " Autocommands {{{1
 

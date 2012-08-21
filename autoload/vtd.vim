@@ -215,10 +215,19 @@ let s:vtdview_show_help = 0
 " The buffer number of the VTD view buffer.
 function! s:ConfidentViewBufNumber()
   " If it doesn't already exist, create it:
-  if !bufexists(s:vtdview_name)
+  if !s:View_Exists()
     silent! execute "badd" s:vtdview_name
   endif
   return bufnr(s:vtdview_name)
+endfunction
+
+" FUNCTION: s:View_Exists() {{{3
+" Is there a currently-existing VTD view window?
+"
+" Return:
+" 1 if a VTD view window exists, otherwise 0
+function! s:View_Exists()
+  return bufexists(s:vtdview_name)
 endfunction
 
 " FUNCTION: s:CreateOrSwitchtoViewWin() {{{3
@@ -347,13 +356,6 @@ function! s:RestorePreviousBufCurrentWin()
   unlet s:vtdview_previous_position
 endfunction
 
-" FUNCTION: vtd#SafeName() {{{3
-" Statusline-safe (i.e., spaces escaped) version of the VTD view name
-function! vtd#SafeName()
-  return s:vtdview_type_name
-  return substitute(s:vtdview_type_name, ' ', '\\ ', 'g')
-endfunction
-
 " FUNCTION: s:SetViewBufOptions() {{{3
 " Set the common options for the vtdview buffer
 function! s:SetViewBufOptions()
@@ -361,7 +363,7 @@ function! s:SetViewBufOptions()
   " (no swapfile, no file on disk, no spell-check, etc.)
   setlocal noswapfile
   setlocal buftype=nofile 
-  setlocal bufhidden=hide 
+  setlocal bufhidden=delete
   setlocal nofoldenable
   setlocal nobuflisted
   setlocal nospell
@@ -441,13 +443,29 @@ endfunction
 " Set the statusline for the view window depending on what's on our plate
 function! s:View_SetStatusline()
   setlocal statusline=VTD\ View\ (
-  setlocal statusline+=%{vtd#SafeName()}
+  setlocal statusline+=%{vtd#View_Type()}
   setlocal statusline+=)
 endfunction
 
 " End Utility functions }}}2
 
 " VTD view: Public functions {{{2
+" FUNCTION: vtd#View_ActOnLine() {{{3
+" Perform the action appropriate for the given line.  If it's a section header,
+" toggle summary-mode.  If it's a line-number, jump to that line.  Otherwise,
+" do nothing.
+function! vtd#View_ActOnLine()
+  echom "Perform action"
+endfunction
+
+" FUNCTION: vtd#View_Close() {{{3
+" Close the VTD view window and delete the buffer.
+function! vtd#View_Close()
+  if s:View_Exists()
+    silent! exec "bdelete" s:ConfidentViewBufNumber()
+  endif
+endfunction
+
 " FUNCTION: vtd#View_EnterAndRefresh() {{{3
 " Enter the VTD view window and refresh its contents.
 function! vtd#View_EnterAndRefresh()
@@ -492,6 +510,12 @@ function! vtd#View_Refresh()
     wincmd p
     call s:RestorePreviousBufCurrentWin()
   endif
+endfunction
+
+" FUNCTION: vtd#View_Type() {{{3
+" Which type of VTD view buffer is it? (Home, Inboxes, NextActions, etc.)
+function! vtd#View_Type()
+  return s:vtdview_type_name
 endfunction
 
 " End Public functions }}}2

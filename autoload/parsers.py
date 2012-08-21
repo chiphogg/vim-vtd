@@ -27,7 +27,6 @@ def vtdview_section_marker(summarize):
         return "▸"
     else:
         return "▾"
-        
 
 def seconds_diff(a, b):
     """The number of seconds which a occurs after b, neglecting microseconds
