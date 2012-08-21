@@ -64,6 +64,15 @@ function! s:Preserve(command)
   call s:PreserveFinish()
 endfunction
 
+" FUNCTION: s:LineContainsValidJump() {{{2
+" Check whether the current line contains a valid jump marker.
+"
+" Return:
+" 1 if this line has a valid jump marker; 0 otherwise
+function! s:LineContainsValidJump()
+  return match(getline("."), '\v\<\<[ipsc]\d+\>\>')
+endfunction
+
 " FUNCTION: vtd#JumpToLine() {{{2
 " Goes to the named line in the original file.  If no line/file is given, look
 " for a marker in the current line of the current buffer.
@@ -221,15 +230,6 @@ function! s:ConfidentViewBufNumber()
   return bufnr(s:vtdview_name)
 endfunction
 
-" FUNCTION: s:View_Exists() {{{3
-" Is there a currently-existing VTD view window?
-"
-" Return:
-" 1 if a VTD view window exists, otherwise 0
-function! s:View_Exists()
-  return bufexists(s:vtdview_name)
-endfunction
-
 " FUNCTION: s:CreateOrSwitchtoViewWin() {{{3
 " End up in the vtdview window: switch to it if it exists; create it if not.
 function! s:CreateOrSwitchtoViewWin()
@@ -278,15 +278,10 @@ endfunction
 " FUNCTION: s:DisplayViewContent() {{{3
 " Display the "meat" of the VTD view: inboxes, next actions, etc.
 function! s:DisplayViewContent()
-  let l:old_c = @c
-  let @c = ''
-
-  let @c=@c.s:View_ContentInboxes()
-  let @c=@c.s:View_ContentRecurs()
-  let @c=@c.s:View_ContentNextActions()
-  silent put c
-
-  let @c = l:old_c
+  call s:View_AppendSection('inbox', s:View_ContentInboxes())
+  call s:View_AppendSection('recur', s:View_ContentRecurs())
+  call s:View_AppendSection('nextActions', s:View_ContentNextActions())
+  echo s:vtdview_sections
 endfunction
 
 " FUNCTION: s:FillViewBuffer() {{{3
@@ -304,6 +299,7 @@ function! s:FillViewBuffer()
   " Delete buffer contents without clobbering register
   " (thanks scrooloose for the elegant, expressive syntax)
   silent 1,$ delete _
+  let s:vtdview_sections = {}
 
   " Add the actual content
   call s:DisplayHelp()
@@ -356,6 +352,35 @@ function! s:RestorePreviousBufCurrentWin()
   unlet s:vtdview_previous_position
 endfunction
 
+" FUNCTION: s:Section_FirstLine() {{{3
+" Linenumber of the first line of the current section in the VTD view window.
+function! s:Section_FirstLine()
+  let l:nums = sort(values(s:vtdview_sections))
+  let l:last = -1
+  for l:num in l:nums
+    if l:num == line(".")
+      return l:num
+    elseif l:num > line(".")
+      return l:last
+    else
+      l:last = l:num
+    endif
+  endfor
+  return l:last
+endfunction
+
+" FUNCTION: s:Section_Name() {{{3
+" Name of the current section in the VTD view window.
+function! s:Section_Name()
+  let l:target = s:Section_FirstLine()
+  for [l:name, l:line] in items(s:vtdview_sections)
+    if l:line == l:target
+      return l:name
+    endif
+  endfor
+  return "LOLwut?"
+endfunction
+
 " FUNCTION: s:SetViewBufOptions() {{{3
 " Set the common options for the vtdview buffer
 function! s:SetViewBufOptions()
@@ -380,6 +405,22 @@ function! s:ShouldDisplay(category)
 endfunction
 
 
+" FUNCTION: s:ToggleSummary(name) {{{3
+" Toggle the summary status for the named section
+"
+" Args:
+" name: A string telling which section to summarize.  There must be a
+" corresponding variable s:vtdview_summarize_<name>.
+function! s:ToggleSummary(name)
+  let l:varname = "s:vtdview_summarize_".a:name
+  if !exists(l:varname)
+    let l:msg = "Section named '".a:name."' requires variable called '"
+    let l:msg=l:msg.l:varname."'; but none exists"
+    throw l:msg
+  endif
+  silent! exec "let" l:varname "= 1 -" l:varname
+endfunction
+
 " FUNCTION: s:UpdatePreviousBufInfo() {{{3
 " When we enter the VTD view buffer, we want to be able to jump back where we
 " came from.  So, this function saves the buffer name and position... *unless*
@@ -390,6 +431,21 @@ function! s:UpdatePreviousBufInfo()
     let s:vtdview_previous_position = getpos(".")
     let s:vtdview_previous_topline = line("w0")
   endif
+endfunction
+
+" FUNCTION: s:View_AppendSection(name, content) {{{3
+" Append a string to the buffer, and keep track of which line this section
+" starts at.
+"
+" Args:
+" name: A meaningful name for the section
+" content: The section's content
+function! s:View_AppendSection(name, content)
+  let l:old_c = @c
+  let @c = a:content
+  let s:vtdview_sections[a:name] = line(".") + 1
+  silent! put c
+  let @c = l:old_c
 endfunction
 
 " FUNCTION: s:View_ContentInboxes() {{{3
@@ -439,6 +495,15 @@ function! s:View_ContentRecurs()
   return l:str
 endfunction
 
+" FUNCTION: s:View_Exists() {{{3
+" Is there a currently-existing VTD view window?
+"
+" Return:
+" 1 if a VTD view window exists, otherwise 0
+function! s:View_Exists()
+  return bufexists(s:vtdview_name)
+endfunction
+
 " FUNCTION: s:View_SetStatusline() {{{3
 " Set the statusline for the view window depending on what's on our plate
 function! s:View_SetStatusline()
@@ -455,7 +520,20 @@ endfunction
 " toggle summary-mode.  If it's a line-number, jump to that line.  Otherwise,
 " do nothing.
 function! vtd#View_ActOnLine()
-  echom "Perform action"
+  let l:linenum = line(".")
+  let l:line = getline(".")
+  let l:section_start = s:Section_FirstLine()
+  if l:section_start ==# l:linenum
+    " If we're on a section header, toggle its summary status
+    call s:ToggleSummary(s:Section_Name())
+  elseif s:LineContainsValidJump()
+    " If we have a valid linejump, do that jump
+    call vtd#JumpToLine()
+  endif
+  " Otherwise, silently do nothing
+
+  " Refresh display
+  call vtd#View_Refresh()
 endfunction
 
 " FUNCTION: vtd#View_Close() {{{3

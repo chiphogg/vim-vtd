@@ -353,7 +353,7 @@ class Plate:
             display = ''
             for i in indices:
                 due_diff = seconds_diff(self.inboxes[i]["TS_due"], self.now)
-                display += "  - %s (%s %s) <<%s>>" % (self.inboxes[i]["name"],
+                display += "\n  - %s (%s %s) <<%s>>" % (self.inboxes[i]["name"],
                         status, pretty_date(abs(due_diff)),
                         self.inboxes[i]["jump_to"])
             return display
