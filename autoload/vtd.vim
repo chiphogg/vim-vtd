@@ -70,7 +70,7 @@ endfunction
 " Return:
 " 1 if this line has a valid jump marker; 0 otherwise
 function! s:LineContainsValidJump()
-  return match(getline("."), '\v\<\<[ipsc]\d+\>\>')
+  return match(getline("."), '\v\<\<[ipsc]\d+\>\>') > -1
 endfunction
 
 " FUNCTION: vtd#JumpToLine() {{{2
@@ -83,7 +83,7 @@ endfunction
 "    the line number within that file.
 function! vtd#JumpToLine(...)
   if a:0 >=# 1
-    if !match(a:1, '\v[ipsc]\d+')
+    if match(a:1, '\v[ipsc]\d+') < 0
       echom "Error: jump string '".a:1."'does not have a valid format."
       return 1
     endif
@@ -281,7 +281,6 @@ function! s:DisplayViewContent()
   call s:View_AppendSection('inbox', s:View_ContentInboxes())
   call s:View_AppendSection('recur', s:View_ContentRecurs())
   call s:View_AppendSection('nextActions', s:View_ContentNextActions())
-  echo s:vtdview_sections
 endfunction
 
 " FUNCTION: s:FillViewBuffer() {{{3
@@ -299,7 +298,7 @@ function! s:FillViewBuffer()
   " Delete buffer contents without clobbering register
   " (thanks scrooloose for the elegant, expressive syntax)
   silent 1,$ delete _
-  let s:vtdview_sections = {}
+  let s:vtdview_sections = []
 
   " Add the actual content
   call s:DisplayHelp()
@@ -355,15 +354,14 @@ endfunction
 " FUNCTION: s:Section_FirstLine() {{{3
 " Linenumber of the first line of the current section in the VTD view window.
 function! s:Section_FirstLine()
-  let l:nums = sort(values(s:vtdview_sections))
   let l:last = -1
-  for l:num in l:nums
+  for [l:num, l:name] in s:vtdview_sections
     if l:num == line(".")
       return l:num
     elseif l:num > line(".")
       return l:last
     else
-      l:last = l:num
+      let l:last = l:num
     endif
   endfor
   return l:last
@@ -373,7 +371,7 @@ endfunction
 " Name of the current section in the VTD view window.
 function! s:Section_Name()
   let l:target = s:Section_FirstLine()
-  for [l:name, l:line] in items(s:vtdview_sections)
+  for [l:line, l:name] in s:vtdview_sections
     if l:line == l:target
       return l:name
     endif
@@ -418,6 +416,8 @@ function! s:ToggleSummary(name)
     let l:msg=l:msg.l:varname."'; but none exists"
     throw l:msg
   endif
+
+  " Change 1 to 0 and 0 to 1:
   silent! exec "let" l:varname "= 1 -" l:varname
 endfunction
 
@@ -441,9 +441,14 @@ endfunction
 " name: A meaningful name for the section
 " content: The section's content
 function! s:View_AppendSection(name, content)
+  " Blank sections don't get added
+  if !strlen(a:content)
+    return
+  endif
+
   let l:old_c = @c
   let @c = a:content
-  let s:vtdview_sections[a:name] = line(".") + 1
+  let s:vtdview_sections += [[line(".") + 1, a:name]]
   silent! put c
   let @c = l:old_c
 endfunction
