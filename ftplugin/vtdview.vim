@@ -16,9 +16,6 @@ nnoremap <silent> <buffer> q :call vtd#View_Close()<CR>
 
 augroup vtd_view_buffer
   autocmd!
-  autocmd BufDelete VTD\ View* call vtd#ViewForget()
-  " I want to put an auto-refresh function here.  But I can't auto-refresh
-  " until I can refresh, and I can't refresh until I can keep track of the
-  " state of the buffer.  I think the way to handle this is to make a class for
-  " the buffer which keeps track of state, but that's a down-the-road feature.
+  autocmd BufDelete __VTD_VIEW_BUFFER__ call vtd#ViewForget()
+  autocmd BufEnter __VTD_VIEW_BUFFER__ call vtd#View_EnterAndRefresh()
 augroup END
