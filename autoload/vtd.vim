@@ -13,8 +13,10 @@ let s:autoload_dir = expand('<sfile>:p:h')
 " Taken from gundo.vim: this helps vim find the python script
 let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
 
-" s:ReadPython(): Ensure the python script has been read {{{3
-function! s:ReadPython()
+" FUNCTION: s:UpdatePython() {{{3
+" Ensure the python script has been read and that the my_plate variable is
+" up-to-date
+function! s:UpdatePython()
   exe "pyfile" s:plugin_path."/parsers.py"
   python FillMyPlate()
 endfunction
@@ -93,13 +95,12 @@ function! vtd#JumpToLine(...)
   endif
   let l:file_id = matchstr(l:jump_to, '[ipsc]')
   let l:line_no = matchstr(l:jump_to, '\v\d+')
-  " Go back to the old window
-  call s:JumpToBaseWindow()
   " Jump to the file and line
   python <<EOF
 abbrev = vim.eval("l:file_id")
 vim.command("let l:file = '%s'" % vtd_fullpath(abbrev).replace("'", "''"))
 EOF
+  wincmd p
   execute "edit +".l:line_no l:file
   execute "normal! zv"
 endfunction
@@ -121,17 +122,10 @@ endfunction
 " Old utility functions (not vetted after 2012-08-20) {{{1
 " These should be blessed-and-migrated, or else deleted.
 
-" s:JumpToBaseWindow() {{{2
-function! s:JumpToBaseWindow()
-  if exists("g:vtd_base_window")
-    call s:JumpToWindowNumber(g:vtd_base_window)
-  endif
-endfunction
-
 " s:GotoClearVTDView(): Goto-and-clear vtdview window (create if needed) {{{2
 function! s:GotoClearVTDView(bufname)
   " First, source the python scriptfile containing all the parsers.
-  call s:ReadPython()
+  call s:UpdatePython()
   " If we're not already in the vtdview window, we need to go there
   if &filetype !=? 'vtdview'
     " Save the current window number (to jump back to later)
@@ -233,8 +227,14 @@ endfunction
 " FUNCTION: s:CreateOrSwitchtoViewWin() {{{3
 " End up in the vtdview window: switch to it if it exists; create it if not.
 function! s:CreateOrSwitchtoViewWin()
-  " Ensure the python code has been read
-  call s:ReadPython()
+  " Ensure the python code has been read.  This also checks timestamps and
+  " updates the my_plate variable if needed.
+  call s:UpdatePython()
+
+  " If already *in* the view window, updating my_plate is all we need to do!
+  if s:InVTDViewWindow()
+    return
+  endif
 
   " Save current buffer name and position
   call s:UpdatePreviousBufInfo()
@@ -332,21 +332,21 @@ endfunction
 function! s:RestorePreviousBufCurrentWin()
   " It would be surprising for the buffer to no longer exist, but if it
   " happens I'd want to know about it:
-  if !bufexists(s:vtdview_previous_bufname)
-    let l:msg = "Cannot restore previous buffer '"
-    let l:msg=l:msg.s:vtdview_previous_bufname
-    let l:msg=l:msg."'; it no longer exists!"
+  if !bufexists(s:vtdview_previous_bufnr)
+    let l:msg = "Cannot restore previous buffer #"
+    let l:msg=l:msg.s:vtdview_previous_bufnr
+    let l:msg=l:msg."; it no longer exists!"
     throw l:msg
   endif
 
   " Open the buffer and restore the position
-  silent execute "buffer" s:vtdview_previous_bufname
+  silent execute "buffer" s:vtdview_previous_bufnr
   silent call cursor(s:vtdview_previous_topline, 1)
   silent normal! zt
   silent call setpos(".", s:vtdview_previous_position)
 
   " Forget these variables
-  unlet s:vtdview_previous_bufname
+  unlet s:vtdview_previous_bufnr
   unlet s:vtdview_previous_topline
   unlet s:vtdview_previous_position
 endfunction
@@ -427,7 +427,7 @@ endfunction
 " we're already *in* the VTD view buffer, in which case it does nothing.
 function! s:UpdatePreviousBufInfo()
   if !s:InVTDViewWindow()
-    let s:vtdview_previous_bufname = bufname("%")
+    let s:vtdview_previous_bufnr = bufnr("%")
     let s:vtdview_previous_position = getpos(".")
     let s:vtdview_previous_topline = line("w0")
   endif
@@ -609,7 +609,7 @@ endfunction
 
 " vtd#ReadAll(): Read/refresh the "list of everything that's on my plate" {{{2
 function! vtd#ReadAll()
-  call s:ReadPython()
+  call s:UpdatePython()
 endfunction
 
 " vtd#ContextsPermanent(): Edit the "permanent contexts" file {{{2
