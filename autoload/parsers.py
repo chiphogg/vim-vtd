@@ -334,6 +334,8 @@ class Plate:
                         saw_new_element = False
                 elif is_recur(line):
                     print "Add new RECUR:      '%s'" % line
+                else:
+                    saw_new_element = False
                 (linenum, line) = read_and_count_lines(linenum, f)
             if saw_new_element:
                 keep_going = update_list_counter(keep_going)
@@ -393,7 +395,7 @@ class Plate:
                 if self.next_actions[i]["TS_due"]:
                     due_diff = seconds_diff(self.next_actions[i]["TS_due"], self.now)
                     due_tag = " (%s %s)" % (status, pretty_date(abs(due_diff)))
-                display += "  - %s %s<<%s>>\n" % (self.next_actions[i]["name"],
+                display += "\n  - %s %s<<%s>>" % (self.next_actions[i]["name"],
                         due_tag, self.next_actions[i]["jump_to"])
             return display
 
