@@ -324,19 +324,6 @@ function! s:InVTDViewWindow()
   return bufname("%") ==# s:vtdview_name
 endfunction
 
-function vtd#A()  " debugging
-  if exists("s:vtdview_previous_bufnr")
-    echom "Previous buffer is" s:vtdview_previous_bufnr
-  else
-    echom "lol no such var"
-  endif
-  if s:InVTDViewWindow()
-    echom "We ARE in it"
-  else
-    echom "We are NOT in it"
-  endif
-endfunction
-
 " FUNCTION: s:RestorePreviousBufCurrentWin() {{{3
 " Recall that s:CreateOrSwitchtoViewWin() saved the info about the buffer we
 " were editing when we *last* jumped to the view window.  This function
