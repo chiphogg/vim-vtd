@@ -1,6 +1,6 @@
 " Vim script
 " Author: Charles Hogg <charles.r.hogg@gmail.com>
-" Last Change: 2012-08-06
+" Last Change: 2012-08-22
 " URL: https://github.com/chiphogg/vim-vtd
 
 " Initialization {{{1
@@ -341,9 +341,9 @@ function! s:RestorePreviousBufCurrentWin()
 
   " Open the buffer and restore the position
   silent execute "buffer" s:vtdview_previous_bufname
-  silent cursor(s:vtdview_previous_topline, 1)
+  silent call cursor(s:vtdview_previous_topline, 1)
   silent normal! zt
-  silent setpos(".", s:vtdview_previous_position)
+  silent call setpos(".", s:vtdview_previous_position)
 
   " Forget these variables
   unlet s:vtdview_previous_bufname
