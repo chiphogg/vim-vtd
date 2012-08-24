@@ -249,7 +249,7 @@ class Plate:
 
     def add_NextAction(self, linenum, line):
         """Parse 'line' and add a new NextAction to the list"""
-        if re.search('DONE', line):
+        if proj_done(line):
             return False
         (line, contexts) = parse_and_strip_contexts(line)
         (line, vis, due) = parse_and_strip_dates(line)
@@ -260,6 +260,7 @@ class Plate:
                 TS_due = due,
                 jump_to = "p%d" % linenum,
                 contexts = contexts)
+        return True
 
     def read_inboxes(self):
         """List all inboxes, and when they need to be done"""
@@ -310,15 +311,14 @@ class Plate:
     def process_outline(self, linenum, line, f, current_project):
         master_indent = opening_whitespace(line)
         list_type = list_start(line)
-        keep_going = list_counter(list_type)
+        ordered_items = 0
         while linenum:
             indent = opening_whitespace(line)
             if indent < master_indent:
                 return (linenum, line)
-            if not keep_going:
+            if list_type == '#' and ordered_items > 0:
                 (linenum, line) = read_and_count_lines(linenum, f)
                 continue
-            saw_new_element = True
             if indent > master_indent:
                 linetype = list_start(line)
                 if linetype:
@@ -326,19 +326,15 @@ class Plate:
                             linenum, line, f, current_project)
                 else:
                     print "Should append: '%s'" % line
-                    saw_new_element = False
                     (linenum, line) = read_and_count_lines(linenum, f)
             else:
                 if is_next_action(line):
-                    if not self.add_NextAction(linenum, line):
-                        saw_new_element = False
+                    action_added = self.add_NextAction(linenum, line)
+                    if list_type == '#' and action_added:
+                        ordered_items += 1
                 elif is_recur(line):
                     print "Add new RECUR:      '%s'" % line
-                else:
-                    saw_new_element = False
                 (linenum, line) = read_and_count_lines(linenum, f)
-            if saw_new_element:
-                keep_going = update_list_counter(keep_going)
         return (linenum, line)
 
     def read_all(self):
