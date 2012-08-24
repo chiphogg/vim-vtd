@@ -11,12 +11,19 @@ import vim
 import re
 import os
 from datetime import datetime, timedelta
+import time
 import string
 
 try:
     AUTOLOAD_PARSERS_PY
 except NameError:
     AUTOLOAD_PARSERS_PY = True;
+
+def sort_by_timestamp(i, items, field):
+    """Sort collection of items by a timestamp field"""
+    key = lambda i: (time.mktime(items[i][field].timetuple())
+            if items[i][field] else float('inf'))
+    return sorted(i, key=key)
 
 def vtdview_section_marker(summarize):
     """ Marker for the beginning of a vtdview section
@@ -349,7 +356,8 @@ class Plate:
             return "%s (%d items)  " % (status, len(indices))
         else:
             display = ''
-            for i in indices:
+            i_sorted = sort_by_timestamp(indices, self.inboxes, "TS_due")
+            for i in i_sorted:
                 due_diff = seconds_diff(self.inboxes[i]["TS_due"], self.now)
                 display += "\n  - %s (%s %s) <<%s>>" % (self.inboxes[i]["name"],
                         status, pretty_date(abs(due_diff)),
@@ -386,7 +394,8 @@ class Plate:
             return "%s (%d items)  " % (status, len(indices))
         else:
             display = ''
-            for i in indices:
+            i_sorted = sort_by_timestamp(indices, self.next_actions, "TS_due")
+            for i in i_sorted:
                 due_tag = ''
                 if self.next_actions[i]["TS_due"]:
                     due_diff = seconds_diff(self.next_actions[i]["TS_due"], self.now)
