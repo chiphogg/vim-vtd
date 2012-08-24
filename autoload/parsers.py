@@ -174,6 +174,20 @@ def update_list_counter(counter):
         return counter
     return counter - 1
 
+def context_list_string(c_list):
+    """A context list in plaintext with proper grammar"""
+    previous = None
+    contexts = ''
+    comma = ''
+    for c in c_list:
+        if previous:
+            contexts += comma + previous
+            comma = ', '
+        previous = c
+    if len(contexts):
+        contexts += ' or '
+    return contexts + previous
+
 class Plate:
     """Keeps track of everything which is 'on your plate'"""
     
@@ -221,27 +235,31 @@ class Plate:
             return False
         return due < self.now
 
-
     def update_time_and_contexts(self):
+        # Updating the time is easy
         self.now = datetime.now()
-        self.contexts_use = []
-        self.contexts_avoid = []
+
+        # Only update our context list if we haven't yet,
+        # OR if the context file has since been updated:
         context_file = vim.eval("g:vtd_contexts_file")
         context_file = re.sub(r"~", os.environ['HOME'], context_file)
-        self.context_whitelist = False
-        with open(context_file) as f:
-            for line in f:
-                line = re.sub(r"#.*$", '', line)
-                if re.match(r"\s*$", line):
-                    continue
-                contexts = line.split()
-                for context in contexts:
-                    if context == '-ALL':
-                        self.context_whitelist = True
-                    elif context[0] == '-':
-                        self.contexts_avoid.append(context[1:])
-                    else:
-                        self.contexts_use.append(context)
+        context_updated = os.path.getmtime(context_file)
+        if (not hasattr(self, '_context_checked')
+                or datetime.fromtimestamp(context_updated) > self._context_checked):
+            self._context_checked = self.now
+            self.contexts_use = []
+            self.contexts_avoid = []
+            with open(context_file) as f:
+                for line in f:
+                    line = re.sub(r"#.*$", '', line)
+                    if re.match(r"\s*$", line):
+                        continue
+                    contexts = line.split()
+                    for context in contexts:
+                        if context[0] == '-':
+                            self.contexts_avoid.append(context[1:])
+                        else:
+                            self.contexts_use.append(context)
 
     def contexts_ok(self, contexts):
         """Check if the supplied context list means this item should be shown
@@ -250,9 +268,9 @@ class Plate:
         for context in contexts:
             if context in self.contexts_avoid:
                 return False
-            elif context in self.contexts_use:
+            if context in self.contexts_use:
                 matches_context = True
-        return matches_context or not self.context_whitelist
+        return matches_context
 
     def add_NextAction(self, linenum, line):
         """Parse 'line' and add a new NextAction to the list"""
@@ -349,6 +367,28 @@ class Plate:
         self.read_inboxes()
         self.read_projects()
 
+    def display_contexts(self):
+        """String: the context info for the VTD view window"""
+        self.update_time_and_contexts()
+        have_contexts = len(self.contexts_use)
+        have_avoided_contexts = len(self.contexts_avoid)
+
+        # Default values: all strings are empty.
+        use = but = avoid = ""
+        # Change strings to appropriate values
+        if have_contexts:
+            use = context_list_string(self.contexts_use)
+        if have_avoided_contexts:
+            avoid = 'NOT ' + context_list_string(self.contexts_avoid)
+        if have_contexts and have_avoided_contexts:
+            but = ' but '
+        context_string = use + but + avoid
+
+        contexts = "%s Contexts: %s\n" % (
+                vtdview_section_marker(True),  # Always summarize... for now!
+                context_string)
+        return contexts
+
     def display_inbox_subset(self, indices, status, summarize):
         if len(indices) < 1:
             return ''
@@ -381,7 +421,7 @@ class Plate:
         due = set(i for i in self.inboxes if (
             self.overdue(self.inboxes[i]["TS_due"]) and
             self.contexts_ok(self.inboxes[i]["contexts"])))
-        inboxes = "%s Inboxes %s%s\n" % (
+        inboxes = "%s Inboxes: %s%s\n" % (
                 vtdview_section_marker(summarize),
                 self.display_inbox_subset(due, 'Overdue', summarize),
                 self.display_inbox_subset(vis, 'Due', summarize))
@@ -415,7 +455,7 @@ class Plate:
         due = set(i for i in self.next_actions if (
             self.overdue(self.next_actions[i]["TS_due"]) and
             self.contexts_ok(self.next_actions[i]["contexts"])))
-        actions = "%s Next Actions %s%s\n" % (
+        actions = "%s Next Actions: %s%s\n" % (
                 vtdview_section_marker(summarize),
                 self.display_action_subset(due, 'Overdue', summarize),
                 self.display_action_subset(vis, 'Due', summarize))

@@ -29,8 +29,11 @@ function! s:SetIfNew(name, value)
   endif
 endfunction
 
-" 'View window' settings {{{2
+" 'Special window' settings {{{2
+" View window height
 call s:SetIfNew("view_height", 10)
+" Contexts window width
+call s:SetIfNew("context_width", 20)
 
 " Filenames {{{2
 
@@ -113,17 +116,10 @@ function! s:VTD_map(action, code, key)
   endif
 endfunction
 
+" VTD contexts: which items are relevant? {{{2
+call s:VTD_map('EditContexts', ':call vtd#Contexts_Enter()<CR>', '@')
+"
 " VTD "Views" (Next Actions, Waiting, etc.) {{{2
-
-" VTD (c)ontexts: which items are relevant? {{{3
-
-" Permanent contexts: local to each computer; changed rarely
-let s:cmd_contexts_perm = ':call vtd#ContextsPermanent()<CR>'
-call s:VTD_map('ContextsPermanent', s:cmd_contexts_perm, '@p')
-" 'Right-now' contexts: what do you care about, *right now*?
-" (Does not persist across sessions)
-let s:cmd_contexts_temp = ':call vtd#ContextsRightNow()<CR>'
-call s:VTD_map('ContextsRightNow', s:cmd_contexts_temp, '@R')
 
 " VTD (h)ome: "command central" for VTD {{{3
 " This will provide an overview for your system: How many Next Actions, what

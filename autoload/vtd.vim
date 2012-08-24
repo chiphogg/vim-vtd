@@ -176,7 +176,10 @@ function! vtd#ViewRemember()
 endfunction
 " End Old utility functions }}}1
 
-" The VTD View buffer {{{1
+" The following are the two "special buffers" for VTD.
+"   The "VTD View" window shows your pruned, filtered lists: Next Actions,
+"   Inboxes, etc.:
+" VTD View buffer {{{1
 
 " Notes about the VTD View buffer:
 " 1) There will be only one buffer for the VTD View, identifiable by its name:
@@ -204,6 +207,7 @@ let s:vtdview_show = s:INBOX + s:RECUR + s:NEXTACT
 let s:vtdview_summarize_inbox = 1
 let s:vtdview_summarize_nextActions = 1
 let s:vtdview_summarize_recur = 1
+let s:vtdview_summarize_contexts = 1
 
 let s:vtdview_show_help = 0
 
@@ -246,7 +250,7 @@ function! s:CreateOrSwitchtoViewWin()
   let l:winnr = bufwinnr(l:view_bufnr) 
   if l:winnr == -1
     " Create a window for the buffer if it doesn't already have one
-    silent execute "topleft" g:vtd_view_height "wincmd n"
+    silent execute "topleft" g:vtd_view_height "new"
     setlocal winfixheight
     call s:SetViewBufOptions()
   else
@@ -266,9 +270,9 @@ function! s:DisplayHelp()
   let @h = ''
 
   if s:vtdview_show_help == 1
-    let @h=@h."> Nope: no help yet.\n"
+    let @h=@h."# Nope: no help yet.\n"
   else
-    let @h=@h."> Someday, pressing '?' will print a help message!\n"
+    let @h=@h."# Someday, pressing '?' will print a help message!\n"
   endif
   silent! put h
 
@@ -278,6 +282,7 @@ endfunction
 " FUNCTION: s:DisplayViewContent() {{{3
 " Display the "meat" of the VTD view: inboxes, next actions, etc.
 function! s:DisplayViewContent()
+  call s:View_AppendSection('contexts', s:View_ContentContexts())
   call s:View_AppendSection('inbox', s:View_ContentInboxes())
   call s:View_AppendSection('recur', s:View_ContentRecurs())
   call s:View_AppendSection('nextActions', s:View_ContentNextActions())
@@ -454,6 +459,17 @@ function! s:View_AppendSection(name, content)
   let @c = l:old_c
 endfunction
 
+" FUNCTION: s:View_ContentContexts() {{{3
+" Display the current contexts.
+function! s:View_ContentContexts()
+  let l:str = ''
+  python <<EOF
+content = my_plate.display_contexts()
+vim.command("let l:str=l:str.'\n%s'" % content.replace("'", "''"))
+EOF
+  return l:str
+endfunction
+
 " FUNCTION: s:View_ContentInboxes() {{{3
 " The current content about inboxes.
 "
@@ -496,7 +512,7 @@ endfunction
 function! s:View_ContentRecurs()
   let l:str=''
   if s:ShouldDisplay(s:RECUR)
-    let l:str=l:str."\n▸ Recurring Actions\n"
+    let l:str=l:str."\n▸ Recurring Actions:\n"
   endif
   return l:str
 endfunction
@@ -605,48 +621,104 @@ endfunction
 " End Public functions }}}2
 
 " End VTD View buffer }}}1
+"   The "VTD Contexts" window lets you edit the contexts file.
+" VTD Contexts buffer {{{1
 
-" old unorganized stuff {{{1
-
-" vtd#ReadAll(): Read/refresh the "list of everything that's on my plate" {{{2
-function! vtd#ReadAll()
-  call s:UpdatePython()
-endfunction
-
-" vtd#ContextsPermanent(): Edit the "permanent contexts" file {{{2
-function! vtd#ContextsPermanent()
-  call s:GotoClearVTDView("Permanent contexts")
-  setlocal modifiable
-  setlocal filetype=vtdcontext
-  setlocal statusline+=%=[hit\ 'q'\ to\ finish]
-  call s:ReadContextsPermanent()
-endfunction
-
-function! s:ReadContextsPermanent()
-  let l:cfile = expand(g:vtd_contexts_file)
-  " If the user lacks a context file, create one from a template that gives
-  " instructions:
-  if !filereadable(l:cfile)
-    let l:template = readfile(s:autoload_dir."/context_template.vtdc", "b")
-    call writefile(l:template, l:cfile, "b")
+" VTD contexts: Utility Functions {{{2
+" FUNCTION: s:ConfidentContextBufNumber() {{{3
+" Return the buffer number of the VTD contexts buffer.  Creates it if it
+" doesn't already exist (this is the 'Confident' part).
+"
+" Return: 
+" The buffer number of the VTD contexts buffer.
+function! s:ConfidentContextBufNumber()
+  " If it doesn't already exist, create it:
+  if !s:Contexts_Exists()
+    silent! execute "badd" g:vtd_contexts_file
   endif
-  execute "read" l:cfile
-  " It pastes *after* line 1, so delete line 1
-  execute "normal! ggdd"
+  return bufnr(g:vtd_contexts_file)
 endfunction
 
-function! vtd#WriteContextsPermanent()
-  let l:content = getline(1, '$')
-  call writefile(l:content, expand(g:vtd_contexts_file), "b")
-  bdelete
+" FUNCTION: s:Contexts_Exists() {{{3
+" Is there a currently-existing VTD contexts window?
+"
+" Return:
+" 1 if a VTD contexts window exists, otherwise 0
+function! s:Contexts_Exists()
+  return bufexists(g:vtd_contexts_file)
 endfunction
+
+" FUNCTION: s:CreateOrSwitchtoContextsWin() {{{3
+" End up in the contexts window: switch to it if it exists; create it if not.
+function! s:CreateOrSwitchtoContextsWin()
+  " If already *in* the contexts window, we're done!
+  if s:InVTDContextsWin()
+    return
+  endif
+
+  " This should always succeed, since it creates the buffer if it doesn't
+  " already exist:
+  let l:context_bufnr = s:ConfidentContextBufNumber()
+
+  let l:winnr = bufwinnr(l:context_bufnr) 
+  if l:winnr == -1
+    " Create a window for the buffer if it doesn't already have one
+    silent execute "topleft" g:vtd_context_width "vnew"
+    setlocal winfixwidth
+    call s:SetContextBufOptions()
+  else
+    " If the contexts buffer already has a window, go ahead and assume that
+    " window has its options setup properly.  (In fact, this should have been
+    " done by the exact code in the other branch of this if-block.)  So just go
+    " to that window and be done with it!
+    silent execute l:winnr "wincmd w"
+  endif
+endfunction
+
+" FUNCTION: s:InVTDContextsWin() {{{3
+" (bool): Are we currently in the vtd contexts window?
+"
+" Return:
+" 1 if yes, 0 if no.
+function! s:InVTDContextsWin()
+  return bufname("%") ==# g:vtd_contexts_file
+endfunction
+
+" FUNCTION: s:SetContextBufOptions() {{{3
+" Set the common options for the vtdview buffer
+function! s:SetContextBufOptions()
+  setlocal noswapfile
+  setlocal bufhidden=delete
+  setlocal nofoldenable
+  setlocal autoread
+  setlocal nobuflisted
+  setlocal nospell
+  setlocal nowrap
+  silent! exec "edit" g:vtd_contexts_file
+
+  setfiletype vtdcontext
+endfunction
+
+
+" End Utility Functions }}}2
+
+" VTD contexts: Public functions {{{2
+" FUNCTION: vtd#Contexts_Enter() {{{3
+" Enter the VTD Contexts window, creating it if necessary.
+function! vtd#Contexts_Enter()
+  call s:CreateOrSwitchtoContextsWin()
+endfunction
+
+" End Public functions }}}2
+
+" End VTD Contexts buffer }}}1
 
 " VTD actions {{{1
 
 " td - vtd#Done(): Context-dependent checkoff {{{2
 function! vtd#Done()
   " First off: check whether we're in the vtdview buffer
-  if &filetype == "vtdview"
+  if s:InVTDViewWindow()
     let l:view_win = winnr()
     call vtd#JumpToLine()
   endif
