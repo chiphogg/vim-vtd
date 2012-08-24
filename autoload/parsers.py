@@ -105,14 +105,18 @@ def next_key(x):
         return 0
     return len(x)
 
-def parse_datetime(string):
+def parse_datetime(string, date_type = ''):
     """Turn datestamp (followed by optional timestamp) into a datetime object
 
     Arguments:
     string - A string containing the date/time stamp
+    date_type - An optional string: '<' for due, '>' for visible.
     """
     if len(string) == 10:
-        return datetime.strptime(string, "%Y-%m-%d")
+        time = '00:01'
+        if date_type == '<':
+            time = '23:59'
+        string = "%s %s" % (string, time)
     if len(string) == 16:
         return datetime.strptime(string, "%Y-%m-%d %H:%M")
     return None
@@ -123,9 +127,9 @@ def parse_and_strip_dates(text):
     date_pattern = r"\s+(?P<type>[<>])" + vim.eval("g:vtd_datetime_regex")
     for match in re.finditer(date_pattern, text):
         if match.group('type') == '>':
-            vis = parse_datetime(match.group('datetime'))
+            vis = parse_datetime(match.group('datetime'), match.group('type'))
         elif match.group('type') == '<':
-            due = parse_datetime(match.group('datetime'))
+            due = parse_datetime(match.group('datetime'), match.group('type'))
 
     # It seems inefficient to do *another* regex search, since we know all the
     # matches already.  But if I just removed each match inside the loop, that

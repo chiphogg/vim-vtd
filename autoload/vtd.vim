@@ -465,7 +465,7 @@ function! s:View_ContentContexts()
   let l:str = ''
   python <<EOF
 content = my_plate.display_contexts()
-vim.command("let l:str=l:str.'\n%s'" % content.replace("'", "''"))
+vim.command("let l:str=l:str.'%s'" % content.replace("'", "''"))
 EOF
   return l:str
 endfunction
