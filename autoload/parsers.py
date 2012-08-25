@@ -201,11 +201,14 @@ class Plate:
         self.inboxes = {}
         self.next_actions = {}
         self.recurs = {}
+        self.reminders = {}
         # Timestamp regexes for different types of objects
         self._TS_inbox = (vim.eval("g:vtd_datetime_regex") +
                 # Mnemonic: "break" is how many days you get a break from seeing
                 # this, "window" is how long you see it before it's overdue.
                 r"\s+\+(?P<break>\d+),(?P<window>\d+)")
+        self._TS_remind = (r"\s*REMIND\s*" +
+                vim.eval("g:vtd_datetime_regex"))
 
     def stale(self):
         """Check if wiki-files have been updated since we last read them"""
@@ -265,7 +268,7 @@ class Plate:
                         else:
                             self.contexts_use.append(context)
 
-    def contexts_ok(self, contexts):
+    def contexts_ok(self, contexts, include_anon=False):
         """Check if the supplied context list means this item should be shown
         """
         matches_context = False
@@ -274,7 +277,7 @@ class Plate:
                 return False
             if context in self.contexts_use:
                 matches_context = True
-        return matches_context
+        return matches_context or include_anon
 
     def add_NextAction(self, linenum, line):
         """Parse 'line' and add a new NextAction to the list"""
@@ -302,7 +305,6 @@ class Plate:
                 (linenum, line) = read_and_count_lines(linenum, f)
             # Also skip "Inboxes" section header:
             (linenum, line) = read_and_count_lines(linenum, f)
-
             # Read inboxes until we hit the "Thoughts" section
             while linenum and not re.match(vim.eval("g:vtd_section_thoughts"), line):
                 m = re.search(self._TS_inbox, line)
@@ -316,6 +318,25 @@ class Plate:
                             TS_last = last_emptied,
                             TS_vis  = vis,
                             TS_due  = due,
+                            jump_to = "i%d" % linenum,
+                            contexts = contexts)
+                (linenum, line) = read_and_count_lines(linenum, f)
+
+            # Now look for the Reminders section. Skip until it starts:
+            remind_header = vim.eval("g:vtd_section_reminders")
+            while linenum and not re.match(remind_header, line):
+                (linenum, line) = read_and_count_lines(linenum, f)
+            # Also skip "Reminders" section header:
+            (linenum, line) = read_and_count_lines(linenum, f)
+            # Read Reminders until EOF
+            while linenum:
+                m = re.search(self._TS_remind, line)
+                if m:
+                    (text, contexts) = parse_and_strip_contexts(line)
+                    remind_when = parse_datetime(m.group('datetime'))
+                    self.reminders[next_key(self.reminders)] = dict(
+                            name = re.sub(self._TS_remind, '', text),
+                            TS   = remind_when,
                             jump_to = "i%d" % linenum,
                             contexts = contexts)
                 (linenum, line) = read_and_count_lines(linenum, f)
@@ -431,6 +452,35 @@ class Plate:
                 self.display_inbox_subset(vis, 'Due', summarize))
         return inboxes
 
+    def display_reminders(self):
+        """String: the reminders info for the VTD view window"""
+        summarize = (vim.eval("s:vtdview_summarize_remind") == "1")
+        self.update_time_and_contexts()
+        vis = set(i for i in self.reminders if (
+            self.visible(self.reminders[i]["TS"]) and
+            self.contexts_ok(self.reminders[i]["contexts"], True)))
+        reminders = "%s Reminders: %s\n" % (
+                vtdview_section_marker(summarize),
+                self.display_reminder_subset(vis, 'Visible', summarize))
+        return reminders
+
+    def display_reminder_subset(self, indices, status, summarize):
+        if len(indices) < 1:
+            return ''
+        if summarize:
+            return "(%d items %s)  " % (len(indices), status)
+        else:
+            display = ''
+            i_sorted = sort_by_timestamp(indices, self.reminders, "TS")
+            for i in i_sorted:
+                due_tag = ''
+                if self.reminders[i]["TS"]:
+                    due_diff = seconds_diff(self.reminders[i]["TS"], self.now)
+                    due_tag = " (%s %s)" % (status, pretty_date(abs(due_diff)))
+                display += "\n  - %s %s<<%s>>" % (self.reminders[i]["name"],
+                        due_tag, self.reminders[i]["jump_to"])
+            return display
+
     def display_action_subset(self, indices, status, summarize):
         if len(indices) < 1:
             return ''
@@ -505,7 +555,7 @@ def parse_inboxes():
                 inboxes += i_line
             i_line = inbox_file.readline()
     inbox_content = ''.join(inboxes)
-    vim.command("let l:inbox_content='%s'" %inbox_content.replace("'", "''"))
+    vim.command("let l:inbox_content='%s'" % inbox_content.replace("'", "''"))
     return
 
 def opening_whitespace(string):

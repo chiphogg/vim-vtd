@@ -56,10 +56,11 @@ call s:SetIfNew("contexts_file", "~/.vtd_local_contexts")
 
 " Regex variables{{{2
 
-" Regex identifying Inboxes section
+" Regexes identifying sections in Inboxes wiki-file
 call s:SetIfNew("section_inbox", '^= Inboxes =\s*$')
-" Regex identifying Thoughts section
 call s:SetIfNew("section_thoughts", '^= Thoughts =\s*$')
+call s:SetIfNew("section_stuff", '^= Stuff =\s*$')
+call s:SetIfNew("section_reminders", '^= Reminders =\s*$')
 
 " Datetime-stamp regex
 let s:default_datetime = '(?P<datetime>\d{4}-\d{2}-\d{2}(\s+\d{2}:\d{2})?)'

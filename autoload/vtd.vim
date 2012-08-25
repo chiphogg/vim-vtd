@@ -142,20 +142,21 @@ let s:vtdview_name = "__VTD_VIEW_BUFFER__"
 let s:INBOX = 1
 let s:RECUR = 2
 let s:NEXTACT = 4
+let s:REMIND = 8
 " Show 'em all by default (corresponds to 'Home view'):
-let s:vtdview_show = s:INBOX + s:RECUR + s:NEXTACT
+let s:vtdview_show = s:INBOX + s:RECUR + s:NEXTACT + s:REMIND
 
 " Summary variables: show all content for this category, or just a summary?
 " Default to 1 ("Summarize").
 let s:vtdview_summarize_inbox = 1
 let s:vtdview_summarize_nextActions = 1
 let s:vtdview_summarize_recur = 1
+let s:vtdview_summarize_remind = 1
 let s:vtdview_summarize_contexts = 1
 
 let s:vtdview_show_help = 0
 
 " End Variables and settings }}}2
-
 " VTD view: Utility functions {{{2
 " FUNCTION: s:ConfidentViewBufNumber() {{{3
 " Return the buffer number of the VTD view buffer.  Creates it if it doesn't
@@ -227,6 +228,7 @@ endfunction
 function! s:DisplayViewContent()
   call s:View_AppendSection('contexts', s:View_ContentContexts())
   call s:View_AppendSection('inbox', s:View_ContentInboxes())
+  call s:View_AppendSection('remind', s:View_ContentReminders())
   call s:View_AppendSection('recur', s:View_ContentRecurs())
   call s:View_AppendSection('nextActions', s:View_ContentNextActions())
 endfunction
@@ -460,6 +462,22 @@ function! s:View_ContentRecurs()
   return l:str
 endfunction
 
+" FUNCTION: s:View_ContentReminders() {{{3
+" The current content about reminders.
+"
+" Return: A string (possibly empty) describing reminders currently visible to
+" the user.  Information shown depends on value of s:vtdview_summarize_recur.
+function! s:View_ContentReminders()
+  let l:str=''
+  if s:ShouldDisplay(s:REMIND)
+    python <<EOF
+content = my_plate.display_reminders()
+vim.command("let l:str=l:str.'\n%s'" % content.replace("'", "''"))
+EOF
+  endif
+  return l:str
+endfunction
+
 " FUNCTION: s:View_Exists() {{{3
 " Is there a currently-existing VTD view window?
 "
@@ -478,7 +496,6 @@ function! s:View_SetStatusline()
 endfunction
 
 " End Utility functions }}}2
-
 " VTD view: Public functions {{{2
 " FUNCTION: vtd#View_ActOnLine() {{{3
 " Perform the action appropriate for the given line.  If it's a section header,
@@ -519,7 +536,7 @@ endfunction
 " FUNCTION: vtd#View_Home() {{{3
 " Goto a 'VTD Home' buffer for a system overview.
 function! vtd#View_Home()
-  let s:vtdview_show = s:INBOX + s:RECUR + s:NEXTACT
+  let s:vtdview_show = s:INBOX + s:RECUR + s:NEXTACT + s:REMIND
   let s:vtdview_type_name = "Home"
   call vtd#View_EnterAndRefresh()
 endfunction
@@ -564,6 +581,7 @@ endfunction
 " End Public functions }}}2
 
 " End VTD View buffer }}}1
+
 "   The "VTD Contexts" window lets you edit the contexts file.
 " VTD Contexts buffer {{{1
 
@@ -644,7 +662,6 @@ endfunction
 
 
 " End Utility Functions }}}2
-
 " VTD contexts: Public functions {{{2
 " FUNCTION: vtd#Contexts_Enter() {{{3
 " Enter the VTD Contexts window, creating it if necessary.
@@ -671,11 +688,15 @@ function! vtd#Done()
   let l:old_cursor = getpos(".")
   let l:line = getline(".")
   let l:type = 'None'
-  " NextAction has an isolated '@' after a list-begin marker:
+  let l:datetime = '\d{4}-\d{2}-\d{2}(\s+\d{2}:\d{2})?'
   if l:line =~# '\v^\s*\S\s+\@\s'
+    " NextAction has an isolated '@' after a list-begin marker:
     let l:type = 'NextAction'
-  " Anything else: if it has a date, it's recurring
-  elseif l:line =~# '\v\d{4}-\d{2}-\d{2}(\s+\d{2}:\d{2})?'
+  elseif l:line =~# '\vREMIND\s*'.l:datetime
+    " Reminder has the REMIND pattern, followed by a datetime:
+    let l:type = 'Reminder'
+  elseif l:line =~# '\v'.l:datetime && l:line !~# '\v\(DONE.*\)'
+    " Anything else: if it has a date (but not DONE), it's recurring
     let l:size = 10
     let l:timedate_fmt = '%F'
     " If this item has time as well as date, we'll need to update timestamp
@@ -693,7 +714,7 @@ function! vtd#Done()
     let l:type = 'Project'
   endif
 
-  if l:type ==? 'NextAction' || l:type ==? 'Project'
+  if l:type ==? 'NextAction' || l:type ==? 'Project' || l:type ==? 'Reminder'
     execute "normal! A (DONE \<C-R>=strftime('%F %R')\<CR>)\<esc>"
   elseif l:type ==? 'Recurring' || l:type ==? 'Inbox'
     let l:date_regex = '\v\d{4}-\d{2}-\d{2}'
