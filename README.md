@@ -7,8 +7,6 @@ Vimming Things Done: a GTD-ish system which lives in vim, based on the
 
 Not-even-remotely alpha yet.  Still hacking around.
 
-But I _have_ built a working GTD using Vim before.  Half of the work here 
-
 ## Should _you_ use it?
 
 Rule #1 to keep in mind: __this is written to be *my personal* productivity
@@ -37,18 +35,30 @@ As long as you keep rule #1 in mind, I'd love to hear any feedback.
      
 ## Coding
 
-  - [Steve Losh](http://stevelosh.com/).  Vimscript was always impenetrable to
-    me.  Then I found Steve's 
+  - [Steve Losh](http://stevelosh.com/).
+    Vimscript was always impenetrable to me.  Then I found Steve's 
     [advice for Writing Vim Plugins]
     (http://stevelosh.com/blog/2011/09/writing-vim-plugins/),
     and his thorough tutorial,
     ["Learn Vimscript the Hard Way"]
     (http://learnvimscriptthehardway.stevelosh.com/).
     Finally, a foothold!
-  - [Tim Pope](http://tpo.pe/).   I must use about a million of his plugins.
+  - [Tim Pope](http://tpo.pe/).
+    I must use about a million of his plugins;
+    they make life easier in so many little ways.
     Not to mention, he *saved Vim plugins* when he wrote
     [pathogen](https://github.com/tpope/vim-pathogen/).
-    I use [vundle](https://github.com/gmarik/vundle/) instead because it
-    handles synchronization better, but even vundle was inspired by pathogen.
-    *tpope showed the way.*
+    I use [vundle](https://github.com/gmarik/vundle/) instead
+    (it handles synchronization better),
+    but even vundle was inspired by pathogen.
+  - [scrooloose](https://github.com/scrooloose).
+    Reading through his code was a revelatory experience:
+    nicely sectioned and thoroughly commented,
+    this is vimscript that _looks good_.
+    It's certainly helped the code for VTD;
+    my code for the view window draws *heavily*
+    from his code for the tree window.
+    I wish I'd found the
+    [NERDtree](https://github.com/scrooloose/nerdtree)
+    source sooner!
     
