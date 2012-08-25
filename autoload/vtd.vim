@@ -713,9 +713,16 @@ function! vtd#Done()
   elseif l:line =~# '\v\S'
     let l:type = 'Project'
   endif
+  let l:done = (l:line =~# '\v\(DONE.*\)')
 
   if l:type ==? 'NextAction' || l:type ==? 'Project' || l:type ==? 'Reminder'
-    execute "normal! A (DONE \<C-R>=strftime('%F %R')\<CR>)\<esc>"
+    if l:done
+      let l:done_regex = '\v\s*\(DONE.*\)'
+      let l:cmd = "normal! 0/".l:done_regex."\<CR>d%"
+      call s:Preserve(l:cmd)
+    else
+      execute "normal! A (DONE \<C-R>=strftime('%F %R')\<CR>)\<esc>"
+    endif
   elseif l:type ==? 'Recurring' || l:type ==? 'Inbox'
     let l:date_regex = '\v\d{4}-\d{2}-\d{2}'
     let l:cmd = "normal! 0/".l:date_regex."\<CR>c".l:size."l\<C-R>=strftime('"
