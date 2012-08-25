@@ -725,6 +725,7 @@ function! vtd#Done()
 
   " Now we're in the base file.
   " Determine what kind of line it is; checkoff accordingly.
+  let l:old_cursor = getpos(".")
   let l:line = getline(".")
   let l:type = 'None'
   " NextAction has an isolated '@' after a list-begin marker:
@@ -757,6 +758,7 @@ function! vtd#Done()
     let l:cmd = l:cmd . l:timedate_fmt . "')\<CR>\<esc>"
     call s:Preserve(l:cmd)
   endif
+  call setpos(".", l:old_cursor)
 
   " If we started out in vtdview window, go back there
   if exists("l:view_win")
