@@ -119,63 +119,6 @@ endfunction
 
 " End Utility functions }}}1
 
-" Old utility functions (not vetted after 2012-08-20) {{{1
-" These should be blessed-and-migrated, or else deleted.
-
-" s:GotoClearVTDView(): Goto-and-clear vtdview window (create if needed) {{{2
-function! s:GotoClearVTDView(bufname)
-  " First, source the python scriptfile containing all the parsers.
-  call s:UpdatePython()
-  " If we're not already in the vtdview window, we need to go there
-  if &filetype !=? 'vtdview'
-    " Save the current window number (to jump back to later)
-    let g:vtd_base_window = winnr()
-    if exists("g:vtd_view_bufnr") && bufexists(g:vtd_view_bufnr)
-      let l:winnr = bufwinnr(g:vtd_view_bufnr)
-      if l:winnr != winnr() && l:winnr != -1
-        call s:JumpToWindowNumber(l:winnr)
-      else
-        call s:PrepareViewWindow()
-        execute "buffer" g:vtd_view_bufnr
-      endif
-    else
-      call s:PrepareViewWindow()
-      call vtd#ViewRemember()
-      " Following line taken from fugitive: 'q' should close vtdview window
-      nnoremap <buffer> <silent> q    :<C-U>bdelete<CR>
-    endif
-  endif
-  " In any case: save position; clear buffer; rename to "VTD View":
-  let b:cursor = getpos(".")
-  setlocal modifiable
-  normal! ggdG
-  silent execute "file" substitute("VTD View (".a:bufname.")", ' ', '\\ ', 'g')
-  setlocal statusline=%F
-  setlocal nomodifiable
-endfunction
-
-" s:FillVTDView(): Fill a VTD-view buffer with content {{{2
-" Assumes we are already inside the VTD-view buffer
-function! s:FillVTDView(linenum, content)
-  setlocal modifiable
-  call append(a:linenum, split(a:content, "\n"))
-  setlocal nomodifiable
-  if exists("b:cursor")
-    call setpos(".", b:cursor )
-  endif
-endfunction
-
-" vtd#ViewForget(): Clear variables referencing the vtd view window/buffer {{{2
-function! vtd#ViewForget()
-  unlet g:vtd_view_bufnr
-endfunction
-
-" vtd#ViewRemember(): Clear variables referencing the vtd view window/buffer {{{2
-function! vtd#ViewRemember()
-  let g:vtd_view_bufnr = bufnr("%")
-endfunction
-" End Old utility functions }}}1
-
 " The following are the two "special buffers" for VTD.
 "   The "VTD View" window shows your pruned, filtered lists: Next Actions,
 "   Inboxes, etc.:
