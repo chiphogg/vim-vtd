@@ -51,6 +51,20 @@ call s:SetIfNew("file_somedaymaybe", "SomedayMaybe.wiki")
 " g:vtd_file_checklists -- Checklist templates
 call s:SetIfNew("file_checklists", "Checklists.wiki")
 
+function! s:Wiki(abbrev)
+  let l:fname = expand(g:vtd_wiki_path).'/'
+  if a:abbrev ==? 'i'
+    let l:fname = l:fname.g:vtd_file_inboxes
+  elseif a:abbrev ==? 'p'
+    let l:fname = l:fname.g:vtd_file_projects
+  elseif a:abbrev ==? 's'
+    let l:fname = l:fname.g:vtd_file_somedaymaybe
+  elseif a:abbrev ==? 'c'
+    let l:fname = l:fname.g:vtd_file_checklists
+  endif
+  return l:fname
+endfunction
+
 " g:vtd_contexts_file -- (semi-)permanent local contexts for this computer
 call s:SetIfNew("contexts_file", "~/.vtd_local_contexts")
 
@@ -119,7 +133,13 @@ endfunction
 
 " VTD contexts: which items are relevant? {{{2
 call s:VTD_map('EditContexts', ':call vtd#Contexts_Enter()<CR>', '@')
-"
+
+" VTD wiki-files {{{2
+call s:VTD_map('WikiInboxes',      ':edit '.s:Wiki('i').'<CR>', 'I')
+call s:VTD_map('WikiProjects',     ':edit '.s:Wiki('p').'<CR>', 'P')
+call s:VTD_map('WikiSomedayMaybe', ':edit '.s:Wiki('s').'<CR>', 'S')
+call s:VTD_map('WikiChecklists',   ':edit '.s:Wiki('c').'<CR>', 'C')
+
 " VTD "Views" (Next Actions, Waiting, etc.) {{{2
 
 " VTD (h)ome: "command central" for VTD {{{3
