@@ -361,15 +361,23 @@ class Plate:
     def process_outline(self, linenum, line, f, current_project):
         master_indent = opening_whitespace(line)
         list_type = list_start(line)
-        ordered_items = 0
+        # A 'blocker' is an ordered-list item which is not done.  As soon as we
+        # find one, we ignore all subsequent elements of that ordered list.
+        blocker_started = blocker_finished = False
         while linenum:
             indent = opening_whitespace(line)
             if indent < master_indent:
+                # If this line is less indented than the list we're processing,
+                # we know we're done.
                 return (linenum, line)
-            if list_type == '#' and ordered_items > 0:
+            if list_type == '#' and blocker_finished:
+                # It doesn't matter what's on this line if it's blocked!
                 (linenum, line) = read_and_count_lines(linenum, f)
                 continue
             if indent > master_indent:
+                # Anything *more* indented than this list gets processed
+                # recursively (unless it's not a list element, in which case it
+                # should be appended to what we already started).
                 linetype = list_start(line)
                 if linetype:
                     (linenum, line) = self.process_outline(
@@ -378,10 +386,14 @@ class Plate:
                     print "Should append: '%s'" % line
                     (linenum, line) = read_and_count_lines(linenum, f)
             else:
+                # What to do with a line indented the *same* as this list:
+                if blocker_started:
+                    blocker_finished = True
+                    continue
                 if list_type == '#' and not item_done(line):
-                    ordered_items += 1
+                    blocker_started = True
                 if is_next_action(line):
-                    action_added = self.add_NextAction(linenum, line)
+                    self.add_NextAction(linenum, line)
                 elif is_recur(line):
                     print "Add new RECUR:      '%s'" % line
                 (linenum, line) = read_and_count_lines(linenum, f)
