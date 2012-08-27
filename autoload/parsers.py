@@ -578,7 +578,7 @@ def opening_whitespace(string):
 
 def is_recur(line):
     """Check if a line of text is structured like a RECURring action"""
-    return re.match(r"RECUR", line)
+    return re.search(r"RECUR", line)
 
 def item_done(line):
     """Check if a line of text is marked as "done"
