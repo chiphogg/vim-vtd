@@ -364,6 +364,8 @@ class Plate:
         # A 'blocker' is an ordered-list item which is not done.  As soon as we
         # find one, we ignore all subsequent elements of that ordered list.
         blocker_started = blocker_finished = False
+        # If any parent is marked DONE, we also ignore these lines
+        parent_done = False
         while linenum:
             indent = opening_whitespace(line)
             if indent < master_indent:
@@ -378,6 +380,9 @@ class Plate:
                 # Anything *more* indented than this list gets processed
                 # recursively (unless it's not a list element, in which case it
                 # should be appended to what we already started).
+                if parent_done:
+                    (linenum, line) = read_and_count_lines(linenum, f)
+                    continue
                 linetype = list_start(line)
                 if linetype:
                     (linenum, line) = self.process_outline(
@@ -390,8 +395,12 @@ class Plate:
                 if blocker_started:
                     blocker_finished = True
                     continue
-                if list_type == '#' and not item_done(line):
-                    blocker_started = True
+                if item_done(line):
+                    parent_done = True
+                else:
+                    parent_done = False
+                    if list_type == '#':
+                        blocker_started = True
                 if is_next_action(line):
                     self.add_NextAction(linenum, line)
                 elif is_recur(line):
