@@ -281,7 +281,7 @@ class Plate:
 
     def add_NextAction(self, linenum, line):
         """Parse 'line' and add a new NextAction to the list"""
-        if proj_done(line):
+        if item_done(line):
             return False
         (line, contexts) = parse_and_strip_contexts(line)
         (line, vis, due) = parse_and_strip_dates(line)
@@ -378,10 +378,10 @@ class Plate:
                     print "Should append: '%s'" % line
                     (linenum, line) = read_and_count_lines(linenum, f)
             else:
+                if list_type == '#' and not item_done(line):
+                    ordered_items += 1
                 if is_next_action(line):
                     action_added = self.add_NextAction(linenum, line)
-                    if list_type == '#' and action_added:
-                        ordered_items += 1
                 elif is_recur(line):
                     print "Add new RECUR:      '%s'" % line
                 (linenum, line) = read_and_count_lines(linenum, f)
@@ -568,6 +568,14 @@ def is_recur(line):
     """Check if a line of text is structured like a RECURring action"""
     return re.match(r"RECUR", line)
 
+def item_done(line):
+    """Check if a line of text is marked as "done"
+
+    Arguments:
+    line - A line of text from a file (usually the Projects file)
+    """
+    return re.search(r"(DONE|WONTDO)", line)
+
 def is_next_action(line):
     """Check if a line of text is structured like a Next Action
 
@@ -594,10 +602,6 @@ def blank(line):
     """Checks whether this line contains only whitespace"""
     return re.match(r"\s*$", line)
 
-def proj_done(line):
-    """Checks whether this line represents a checked-off project"""
-    return re.search(r"DONE(\(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}\))?", line)
-
 def sec_header(line):
     """Checks whether this line is a wiki section header"""
     return re.match(r"=+\s+\w", line)
@@ -614,7 +618,7 @@ def parse_next_actions():
                         p_line, p_file, cur_proj)
                 next_actions.extend(new_actions)
             else:
-                if blank(p_line) or proj_done(p_line) or sec_header(p_line):
+                if blank(p_line) or item_done(p_line) or sec_header(p_line):
                     cur_proj = ''
                 else:
                     cur_proj = p_line
