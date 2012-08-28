@@ -695,8 +695,9 @@ function! vtd#Done()
   elseif l:line =~# '\vREMIND\s*'.l:datetime
     " Reminder has the REMIND pattern, followed by a datetime:
     let l:type = 'Reminder'
-  elseif l:line =~# '\v'.l:datetime && l:line !~# '\v\(DONE.*\)'
-    " Anything else: if it has a date (but not DONE), it's recurring
+  elseif l:line =~# '\v\s@<='.l:datetime && l:line !~# '\v\(DONE.*\)'
+    " A whitespace-preceded date means this item recurs; "checking it off"
+    " means setting the timestamp to now.
     let l:size = 10
     let l:timedate_fmt = '%F'
     " If this item has time as well as date, we'll need to update timestamp
