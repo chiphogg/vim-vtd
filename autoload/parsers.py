@@ -25,6 +25,17 @@ def sort_by_timestamp(i, items, field):
             if items[i][field] else float('inf'))
     return sorted(i, key=key)
 
+def time_window(window):
+    """ The window of time (in days) specified by this string
+
+    Arguments:
+    window - The result of a regex match; should be either a bunch of digits, or
+    empty (in which case, a 1-day window is assumed).
+    """
+    if len(window):
+        return int(window)
+    return 1
+
 def vtdview_section_marker(summarize):
     """ Marker for the beginning of a vtdview section
 
@@ -202,13 +213,30 @@ class Plate:
         self.next_actions = {}
         self.recurs = {}
         self.reminders = {}
+
+        # A few helpful regexes...
+        # Mnemonic: "break" is how many days you get a break from seeing this,
+        # "window" is how long you see it before it's overdue.
+        break_window = r"\+(?P<break>\d+)(,(?P<window>\d+))?"
+        # Day of week has format N*DOW: e.g., 3*TUE means "every 3rd Tuesday"
+        day_of_week = (r"((?P<num>\d+)\*)?" +
+                r"(?P<dow>(MON)|(TUE)|(WED)|(THU)|(FRI)|(SAT)|(SUN))")
+        # Day of month; negative numbers count from the end.
+        # e.g., M+3 means "3rd day of the month"
+        # e.g., M-7,3 means "visible on 7th-last day of month; 3-day window"
+        day_of_month = r"M(?P<offset>[+-]\d+)(,(?P<window_dom>\d+))?"
+
         # Timestamp regexes for different types of objects
-        self._TS_inbox = (vim.eval("g:vtd_datetime_regex") +
-                # Mnemonic: "break" is how many days you get a break from seeing
-                # this, "window" is how long you see it before it's overdue.
-                r"\s+\+(?P<break>\d+),(?P<window>\d+)")
+        self._TS_inbox = (vim.eval("g:vtd_datetime_regex") + r"\s+" +
+                break_window)
         self._TS_remind = (r"\s*REMIND\s*" +
                 vim.eval("g:vtd_datetime_regex"))
+        self._TS_recur = (r"\s*RECUR\s*" +
+                vim.eval("g:vtd_datetime_regex") + r"\s+" +
+                r"((" + break_window + r")" +
+                r"|(" + day_of_week  + r")" +
+                r"|(" + day_of_month + r"))")
+
 
     def stale(self):
         """Check if wiki-files have been updated since we last read them"""
@@ -279,6 +307,27 @@ class Plate:
                 matches_context = True
         return matches_context or include_anon
 
+    def add_recur(self, linenum, line):
+        """Parse 'line' and add a new RECUR to the list"""
+        m = re.search(self._TS_recur, line)
+        if not m:
+            print "'%s' gives me the fits!" % line[0:40]
+            return False
+        (line, contexts) = parse_and_strip_contexts(line)
+        if m.group("break"):
+            print "'%s' is a regular type recur" % line[0:40]
+        elif m.group("dow"):
+            print "'%s' is a day-of-week type recur" % line[0:40]
+        elif m.group("offset"):
+            print "'%s' is a day-of-month type recur" % line[0:40]
+        else:
+            print "'%s' is a recur, but search me lol" % line[0:40]
+        self.recurs[next_key(self.recurs)] = dict(
+                name = re.sub(self._TS_recur, '', line),
+                jump_to = "p%d" % linenum,
+                contexts = contexts)
+        return True
+
     def add_NextAction(self, linenum, line):
         """Parse 'line' and add a new NextAction to the list"""
         if item_done(line):
@@ -312,7 +361,8 @@ class Plate:
                     (text, contexts) = parse_and_strip_contexts(line)
                     last_emptied = parse_datetime(m.group('datetime'))
                     vis = last_emptied + timedelta(days=int(m.group('break')))
-                    due = vis + timedelta(days=int(m.group('window')))
+                    window = time_window(m.group('window'))
+                    due = vis + timedelta(days=window)
                     self.inboxes[next_key(self.inboxes)] = dict(
                             name = re.sub(self._TS_inbox, '', text),
                             TS_last = last_emptied,
@@ -326,7 +376,7 @@ class Plate:
             remind_header = vim.eval("g:vtd_section_reminders")
             while linenum and not re.match(remind_header, line):
                 (linenum, line) = read_and_count_lines(linenum, f)
-            # Also skip "Reminders" section header:
+            # Also skip "Reminders" section header itself:
             (linenum, line) = read_and_count_lines(linenum, f)
             # Read Reminders until EOF
             while linenum:
@@ -404,7 +454,7 @@ class Plate:
                 if is_next_action(line):
                     self.add_NextAction(linenum, line)
                 elif is_recur(line):
-                    print "Add new RECUR:      '%s'" % line
+                    self.add_recur(linenum, line)
                 (linenum, line) = read_and_count_lines(linenum, f)
         return (linenum, line)
 
