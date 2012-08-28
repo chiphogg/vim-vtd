@@ -331,7 +331,7 @@ class Plate:
             # Read Reminders until EOF
             while linenum:
                 m = re.search(self._TS_remind, line)
-                if m:
+                if m and not item_done(line):
                     (text, contexts) = parse_and_strip_contexts(line)
                     remind_when = parse_datetime(m.group('datetime'))
                     self.reminders[next_key(self.reminders)] = dict(
