@@ -15,6 +15,7 @@ from calendar import monthrange
 import time
 import string
 
+# Load guard:
 try:
     AUTOLOAD_PARSERS_PY
 except NameError:
@@ -32,12 +33,13 @@ def next_day_month(date, offset):
     """The next day after 'date' which has the right offset within the month"""
     # It will either be the same month, or the following month
     day_in_month = offset_in_month(date.year, date.month, offset)
-    new_date = date.replace(day = day_in_month)
+    new_date = date.replace(day=day_in_month, hour=0, minute=0)
     if new_date > date:
         return new_date
     # If that didn't work, let's go to the next month
-    new_date = date.replace(day = 1) + datetime.timedelta(32)
-    new_date.day = offset_in_month(new_date.year, new_date.month, offset)
+    new_date = new_date.replace(day=1) + timedelta(days=32)
+    day_in_month = offset_in_month(new_date.year, new_date.month, offset)
+    new_date = new_date.replace(day=day_in_month)
     return new_date
 
 def sort_by_timestamp(i, items, field):
