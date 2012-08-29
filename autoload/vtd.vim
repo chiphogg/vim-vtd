@@ -457,7 +457,10 @@ endfunction
 function! s:View_ContentRecurs()
   let l:str=''
   if s:ShouldDisplay(s:RECUR)
-    let l:str=l:str."\n▸ Recurring Actions:\n"
+    python <<EOF
+content = my_plate.display_recurs()
+vim.command("let l:str=l:str.'\n%s'" % content.replace("'", "''"))
+EOF
   endif
   return l:str
 endfunction

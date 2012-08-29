@@ -11,6 +11,7 @@ import vim
 import re
 import os
 from datetime import datetime, timedelta
+from calendar import monthrange
 import time
 import string
 
@@ -18,6 +19,26 @@ try:
     AUTOLOAD_PARSERS_PY
 except NameError:
     AUTOLOAD_PARSERS_PY = True;
+
+def offset_in_month(year, month, offset):
+    """
+    Day of month having this offset ('3' is 3rd day of month, '-1' is last)
+    """
+    month_length = monthrange(year, month)[1]
+    if offset < 0: offset += 1
+    return (month_length + offset - 1) % month_length + 1
+
+def next_day_month(date, offset):
+    """The next day after 'date' which has the right offset within the month"""
+    # It will either be the same month, or the following month
+    day_in_month = offset_in_month(date.year, date.month, offset)
+    new_date = date.replace(day = day_in_month)
+    if new_date > date:
+        return new_date
+    # If that didn't work, let's go to the next month
+    new_date = date.replace(day = 1) + datetime.timedelta(32)
+    new_date.day = offset_in_month(new_date.year, new_date.month, offset)
+    return new_date
 
 def sort_by_timestamp(i, items, field):
     """Sort collection of items by a timestamp field"""
@@ -32,9 +53,12 @@ def time_window(window):
     window - The result of a regex match; should be either a bunch of digits, or
     empty (in which case, a 1-day window is assumed).
     """
-    if len(window):
-        return int(window)
-    return 1
+    try:
+        if len(window):
+            return int(window)
+        return 1
+    except:
+        return 1
 
 def vtdview_section_marker(summarize):
     """ Marker for the beginning of a vtdview section
@@ -314,16 +338,27 @@ class Plate:
             print "'%s' gives me the fits!" % line[0:40]
             return False
         (line, contexts) = parse_and_strip_contexts(line)
+        last_done = parse_datetime(m.group('datetime'))
+        d_vis = timedelta(days=-1000) # temporary!!  sooo temporary.
+        d_due = timedelta(days=-1000)
+        vis = due = None
         if m.group("break"):
-            print "'%s' is a regular type recur" % line[0:40]
+            d_vis = timedelta(days=int(m.group("break")))
+            d_due = timedelta(days=time_window(m.group("window")))
         elif m.group("dow"):
             print "'%s' is a day-of-week type recur" % line[0:40]
         elif m.group("offset"):
-            print "'%s' is a day-of-month type recur" % line[0:40]
+            vis = next_day_month(last_done, int(m.group("offset")))
+            d_due = timedelta(days=time_window(m.group("window_dom")))
         else:
             print "'%s' is a recur, but search me lol" % line[0:40]
+        if not vis: vis = last_done + d_vis
+        if not due: due = vis + d_due
         self.recurs[next_key(self.recurs)] = dict(
                 name = re.sub(self._TS_recur, '', line),
+                TS_last = last_done,
+                TS_vis = vis,
+                TS_due = due,
                 jump_to = "p%d" % linenum,
                 contexts = contexts)
         return True
@@ -484,6 +519,39 @@ class Plate:
                 vtdview_section_marker(True),  # Always summarize... for now!
                 context_string)
         return contexts
+
+    def display_recur_subset(self, indices, status, summarize):
+        if len(indices) < 1:
+            return ''
+        if summarize:
+            return "%s (%d items)  " % (status, len(indices))
+        else:
+            display = ''
+            i_sorted = sort_by_timestamp(indices, self.recurs, "TS_due")
+            for i in i_sorted:
+                due_diff = seconds_diff(self.recurs[i]["TS_due"], self.now)
+                display += "\n  - %s (%s %s) <<%s>>" % (self.recurs[i]["name"],
+                        status, pretty_date(abs(due_diff)),
+                        self.recurs[i]["jump_to"])
+            return display
+
+    def display_recurs(self):
+        """A string representing the currently relevant recurring actions."""
+        summarize = (vim.eval("s:vtdview_summarize_recur") == "1")
+        self.update_time_and_contexts()
+        vis = set(i for i in self.recurs if (
+            self.visible(self.recurs[i]["TS_vis"]) and
+            not self.overdue(self.recurs[i]["TS_due"]) and
+            self.contexts_ok(self.recurs[i]["contexts"])))
+        due = set(i for i in self.recurs if (
+            self.overdue(self.recurs[i]["TS_due"]) and
+            self.contexts_ok(self.recurs[i]["contexts"])))
+        recurs = "%s Recurring Actions: %s%s\n" % (
+                vtdview_section_marker(summarize),
+                self.display_recur_subset(due, 'Overdue', summarize),
+                self.display_recur_subset(vis, 'Due', summarize))
+        return recurs
+
 
     def display_inbox_subset(self, indices, status, summarize):
         if len(indices) < 1:
