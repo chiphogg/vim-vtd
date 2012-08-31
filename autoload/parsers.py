@@ -114,8 +114,6 @@ def next_day_week(last_done, match):
         due = set_time_to_string(due, match.group("dow_due"))
     if match.group("dow_vis"):
         vis = set_time_to_string(vis, match.group("dow_vis"))
-    print last_done
-    print vis
     return (vis, due)
 
 def next_day_month(date, offset):
