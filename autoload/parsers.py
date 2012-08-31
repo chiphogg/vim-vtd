@@ -29,6 +29,95 @@ def offset_in_month(year, month, offset):
     if offset < 0: offset += 1
     return (month_length + offset - 1) % month_length + 1
 
+def decode_dow(dow):
+    """Turn 3-capital-letter abbreviation into day-of-week number.
+
+    Arguments:
+    dow - A 3-capital-letter abbreviation of the day of week (e.g., "SUN")
+
+    Return:
+    A number whose meaning is the same as datetime.date.weekday() (i.e., 0 for
+    Monday and 6 for Sunday)
+    """
+    dow_list = {
+            'MON': 0,
+            'TUE': 1,
+            'WED': 2,
+            'THU': 3,
+            'FRI': 4,
+            'SAT': 5,
+            'SUN': 6,
+            }
+    try:
+        day_num = dow_list[dow]
+    except KeyError:
+        day_num = None
+    return day_num
+
+def closest_dow(target, date):
+    """Find the closest target (e.g., closest Monday) to date
+
+    Arguments:
+    target - An integer from 0 to 6 representing the weekday (as in
+        datetime.datetime.weekday())
+    date - The date to adjust
+
+    Return:
+    A datetime object representing the closest given-DOW to the given date.
+    """
+    date_dow = date.weekday()
+    delta = (target + 7 - date_dow) % 7
+    if delta > 3:
+        delta -= 7
+    return date + timedelta(days=delta)
+
+def set_time_to_string(date, time_str):
+    """A datetime object whose date is 'date' and time is from 'time_str'
+
+    Arguments:
+    date - A datetime object
+    time_str - A string in "%H:%M" (i.e., "hh:mm") format
+
+    Returns:
+    A datetime object on the same day as 'date' but whose time is 'time_str'
+    """
+    date_fmt = "%Y-%m-%d"
+    new_date = datetime.strptime("%s %s" % (date.strftime(date_fmt), time_str),
+            "%s %%H:%%M" % date_fmt)
+    return new_date
+
+def next_day_week(last_done, match):
+    """Visible- and Due-dates for day-of-week type RECURs"""
+    (vis, due) = (last_done, last_done)
+    last_dow = last_done.weekday()
+    time_chunk = 7  # days in a week
+    if match.group("num"): time_chunk *= int(match.group("num"))
+    recur_dow = decode_dow(match.group("dow"))
+
+    # Calculate the due-DATE
+    if match.group("anchor"):
+        # anchor means "Every N weeks past *this date*": it 'anchors' the
+        # repeating.  Use it for, e.g., handing in timesheets every 2 weeks.
+        anchor = datetime.strptime(match.group("anchor"), "%Y-%m-%d")
+    else:
+        # If there's no anchor, we're "free-floating":
+        # anchor to the last time we completed the task.
+        anchor = last_done.replace(hour=0, minute=0, second=0)
+    anchor_date = closest_dow(recur_dow, anchor)
+    elapsed_days = (last_done - anchor_date).days
+    days_left = time_chunk - (elapsed_days % time_chunk)
+    vis = anchor_date + timedelta(days=elapsed_days + days_left)
+
+    # Calculate the due-TIME
+    due = vis.replace(hour=23, minute=59)  # Defaults to due at end of day
+    if match.group("dow_due"):
+        due = set_time_to_string(due, match.group("dow_due"))
+    if match.group("dow_vis"):
+        vis = set_time_to_string(vis, match.group("dow_vis"))
+    print last_done
+    print vis
+    return (vis, due)
+
 def next_day_month(date, offset):
     """The next day after 'date' which has the right offset within the month"""
     # It will either be the same month, or the following month
@@ -245,8 +334,15 @@ class Plate:
         # "window" is how long you see it before it's overdue.
         break_window = r"\+(?P<break>\d+)(,(?P<window>\d+))?"
         # Day of week has format N*DOW: e.g., 3*TUE means "every 3rd Tuesday"
+        # e.g., 2*TUE(2012-09-04 17:00-22:00) means "every second Tuesday,
+        #   starting 2012-09-04, visible 17:00 and due by 22:00"
+        no_paren = r"(?!\))"  # helps make sure parenthesis non-empty
+        dow_anchor = r"(?P<anchor>\d{4}-\d{2}-\d{2})?"
+        self.dow_times = r"(((?P<dow_vis>\d{2}:\d{2})-)?(?P<dow_due>\d{2}:\d{2}))?"
         day_of_week = (r"((?P<num>\d+)\*)?" +
-                r"(?P<dow>(MON)|(TUE)|(WED)|(THU)|(FRI)|(SAT)|(SUN))")
+                r"(?P<dow>(MON)|(TUE)|(WED)|(THU)|(FRI)|(SAT)|(SUN))" +
+                r"(\(" + no_paren + dow_anchor + r"\s*" + self.dow_times + r"\))?")
+                #r"(\(" + no_paren + dow_anchor + r"\s*" + dow_times + r"\))?")
         # Day of month; negative numbers count from the end.
         # e.g., M+3 means "3rd day of the month"
         # e.g., M-7,3 means "visible on 7th-last day of month; 3-day window"
@@ -336,24 +432,20 @@ class Plate:
     def add_recur(self, linenum, line):
         """Parse 'line' and add a new RECUR to the list"""
         m = re.search(self._TS_recur, line)
-        if not m:
-            print "'%s' gives me the fits!" % line[0:40]
-            return False
         (line, contexts) = parse_and_strip_contexts(line)
         last_done = parse_datetime(m.group('datetime'))
-        d_vis = timedelta(days=-1000) # temporary!!  sooo temporary.
-        d_due = timedelta(days=-1000)
         vis = due = None
         if m.group("break"):
             d_vis = timedelta(days=int(m.group("break")))
             d_due = timedelta(days=time_window(m.group("window")))
         elif m.group("dow"):
-            print "'%s' is a day-of-week type recur" % line[0:40]
+            (vis, due) = next_day_week(last_done, m)
         elif m.group("offset"):
             vis = next_day_month(last_done, int(m.group("offset")))
             d_due = timedelta(days=time_window(m.group("window_dom")))
         else:
-            print "'%s' is a recur, but search me lol" % line[0:40]
+            print "Syntax error line %d" % linenum
+            return False
         if not vis: vis = last_done + d_vis
         if not due: due = vis + d_due
         self.recurs[next_key(self.recurs)] = dict(
