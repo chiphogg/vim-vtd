@@ -91,7 +91,7 @@ def next_day_week(last_done, match):
     (vis, due) = (last_done, last_done)
     last_dow = last_done.weekday()
     time_chunk = 7  # days in a week
-    if match.group("num"): time_chunk *= int(match.group("num"))
+    if match.group("w_num"): time_chunk *= int(match.group("w_num"))
     recur_dow = decode_dow(match.group("dow"))
 
     # Calculate the due-DATE
@@ -116,15 +116,39 @@ def next_day_week(last_done, match):
         vis = set_time_to_string(vis, match.group("dow_vis"))
     return (vis, due)
 
-def next_day_month(date, offset):
-    """The next day after 'date' which has the right offset within the month"""
-    # It will either be the same month, or the following month
+def increment_month(date, n_months=1):
+    """Increment the given date by the given number of months."""
+    months_per_year = 12
+    # This "-1, +1" nonsense is necessary because month numbers start from 1,
+    # whereas computer scientists would prefer they start from 0.
+    m = date.month + n_months - 1
+    month = m % months_per_year + 1
+    year = date.year + (m / months_per_year)
+    return date.replace(year=year, month=month)
+
+def next_day_month(date, match):
+    """The next day after 'date' which has the right offset within the month
+    
+    Arguments:
+    date - datetime object
+    match - A regex match object containing (among others) the following:
+        offset - The offset relative to the start (or end) of the month
+        m_num - (optional) Repeat every m_num months (defaults to 1)
+    """
+    # Parse matches to see how much to offset, and how many months to repeat
+    offset = int(match.group("offset"))
+    m_num = 1
+    if match.group("m_num"):
+        m_num = int(match.group("m_num"))
+    # Begin by finding the day in the *same* month with the right offset.  To
+    # get our final date, we'll move this date by some integer number of months.
     day_in_month = offset_in_month(date.year, date.month, offset)
     new_date = date.replace(day=day_in_month, hour=0, minute=0)
     if new_date > date:
-        return new_date
-    # If that didn't work, let's go to the next month
-    new_date = new_date.replace(day=1) + timedelta(days=32)
+        m_num -= 1
+    new_date = increment_month(new_date, m_num)
+    # We'd be done already, except the offset might be from the *end* of the
+    # month.  So we have to ensure it's correct for the *new* month.
     day_in_month = offset_in_month(new_date.year, new_date.month, offset)
     new_date = new_date.replace(day=day_in_month)
     return new_date
@@ -337,14 +361,15 @@ class Plate:
         no_paren = r"(?!\))"  # helps make sure parenthesis non-empty
         dow_anchor = r"(?P<anchor>\d{4}-\d{2}-\d{2})?"
         self.dow_times = r"(((?P<dow_vis>\d{2}:\d{2})-)?(?P<dow_due>\d{2}:\d{2}))?"
-        day_of_week = (r"((?P<num>\d+)\*)?" +
+        day_of_week = (r"((?P<w_num>\d+)\*)?" +
                 r"(?P<dow>(MON)|(TUE)|(WED)|(THU)|(FRI)|(SAT)|(SUN))" +
                 r"(\(" + no_paren + dow_anchor + r"\s*" + self.dow_times + r"\))?")
                 #r"(\(" + no_paren + dow_anchor + r"\s*" + dow_times + r"\))?")
         # Day of month; negative numbers count from the end.
         # e.g., M+3 means "3rd day of the month"
         # e.g., M-7,3 means "visible on 7th-last day of month; 3-day window"
-        day_of_month = r"M(?P<offset>[+-]\d+)(,(?P<window_dom>\d+))?"
+        day_of_month = (r"((?P<m_num>\d+)\*)?M" +
+                r"(?P<offset>[+-]\d+)(,(?P<m_window>\d+))?")
 
         # Timestamp regexes for different types of objects
         self._TS_inbox = (vim.eval("g:vtd_datetime_regex") + r"\s+" +
@@ -439,8 +464,8 @@ class Plate:
         elif m.group("dow"):
             (vis, due) = next_day_week(last_done, m)
         elif m.group("offset"):
-            vis = next_day_month(last_done, int(m.group("offset")))
-            d_due = timedelta(days=time_window(m.group("window_dom")))
+            vis = next_day_month(last_done, m)
+            d_due = timedelta(days=time_window(m.group("m_window")))
         else:
             print "Syntax error line %d" % linenum
             return False
