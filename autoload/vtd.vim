@@ -66,6 +66,32 @@ function! s:Preserve(command)
   call s:PreserveFinish()
 endfunction
 
+" FUNCTION: s:GotoUsableWindow() {{{2
+" Go to a "usable" (i.e., not special in any way) window, creating one if none
+" exists.  Defaults to most-recently-used window.
+"
+" (HEAVILY influenced by NERDtree's `s:Opener._previousWindow()` and related.)
+function! s:GotoUsableWindow()
+  let l:win_num = winnr("#")
+  if !s:WindowUsable(l:win_num)
+    let l:win_num = 1
+    while l:win_num <= winnr("$")
+      if l:win_num !=# winnr("#") && s:WindowUsable(l:win_num)
+        break
+      endif
+      let l:win_num += 1
+    endwhile
+  endif
+  
+  " At this point, l:win_num either holds a usable window, or an invalid window
+  " number.  If it's usable, go there; else, make a new split.
+  if l:win_num <= winnr("$")
+    execute l:win_num."wincmd w"
+  else
+    botright new
+  endif
+endfunction
+
 " FUNCTION: s:LineContainsValidJump() {{{2
 " Check whether the current line contains a valid jump marker.
 "
@@ -73,6 +99,39 @@ endfunction
 " 1 if this line has a valid jump marker; 0 otherwise
 function! s:LineContainsValidJump()
   return match(getline("."), '\v\<\<[ipsc]\d+\>\>') > -1
+endfunction
+
+" FUNCTION: s:WindowUsable() {{{2
+" Check whether the given window is "usable": i.e., an ordinary, regular
+" window (rather than a help window, preview window, NERDtree, VOoM, VTDview,
+" VTD context picker, etc.)
+"
+" Args:
+" win_num: The window number to check.
+"
+" Return:
+" 1 if the window is usable; 0 otherwise
+function! s:WindowUsable(win_num)
+  let l:buf_num = winbufnr(a:win_num)
+
+  " If the window doesn't exist, it's obviously not usable
+  if l:buf_num == -1
+    return 0
+  endif
+
+  " Run through the checklist for what makes a buffer "usable"
+  let l:U = 1 " Start with 1 (True); break up lines for readability
+  " A 'USABLE BUFFER'...
+  " ...must be a 'normal buffer':
+  let l:U = l:U && getbufvar(l:buf_num, '&buftype') ==# ''
+  " ...can't be preview window:
+  let l:U = l:U && !getwinvar(l:buf_num, '&previewwindow')
+  " ...can't be modified (unless 'hidden' is set!):
+  let l:U = l:U && (!getbufvar(l:buf_num, '&modified') || &hidden)
+  " ...can't be the vtdcontext window:
+  let l:U = l:U && getbufvar(l:buf_num, '&filetype') !=? 'vtdcontext'
+
+  return l:U
 endfunction
 
 " FUNCTION: vtd#JumpToLine() {{{2
@@ -100,7 +159,7 @@ function! vtd#JumpToLine(...)
 abbrev = vim.eval("l:file_id")
 vim.command("let l:file = '%s'" % vtd_fullpath(abbrev).replace("'", "''"))
 EOF
-  wincmd p
+  call s:GotoUsableWindow()
   execute "edit +".l:line_no l:file
   execute "normal! zv"
 endfunction
@@ -359,7 +418,7 @@ endfunction
 "
 " Args:
 " name: A string telling which section to summarize.  There must be a
-" corresponding variable s:vtdview_summarize_<name>.
+"    corresponding variable s:vtdview_summarize_<name>.
 function! s:ToggleSummary(name)
   let l:varname = "s:vtdview_summarize_".a:name
   if !exists(l:varname)
