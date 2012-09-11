@@ -13,7 +13,7 @@ highlight link due Special
 syntax match jumpTo '<<[ipsc]\d\+>>'
 highlight link jumpTo Ignore
 
-syntax match messages '\v#.*$'
+syntax match messages '\v\s@<=#.*$'
 highlight link messages Comment
 
 syntax match sectionHeader '\v^\s*[▸▾][^:]*'
