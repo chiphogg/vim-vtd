@@ -239,15 +239,6 @@ def pretty_date(dt_secs):
         return pluralize(day_diff / 30, "month")
     return pluralize(day_diff / 365, "year")
 
-def read_and_count_lines(linenum, f):
-    """Read the next line from f, and increment line-number count"""
-    line = f.readline()
-    if not line:
-        return (0, line)  # Either one will evaluate to false
-    # Remove trailing newline:
-    line = re.sub(r"\n$", '', line)
-    return (linenum + 1, line)
-
 def next_key(x):
     if len(x) <= 0:
         return 0
@@ -287,15 +278,23 @@ def parse_and_strip_dates(text):
     return (stripped_text, vis, due)
 
 def parse_and_strip_contexts(text):
-    """Return (text, contexts) tuple with single-@ contexts stripped out"""
+    """
+    Return (text, contexts, specials) tuple with single-@ contexts stripped out
+    """
+    # First, find any "special" contexts, of the form @name:val
+    specials = {}
+    special_regex = r"\s+@(?P<name>\w+):(?P<val>\w+)"
+    for match in re.finditer(special_regex, text):
+        specials[match.group("name")] = match.group("val")
+    stripped_text = re.sub(special_regex, "", text)
     contexts = []
-    for match in re.finditer(r"\s+@{1,2}(?P<context>\w+)", text):
+    for match in re.finditer(r"\s+@{1,2}(?P<context>\w+)", stripped_text):
         contexts.append(match.group('context'))
     # First strip/unlabel contexts, then strip opening list characters
-    stripped_text = re.sub(r"\s+@\w+", "", text)
+    stripped_text = re.sub(r"\s+@\w+", "", stripped_text)
     stripped_text = re.sub('@@', '', stripped_text)
     stripped_text = re.sub('^\s*[-*#@]\s*', '', stripped_text)
-    return (stripped_text, contexts)
+    return (stripped_text, contexts, specials)
 
 def list_counter(list_type):
     """A counter telling how many elements to process from a list
@@ -350,6 +349,7 @@ class Plate:
         self.next_actions = {}
         self.recurs = {}
         self.reminders = {}
+        self.ids = {}
 
         # A few helpful regexes...
         # Mnemonic: "break" is how many days you get a break from seeing this,
@@ -441,9 +441,15 @@ class Plate:
                         else:
                             self.contexts_use.append(context)
 
-    def contexts_ok(self, contexts, include_anon=False):
+    def contexts_ok(self, contexts, specials, include_anon=False):
         """Check if the supplied context list means this item should be shown
         """
+        # Check "special" items
+        if ("after" in specials.keys()
+                and specials["after"] in self.ids.keys()
+                and not self.ids[specials["after"]]["done"]):
+            return False
+        # Check contexts
         matches_context = False
         for context in contexts:
             if context in self.contexts_avoid:
@@ -455,7 +461,7 @@ class Plate:
     def add_recur(self, linenum, line):
         """Parse 'line' and add a new RECUR to the list"""
         m = re.search(self._TS_recur, line)
-        (line, contexts) = parse_and_strip_contexts(line)
+        (line, contexts, specials) = parse_and_strip_contexts(line)
         last_done = parse_datetime(m.group('datetime'))
         vis = due = None
         if m.group("break"):
@@ -477,14 +483,15 @@ class Plate:
                 TS_vis = vis,
                 TS_due = due,
                 jump_to = "p%d" % linenum,
-                contexts = contexts)
+                contexts = contexts,
+                specials = specials)
         return True
 
     def add_NextAction(self, linenum, line):
         """Parse 'line' and add a new NextAction to the list"""
         if item_done(line):
             return False
-        (line, contexts) = parse_and_strip_contexts(line)
+        (line, contexts, specials) = parse_and_strip_contexts(line)
         (line, vis, due) = parse_and_strip_dates(line)
         text = re.sub('^\s*@\s+', '', line)
         self.next_actions[next_key(self.next_actions)] = dict(
@@ -492,25 +499,27 @@ class Plate:
                 TS_vis = vis,
                 TS_due = due,
                 jump_to = "p%d" % linenum,
-                contexts = contexts)
+                contexts = contexts,
+                specials = specials)
         return True
 
     def read_inboxes(self):
         """List all inboxes, and when they need to be done"""
+        self._cur_file = 'i'
         # Parse Inboxes file to get our list of inboxes
         linenum = 0
         with open(vtd_fullpath('i')) as f:
             # Skip opening lines
-            (linenum, line) = read_and_count_lines(linenum, f)
+            (linenum, line) = self.read_and_count_lines(linenum, f)
             while linenum and not re.match(vim.eval("g:vtd_section_inbox"), line):
-                (linenum, line) = read_and_count_lines(linenum, f)
+                (linenum, line) = self.read_and_count_lines(linenum, f)
             # Also skip "Inboxes" section header:
-            (linenum, line) = read_and_count_lines(linenum, f)
+            (linenum, line) = self.read_and_count_lines(linenum, f)
             # Read inboxes until we hit the "Thoughts" section
             while linenum and not re.match(vim.eval("g:vtd_section_thoughts"), line):
                 m = re.search(self._TS_inbox, line)
                 if m:
-                    (text, contexts) = parse_and_strip_contexts(line)
+                    (text, contexts, specials) = parse_and_strip_contexts(line)
                     last_emptied = parse_datetime(m.group('datetime'))
                     vis = last_emptied + timedelta(days=int(m.group('break')))
                     window = time_window(m.group('window'))
@@ -521,33 +530,37 @@ class Plate:
                             TS_vis  = vis,
                             TS_due  = due,
                             jump_to = "i%d" % linenum,
-                            contexts = contexts)
-                (linenum, line) = read_and_count_lines(linenum, f)
+                            contexts = contexts,
+                            specials = specials)
+                (linenum, line) = self.read_and_count_lines(linenum, f)
 
             # Now look for the Reminders section. Skip until it starts:
             remind_header = vim.eval("g:vtd_section_reminders")
             while linenum and not re.match(remind_header, line):
-                (linenum, line) = read_and_count_lines(linenum, f)
+                (linenum, line) = self.read_and_count_lines(linenum, f)
             # Also skip "Reminders" section header itself:
-            (linenum, line) = read_and_count_lines(linenum, f)
+            (linenum, line) = self.read_and_count_lines(linenum, f)
             # Read Reminders until EOF
             while linenum:
                 m = re.search(self._TS_remind, line)
                 if m and not item_done(line):
-                    (text, contexts) = parse_and_strip_contexts(line)
+                    (text, contexts, specials) = parse_and_strip_contexts(line)
                     remind_when = parse_datetime(m.group('datetime'))
                     self.reminders[next_key(self.reminders)] = dict(
                             name = re.sub(self._TS_remind, '', text),
                             TS   = remind_when,
                             jump_to = "i%d" % linenum,
-                            contexts = contexts)
-                (linenum, line) = read_and_count_lines(linenum, f)
+                            contexts = contexts,
+                            specials = specials)
+                (linenum, line) = self.read_and_count_lines(linenum, f)
+        self._cur_file = ''
 
     def read_projects(self):
         """Scan Projects lists for Next Actions, RECURs, etc."""
+        self._cur_file = 'p'
         linenum = 0
         with open(vtd_fullpath('p')) as f:
-            (linenum, line) = read_and_count_lines(linenum, f)
+            (linenum, line) = self.read_and_count_lines(linenum, f)
             current_project = None
             while linenum:
                 if list_start(line):
@@ -558,7 +571,8 @@ class Plate:
                         current_project = None
                     else:
                         current_project = line
-                    (linenum, line) = read_and_count_lines(linenum, f)
+                    (linenum, line) = self.read_and_count_lines(linenum, f)
+        self._cur_file = ''
 
     def process_outline(self, linenum, line, f, current_project):
         master_indent = opening_whitespace(line)
@@ -576,14 +590,14 @@ class Plate:
                 return (linenum, line)
             if list_type == '#' and blocker_finished:
                 # It doesn't matter what's on this line if it's blocked!
-                (linenum, line) = read_and_count_lines(linenum, f)
+                (linenum, line) = self.read_and_count_lines(linenum, f)
                 continue
             if indent > master_indent:
                 # Anything *more* indented than this list gets processed
                 # recursively (unless it's not a list element, in which case it
                 # should be appended to what we already started).
                 if parent_done:
-                    (linenum, line) = read_and_count_lines(linenum, f)
+                    (linenum, line) = self.read_and_count_lines(linenum, f)
                     continue
                 linetype = list_start(line)
                 if linetype:
@@ -591,7 +605,7 @@ class Plate:
                             linenum, line, f, current_project)
                 else:
                     print "Should append: '%s'" % line
-                    (linenum, line) = read_and_count_lines(linenum, f)
+                    (linenum, line) = self.read_and_count_lines(linenum, f)
             else:
                 # What to do with a line indented the *same* as this list:
                 if blocker_started:
@@ -607,7 +621,7 @@ class Plate:
                     self.add_NextAction(linenum, line)
                 elif is_recur(line):
                     self.add_recur(linenum, line)
-                (linenum, line) = read_and_count_lines(linenum, f)
+                (linenum, line) = self.read_and_count_lines(linenum, f)
         return (linenum, line)
 
     def read_all(self):
@@ -659,10 +673,14 @@ class Plate:
         vis = set(i for i in self.recurs if (
             self.visible(self.recurs[i]["TS_vis"]) and
             not self.overdue(self.recurs[i]["TS_due"]) and
-            self.contexts_ok(self.recurs[i]["contexts"])))
+            self.contexts_ok(
+                self.recurs[i]["contexts"],
+                self.recurs[i]["specials"])))
         due = set(i for i in self.recurs if (
             self.overdue(self.recurs[i]["TS_due"]) and
-            self.contexts_ok(self.recurs[i]["contexts"])))
+            self.contexts_ok(
+                self.recurs[i]["contexts"],
+                self.recurs[i]["specials"])))
         recurs = "%s Recurring Actions: %s%s\n" % (
                 vtdview_section_marker(summarize),
                 self.display_recur_subset(due, 'Overdue', summarize),
@@ -698,10 +716,14 @@ class Plate:
         vis = set(i for i in self.inboxes if (
             self.visible(self.inboxes[i]["TS_vis"]) and
             not self.overdue(self.inboxes[i]["TS_due"]) and
-            self.contexts_ok(self.inboxes[i]["contexts"])))
+            self.contexts_ok(
+                self.inboxes[i]["contexts"],
+                self.inboxes[i]["specials"])))
         due = set(i for i in self.inboxes if (
             self.overdue(self.inboxes[i]["TS_due"]) and
-            self.contexts_ok(self.inboxes[i]["contexts"])))
+            self.contexts_ok(
+                self.inboxes[i]["contexts"],
+                self.inboxes[i]["specials"])))
         inboxes = "%s Inboxes: %s%s\n" % (
                 vtdview_section_marker(summarize),
                 self.display_inbox_subset(due, 'Overdue', summarize),
@@ -714,7 +736,10 @@ class Plate:
         self.update_time_and_contexts()
         vis = set(i for i in self.reminders if (
             self.visible(self.reminders[i]["TS"]) and
-            self.contexts_ok(self.reminders[i]["contexts"], True)))
+            self.contexts_ok(
+                self.reminders[i]["contexts"],
+                self.reminders[i]["specials"],
+                include_anon=True)))
         reminders = "%s Reminders: %s\n" % (
                 vtdview_section_marker(summarize),
                 self.display_reminder_subset(vis, 'Visible', summarize))
@@ -754,6 +779,23 @@ class Plate:
                         due_tag, self.next_actions[i]["jump_to"])
             return display
 
+    def read_and_count_lines(self, linenum, f):
+        """Read the next line from f, and increment line-number count"""
+        line = f.readline()
+        linenum += 1
+        if not line:
+            return (0, line)  # Either one will evaluate to false
+        # Remove trailing newline:
+        line = re.sub(r"\n$", '', line)
+        # Check whether this line contains an 'id'
+        m = re.search(r"(?<!\S)#(?P<name>[a-zA-Z0-9]+)", line)
+        if m:
+            self.ids[m.group("name")] = dict(
+                    done = re.search(r"DONE", line),
+                    jump = "%s%d" % (self._cur_file, linenum)
+                    )
+        return (linenum, line)
+
     def display_NextActions(self):
         """A string representing the current NextActions list"""
         summarize = (vim.eval("s:vtdview_summarize_nextActions") == "1")
@@ -761,10 +803,14 @@ class Plate:
         vis = set(i for i in self.next_actions if (
             self.visible(self.next_actions[i]["TS_vis"]) and
             not self.overdue(self.next_actions[i]["TS_due"]) and
-            self.contexts_ok(self.next_actions[i]["contexts"])))
+            self.contexts_ok(
+                self.next_actions[i]["contexts"],
+                self.next_actions[i]["specials"])))
         due = set(i for i in self.next_actions if (
             self.overdue(self.next_actions[i]["TS_due"]) and
-            self.contexts_ok(self.next_actions[i]["contexts"])))
+            self.contexts_ok(
+                self.next_actions[i]["contexts"],
+                self.next_actions[i]["specials"])))
         actions = "%s Next Actions: %s%s\n" % (
                 vtdview_section_marker(summarize),
                 self.display_action_subset(due, 'Overdue', summarize),
