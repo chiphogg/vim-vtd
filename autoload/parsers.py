@@ -239,15 +239,6 @@ def pretty_date(dt_secs):
         return pluralize(day_diff / 30, "month")
     return pluralize(day_diff / 365, "year")
 
-def read_and_count_lines(linenum, f):
-    """Read the next line from f, and increment line-number count"""
-    line = f.readline()
-    if not line:
-        return (0, line)  # Either one will evaluate to false
-    # Remove trailing newline:
-    line = re.sub(r"\n$", '', line)
-    return (linenum + 1, line)
-
 def next_key(x):
     if len(x) <= 0:
         return 0
@@ -350,6 +341,7 @@ class Plate:
         self.next_actions = {}
         self.recurs = {}
         self.reminders = {}
+        self.ids = {}
 
         # A few helpful regexes...
         # Mnemonic: "break" is how many days you get a break from seeing this,
@@ -497,15 +489,16 @@ class Plate:
 
     def read_inboxes(self):
         """List all inboxes, and when they need to be done"""
+        self._cur_file = 'i'
         # Parse Inboxes file to get our list of inboxes
         linenum = 0
         with open(vtd_fullpath('i')) as f:
             # Skip opening lines
-            (linenum, line) = read_and_count_lines(linenum, f)
+            (linenum, line) = self.read_and_count_lines(linenum, f)
             while linenum and not re.match(vim.eval("g:vtd_section_inbox"), line):
-                (linenum, line) = read_and_count_lines(linenum, f)
+                (linenum, line) = self.read_and_count_lines(linenum, f)
             # Also skip "Inboxes" section header:
-            (linenum, line) = read_and_count_lines(linenum, f)
+            (linenum, line) = self.read_and_count_lines(linenum, f)
             # Read inboxes until we hit the "Thoughts" section
             while linenum and not re.match(vim.eval("g:vtd_section_thoughts"), line):
                 m = re.search(self._TS_inbox, line)
@@ -522,14 +515,14 @@ class Plate:
                             TS_due  = due,
                             jump_to = "i%d" % linenum,
                             contexts = contexts)
-                (linenum, line) = read_and_count_lines(linenum, f)
+                (linenum, line) = self.read_and_count_lines(linenum, f)
 
             # Now look for the Reminders section. Skip until it starts:
             remind_header = vim.eval("g:vtd_section_reminders")
             while linenum and not re.match(remind_header, line):
-                (linenum, line) = read_and_count_lines(linenum, f)
+                (linenum, line) = self.read_and_count_lines(linenum, f)
             # Also skip "Reminders" section header itself:
-            (linenum, line) = read_and_count_lines(linenum, f)
+            (linenum, line) = self.read_and_count_lines(linenum, f)
             # Read Reminders until EOF
             while linenum:
                 m = re.search(self._TS_remind, line)
@@ -541,13 +534,15 @@ class Plate:
                             TS   = remind_when,
                             jump_to = "i%d" % linenum,
                             contexts = contexts)
-                (linenum, line) = read_and_count_lines(linenum, f)
+                (linenum, line) = self.read_and_count_lines(linenum, f)
+        self._cur_file = ''
 
     def read_projects(self):
         """Scan Projects lists for Next Actions, RECURs, etc."""
+        self._cur_file = 'p'
         linenum = 0
         with open(vtd_fullpath('p')) as f:
-            (linenum, line) = read_and_count_lines(linenum, f)
+            (linenum, line) = self.read_and_count_lines(linenum, f)
             current_project = None
             while linenum:
                 if list_start(line):
@@ -558,7 +553,8 @@ class Plate:
                         current_project = None
                     else:
                         current_project = line
-                    (linenum, line) = read_and_count_lines(linenum, f)
+                    (linenum, line) = self.read_and_count_lines(linenum, f)
+        self._cur_file = ''
 
     def process_outline(self, linenum, line, f, current_project):
         master_indent = opening_whitespace(line)
@@ -576,14 +572,14 @@ class Plate:
                 return (linenum, line)
             if list_type == '#' and blocker_finished:
                 # It doesn't matter what's on this line if it's blocked!
-                (linenum, line) = read_and_count_lines(linenum, f)
+                (linenum, line) = self.read_and_count_lines(linenum, f)
                 continue
             if indent > master_indent:
                 # Anything *more* indented than this list gets processed
                 # recursively (unless it's not a list element, in which case it
                 # should be appended to what we already started).
                 if parent_done:
-                    (linenum, line) = read_and_count_lines(linenum, f)
+                    (linenum, line) = self.read_and_count_lines(linenum, f)
                     continue
                 linetype = list_start(line)
                 if linetype:
@@ -591,7 +587,7 @@ class Plate:
                             linenum, line, f, current_project)
                 else:
                     print "Should append: '%s'" % line
-                    (linenum, line) = read_and_count_lines(linenum, f)
+                    (linenum, line) = self.read_and_count_lines(linenum, f)
             else:
                 # What to do with a line indented the *same* as this list:
                 if blocker_started:
@@ -607,7 +603,7 @@ class Plate:
                     self.add_NextAction(linenum, line)
                 elif is_recur(line):
                     self.add_recur(linenum, line)
-                (linenum, line) = read_and_count_lines(linenum, f)
+                (linenum, line) = self.read_and_count_lines(linenum, f)
         return (linenum, line)
 
     def read_all(self):
@@ -753,6 +749,24 @@ class Plate:
                 display += "\n  - %s %s<<%s>>" % (self.next_actions[i]["name"],
                         due_tag, self.next_actions[i]["jump_to"])
             return display
+
+    def read_and_count_lines(self, linenum, f):
+        """Read the next line from f, and increment line-number count"""
+        line = f.readline()
+        linenum += 1
+        if not line:
+            return (0, line)  # Either one will evaluate to false
+        # Remove trailing newline:
+        line = re.sub(r"\n$", '', line)
+        # Check whether this line contains an 'id'
+        m = re.search(r"#(?P<name>[a-zA-Z0-9]+)", line)
+        if m:
+            self.ids[next_key(self.ids)] = dict(
+                    name = m.group("name"),
+                    done = re.search(r"DONE", line),
+                    jump = "%s%d" % (self._cur_file, linenum)
+                    )
+        return (linenum, line)
 
     def display_NextActions(self):
         """A string representing the current NextActions list"""
