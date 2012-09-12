@@ -307,9 +307,9 @@ function! s:FillViewBuffer()
   " Delete buffer contents without clobbering register
   " (thanks scrooloose for the elegant, expressive syntax)
   silent 1,$ delete _
-  let s:vtdview_sections = []
 
   " Add the actual content
+  let s:vtdview_sections = []
   call s:DisplayHelp()
   call s:DisplayViewContent()
   call s:View_SetStatusline()
@@ -458,7 +458,7 @@ function! s:View_AppendSection(name, content)
 
   let l:old_c = @c
   let @c = a:content
-  let s:vtdview_sections += [[line(".") + 1, a:name]]
+  let s:vtdview_sections += [[line("."), a:name]]
   silent! put c
   let @c = l:old_c
 endfunction
@@ -484,7 +484,7 @@ function! s:View_ContentInboxes()
   if s:ShouldDisplay(s:INBOX)
     python <<EOF
 content = my_plate.display_inboxes()
-vim.command("let l:str=l:str.'\n%s'" % content.replace("'", "''"))
+vim.command("let l:str=l:str.'%s'" % content.replace("'", "''"))
 EOF
   endif
   return l:str
@@ -501,7 +501,7 @@ function! s:View_ContentNextActions()
   if s:ShouldDisplay(s:NEXTACT)
     python <<EOF
 content = my_plate.display_NextActions()
-vim.command("let l:str=l:str.'\n%s'" % content.replace("'", "''"))
+vim.command("let l:str=l:str.'%s'" % content.replace("'", "''"))
 EOF
   endif
   return l:str
@@ -518,7 +518,7 @@ function! s:View_ContentRecurs()
   if s:ShouldDisplay(s:RECUR)
     python <<EOF
 content = my_plate.display_recurs()
-vim.command("let l:str=l:str.'\n%s'" % content.replace("'", "''"))
+vim.command("let l:str=l:str.'%s'" % content.replace("'", "''"))
 EOF
   endif
   return l:str
@@ -534,7 +534,7 @@ function! s:View_ContentReminders()
   if s:ShouldDisplay(s:REMIND)
     python <<EOF
 content = my_plate.display_reminders()
-vim.command("let l:str=l:str.'\n%s'" % content.replace("'", "''"))
+vim.command("let l:str=l:str.'%s'" % content.replace("'", "''"))
 EOF
   endif
   return l:str

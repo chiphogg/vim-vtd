@@ -339,6 +339,37 @@ def context_list_string(c_list):
         contexts += ' or '
     return contexts + previous
 
+def view_section_counts(late, due, ready):
+    """Text counting how many items are late, due, and ready
+
+    late - Indices to tasks which are late
+    due - Indices to tasks which are "due"
+    ready - Indices to tasks which are visible (but not due *too* soon)
+    """
+    names = ['Late', 'Due', 'Ready']
+    counts = [len(i) for i in [late, due, ready]]
+    both = ["%d %s" % (counts[i], names[i]) for i in range(len(names)) if counts[i]]
+    if both:
+        return ", ".join([str(i) for i in both])
+    else:
+        return "Clear"
+
+def view_section_header(title, closed, late, due, ready):
+    """Text for a vtdview section header
+
+    Arguments:
+    title - The title of the section
+    closed - Whether the section should be closed or open
+    late - Indices to tasks which are late
+    due - Indices to tasks which are "due"
+    ready - Indices to tasks which are visible (but not due *too* soon)
+    """
+    return "%s %s: (%s)\n" % (
+            vtdview_section_marker(closed),
+            title,
+            view_section_counts(late, due, ready))
+
+
 class Plate:
     """Keeps track of everything which is 'on your plate'"""
     
@@ -350,6 +381,7 @@ class Plate:
         self.recurs = {}
         self.reminders = {}
         self.ids = {}
+        self.warning = float(vim.eval("g:vtd_default_warning_days"))
 
         # A few helpful regexes...
         # Mnemonic: "break" is how many days you get a break from seeing this,
@@ -403,6 +435,17 @@ class Plate:
         if vis is None:
             return True
         return vis < self.now
+
+    def almost_due(self, item):
+        """Tells whether an item is "almost due"
+
+        Arguments:
+        item - An item assumed to have datetime objects ["TS_due"] and
+        ["TS_warn"]
+        """
+        if item["TS_due"] is None:
+            return False
+        return item["TS_due"] < item["TS_warn"] + timedelta(days=self.warning)
 
     def overdue(self, due):
         """Tells whether an item due on 'due' is overdue
@@ -524,10 +567,12 @@ class Plate:
                     vis = last_emptied + timedelta(days=int(m.group('break')))
                     window = time_window(m.group('window'))
                     due = vis + timedelta(days=window)
+                    warn = due - timedelta(days=self.warning)
                     self.inboxes[next_key(self.inboxes)] = dict(
                             name = re.sub(self._TS_inbox, '', text),
                             TS_last = last_emptied,
                             TS_vis  = vis,
+                            TS_warn = warn,
                             TS_due  = due,
                             jump_to = "i%d" % linenum,
                             contexts = contexts,
@@ -655,7 +700,7 @@ class Plate:
         if len(indices) < 1:
             return ''
         if summarize:
-            return "%s (%d items)  " % (status, len(indices))
+            return "%d %s" % (status, len(indices))
         else:
             display = ''
             i_sorted = sort_by_timestamp(indices, self.recurs, "TS_due")
@@ -683,7 +728,7 @@ class Plate:
                 self.recurs[i]["specials"])))
         recurs = "%s Recurring Actions: %s%s\n" % (
                 vtdview_section_marker(summarize),
-                self.display_recur_subset(due, 'Overdue', summarize),
+                self.display_recur_subset(due, 'Late', summarize),
                 self.display_recur_subset(vis, 'Due', summarize))
         return recurs
 
@@ -692,7 +737,7 @@ class Plate:
         if len(indices) < 1:
             return ''
         if summarize:
-            return "%s (%d items)  " % (status, len(indices))
+            return "%d %s" % (status, len(indices))
         else:
             display = ''
             i_sorted = sort_by_timestamp(indices, self.inboxes, "TS_due")
@@ -720,14 +765,22 @@ class Plate:
                 self.inboxes[i]["contexts"],
                 self.inboxes[i]["specials"])))
         due = set(i for i in self.inboxes if (
+            not self.overdue(self.inboxes[i]["TS_due"]) and
+            self.contexts_ok(
+                self.inboxes[i]["contexts"],
+                self.inboxes[i]["specials"])
+            and self.almost_due(self.inboxes[i])))
+        late = set(i for i in self.inboxes if (
             self.overdue(self.inboxes[i]["TS_due"]) and
             self.contexts_ok(
                 self.inboxes[i]["contexts"],
                 self.inboxes[i]["specials"])))
-        inboxes = "%s Inboxes: %s%s\n" % (
-                vtdview_section_marker(summarize),
-                self.display_inbox_subset(due, 'Overdue', summarize),
-                self.display_inbox_subset(vis, 'Due', summarize))
+        inboxes = view_section_header("Inboxes", summarize, late, due, vis)
+        if not summarize:
+            inboxes += "%s%s%s\n" % (
+                    self.display_inbox_subset(late, 'Late', summarize),
+                    self.display_inbox_subset(due, 'Due', summarize),
+                    self.display_inbox_subset(vis, 'Ready', summarize))
         return inboxes
 
     def display_reminders(self):
@@ -766,7 +819,7 @@ class Plate:
         if len(indices) < 1:
             return ''
         if summarize:
-            return "%s (%d items)  " % (status, len(indices))
+            return "%d %s" % (len(indices), status)
         else:
             display = ''
             i_sorted = sort_by_timestamp(indices, self.next_actions, "TS_due")
@@ -813,7 +866,7 @@ class Plate:
                 self.next_actions[i]["specials"])))
         actions = "%s Next Actions: %s%s\n" % (
                 vtdview_section_marker(summarize),
-                self.display_action_subset(due, 'Overdue', summarize),
+                self.display_action_subset(due, 'Late', summarize),
                 self.display_action_subset(vis, 'Due', summarize))
         return actions
 
