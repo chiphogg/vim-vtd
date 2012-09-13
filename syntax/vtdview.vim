@@ -4,6 +4,8 @@ endif
 
 syntax match overdue '\v\(\s*Overdue\s*[^)]*\)'
 syntax match overdue '\vOverdue\s*\(\s*[^)]*\)'
+syntax match overdue '\v\(\s*Late\s*[^)]*\)'
+syntax match overdue '\vLate\s*\(\s*[^)]*\)'
 highlight link overdue Todo
 
 syntax match due '\v\(\s*Due\s*[^)]*\)'

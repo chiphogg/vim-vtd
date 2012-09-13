@@ -364,7 +364,7 @@ def view_section_header(title, closed, late, due, ready):
     due - Indices to tasks which are "due"
     ready - Indices to tasks which are visible (but not due *too* soon)
     """
-    return "%s %s: (%s)\n" % (
+    return "%s %s: (%s)" % (
             vtdview_section_marker(closed),
             title,
             view_section_counts(late, due, ready))
@@ -445,7 +445,7 @@ class Plate:
         """
         if item["TS_due"] is None:
             return False
-        return item["TS_due"] < item["TS_warn"] + timedelta(days=self.warning)
+        return item["TS_warn"] < self.now
 
     def overdue(self, due):
         """Tells whether an item due on 'due' is overdue
@@ -700,7 +700,7 @@ class Plate:
         if len(indices) < 1:
             return ''
         if summarize:
-            return "%d %s" % (status, len(indices))
+            return "%d %s" % (len(indices), status)
         else:
             display = ''
             i_sorted = sort_by_timestamp(indices, self.recurs, "TS_due")
@@ -737,7 +737,7 @@ class Plate:
         if len(indices) < 1:
             return ''
         if summarize:
-            return "%d %s" % (status, len(indices))
+            return "%d %s" % (len(indices), status)
         else:
             display = ''
             i_sorted = sort_by_timestamp(indices, self.inboxes, "TS_due")
@@ -759,28 +759,29 @@ class Plate:
         summarize = (vim.eval("s:vtdview_summarize_inbox") == "1")
         self.update_time_and_contexts()
         vis = set(i for i in self.inboxes if (
-            self.visible(self.inboxes[i]["TS_vis"]) and
-            not self.overdue(self.inboxes[i]["TS_due"]) and
-            self.contexts_ok(
+            self.visible(self.inboxes[i]["TS_vis"])
+            and not self.overdue(self.inboxes[i]["TS_due"])
+            and self.contexts_ok(
                 self.inboxes[i]["contexts"],
-                self.inboxes[i]["specials"])))
+                self.inboxes[i]["specials"])
+            and not self.almost_due(self.inboxes[i])))
         due = set(i for i in self.inboxes if (
-            not self.overdue(self.inboxes[i]["TS_due"]) and
-            self.contexts_ok(
+            not self.overdue(self.inboxes[i]["TS_due"])
+            and self.contexts_ok(
                 self.inboxes[i]["contexts"],
                 self.inboxes[i]["specials"])
             and self.almost_due(self.inboxes[i])))
         late = set(i for i in self.inboxes if (
-            self.overdue(self.inboxes[i]["TS_due"]) and
-            self.contexts_ok(
+            self.overdue(self.inboxes[i]["TS_due"])
+            and self.contexts_ok(
                 self.inboxes[i]["contexts"],
                 self.inboxes[i]["specials"])))
         inboxes = view_section_header("Inboxes", summarize, late, due, vis)
         if not summarize:
-            inboxes += "%s%s%s\n" % (
+            inboxes += "%s%s%s\n\n" % (
                     self.display_inbox_subset(late, 'Late', summarize),
                     self.display_inbox_subset(due, 'Due', summarize),
-                    self.display_inbox_subset(vis, 'Ready', summarize))
+                    self.display_inbox_subset(vis, 'Due', summarize))
         return inboxes
 
     def display_reminders(self):
