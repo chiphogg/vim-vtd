@@ -619,21 +619,19 @@ class Plate:
                     (linenum, line) = self.read_and_count_lines(linenum, f)
         self._cur_file = ''
 
-    def process_outline(self, linenum, line, f, current_project):
+    def process_outline(self, linenum, line, f, current_project, ordered=False):
         master_indent = opening_whitespace(line)
-        list_type = list_start(line)
-        # A 'blocker' is an ordered-list item which is not done.  As soon as we
-        # find one, we ignore all subsequent elements of that ordered list.
         blocker_started = blocker_finished = False
         # If any parent is marked DONE, we also ignore these lines
         parent_done = False
         while linenum:
             indent = opening_whitespace(line)
-            if indent < master_indent:
+            if indent < master_indent or re.match(r"\s*$", line):
                 # If this line is less indented than the list we're processing,
-                # we know we're done.
+                # we know we're done.  (Blank lines also end this list, which is
+                # useful if master_indent is 0!)
                 return (linenum, line)
-            if list_type == '#' and blocker_finished:
+            if blocker_finished:
                 # It doesn't matter what's on this line if it's blocked!
                 (linenum, line) = self.read_and_count_lines(linenum, f)
                 continue
@@ -644,15 +642,16 @@ class Plate:
                 if parent_done:
                     (linenum, line) = self.read_and_count_lines(linenum, f)
                     continue
-                linetype = list_start(line)
-                if linetype:
+                if list_start(line):
+                    ordered = (parent_linetype == '#')
                     (linenum, line) = self.process_outline(
-                            linenum, line, f, current_project)
+                            linenum, line, f, current_project, ordered)
                 else:
-                    print "Should append: '%s'" % line
+                    #print "Should append: '%s'" % line
                     (linenum, line) = self.read_and_count_lines(linenum, f)
             else:
                 # What to do with a line indented the *same* as this list:
+                parent_linetype = list_start(line)
                 if blocker_started:
                     blocker_finished = True
                     continue
@@ -660,7 +659,7 @@ class Plate:
                     parent_done = True
                 else:
                     parent_done = False
-                    if list_type == '#':
+                    if ordered and not (parent_linetype == '*'):
                         blocker_started = True
                 if is_next_action(line):
                     self.add_NextAction(linenum, line)
@@ -942,10 +941,7 @@ def is_next_action(line):
         a) It's a "list"-type line (starts with a list marker),
         b) It begins with an isolated '@' symbol
     """
-    list_type = list_start(line)
-    if not list_type:
-        return False
-    return re.match(r"\s*[%s]\s+@\s" % list_type, line)
+    return list_start(line) == '@'
 
 def list_start(line):
     """The list-denoting character (if this line starts a list element)"""
