@@ -29,6 +29,13 @@ function! s:SetIfNew(name, value)
   endif
 endfunction
 
+" Miscellaneous settings {{{2
+
+" How many days before the due-date should an item be considered "almost due"?
+" This sets the default value.
+" (Note you can have a value like "1.5" and it will work just fine.)
+call s:SetIfNew("default_warning_days", "1")
+
 " 'Special window' settings {{{2
 " View window height
 call s:SetIfNew("view_height", 10)

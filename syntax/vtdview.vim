@@ -4,6 +4,8 @@ endif
 
 syntax match overdue '\v\(\s*Overdue\s*[^)]*\)'
 syntax match overdue '\vOverdue\s*\(\s*[^)]*\)'
+syntax match overdue '\v\(\s*Late\s*[^)]*\)'
+syntax match overdue '\vLate\s*\(\s*[^)]*\)'
 highlight link overdue Todo
 
 syntax match due '\v\(\s*Due\s*[^)]*\)'
@@ -13,7 +15,7 @@ highlight link due Special
 syntax match jumpTo '<<[ipsc]\d\+>>'
 highlight link jumpTo Ignore
 
-syntax match messages '\v\s@<=#.*$'
+syntax match messages '\v\S@<!#.*$'
 highlight link messages Comment
 
 syntax match sectionHeader '\v^\s*[▸▾][^:]*'
