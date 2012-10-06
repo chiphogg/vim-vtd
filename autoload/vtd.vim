@@ -751,8 +751,8 @@ function! vtd#Done()
   let l:line = getline(".")
   let l:type = 'None'
   let l:datetime = '\d{4}-\d{2}-\d{2}(\s+\d{2}:\d{2})?'
-  if l:line =~# '\v^\s*\S\s+\@\s'
-    " NextAction has an isolated '@' after a list-begin marker:
+  if l:line =~# '\v^\s*\@\s'
+    " NextAction starts with an isolated '@':
     let l:type = 'NextAction'
   elseif l:line =~# '\vREMIND\s*'.l:datetime
     " Reminder has the REMIND pattern, followed by a datetime:
