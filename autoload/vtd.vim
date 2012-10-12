@@ -710,6 +710,7 @@ endfunction
 " FUNCTION: s:SetContextBufOptions() {{{3
 " Set the common options for the vtdview buffer
 function! s:SetContextBufOptions()
+  silent! exec "edit" g:vtd_contexts_file
   setlocal noswapfile
   setlocal bufhidden=delete
   setlocal nofoldenable
@@ -717,7 +718,6 @@ function! s:SetContextBufOptions()
   setlocal nobuflisted
   setlocal nospell
   setlocal nowrap
-  silent! exec "edit" g:vtd_contexts_file
 
   setfiletype vtdcontext
 endfunction
