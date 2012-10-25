@@ -643,9 +643,9 @@ class Plate:
                     (linenum, line) = self.read_and_count_lines(linenum, f)
                     continue
                 if list_start(line):
-                    ordered = (parent_linetype == '#')
+                    child_ordered = (parent_linetype == '#')
                     (linenum, line) = self.process_outline(
-                            linenum, line, f, current_project, ordered)
+                            linenum, line, f, current_project, child_ordered)
                 else:
                     #print "Should append: '%s'" % line
                     (linenum, line) = self.read_and_count_lines(linenum, f)
