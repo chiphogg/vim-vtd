@@ -683,16 +683,10 @@ class Plate:
         use = but = avoid = ""
         # Change strings to appropriate values
         if have_contexts:
-            use = context_list_string(self.contexts_use)
+            use = "Include: %s\n" % context_list_string(self.contexts_use)
         if have_avoided_contexts:
-            avoid = 'NOT ' + context_list_string(self.contexts_avoid)
-        if have_contexts and have_avoided_contexts:
-            but = ' but '
-        context_string = use + but + avoid
-
-        contexts = "%s Contexts: %s\n" % (
-                vtdview_section_marker(True),  # Always summarize... for now!
-                context_string)
+            avoid = "Exclude: %s\n" % context_list_string(self.contexts_avoid)
+        contexts = use + avoid + "\n"
         return contexts
 
     def display_recur_subset(self, indices, status, summarize):
