@@ -47,17 +47,21 @@ endfunction
 
 function! s:PreserveStart()
   let b:PRESERVE_search = @/
-  let b:PRESERVE_cursor = getpos(".")
-  normal! H
-  let b:PRESERVE_window = getpos(".")
-  call setpos(".", b:PRESERVE_cursor)
+  let b:PRESERVE_folds = &foldenable
+  setlocal nofoldenable
+  let b:PRESERVE_view = winsaveview()
 endfunction
 
 function! s:PreserveFinish()
+  " Restore saved values (in properly-nested reverse order)
+  call winrestview(b:PRESERVE_view)
+  let &foldenable = b:PRESERVE_folds
   let @/ = b:PRESERVE_search
-  call setpos(".", b:PRESERVE_window)
-  normal! zt
-  call setpos(".", b:PRESERVE_cursor)
+
+  " Clean up old values
+  unlet b:PRESERVE_search
+  unlet b:PRESERVE_folds
+  unlet b:PRESERVE_view
 endfunction
 
 function! s:Preserve(command)
