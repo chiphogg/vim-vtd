@@ -751,7 +751,7 @@ function! vtd#Done()
 
   " Now we're in the base file.
   " Determine what kind of line it is; checkoff accordingly.
-  let l:old_cursor = getpos(".")
+  call s:PreserveStart()
   let l:line = getline(".")
   let l:type = 'None'
   let l:datetime = '\d{4}-\d{2}-\d{2}(\s+\d{2}:\d{2})?'
@@ -786,7 +786,7 @@ function! vtd#Done()
     if l:done
       let l:done_regex = '\v\s*\(DONE.*\)'
       let l:cmd = "normal! 0/".l:done_regex."\<CR>d%"
-      call s:Preserve(l:cmd)
+      execute l:cmd
     else
       execute "normal! A (DONE \<C-R>=strftime('%F %R')\<CR>)\<esc>"
     endif
@@ -794,9 +794,9 @@ function! vtd#Done()
     let l:date_regex = '\v\d{4}-\d{2}-\d{2}'
     let l:cmd = "normal! 0/".l:date_regex."\<CR>c".l:size."l\<C-R>=strftime('"
     let l:cmd = l:cmd . l:timedate_fmt . "')\<CR>\<esc>"
-    call s:Preserve(l:cmd)
+    execute l:cmd
   endif
-  call setpos(".", l:old_cursor)
+  call s:PreserveFinish()
 
   " If we started out in vtdview window, go back there
   if exists("l:view_win")
