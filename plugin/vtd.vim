@@ -69,7 +69,7 @@ function! s:Wiki(abbrev)
   elseif a:abbrev ==? 'c'
     let l:fname = l:fname.g:vtd_file_checklists
   endif
-  return l:fname
+  return escape(l:fname, ' ')
 endfunction
 
 " g:vtd_contexts_file -- (semi-)permanent local contexts for this computer
