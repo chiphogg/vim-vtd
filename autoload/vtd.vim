@@ -164,8 +164,8 @@ abbrev = vim.eval("l:file_id")
 vim.command("let l:file = '%s'" % vtd_fullpath(abbrev).replace("'", "''"))
 EOF
   call s:GotoUsableWindow()
-  execute "edit +".l:line_no l:file
-  execute "normal! zv"
+  execute 'edit +'.l:line_no escape(l:file, ' ')
+  execute 'normal! zv'
 endfunction
 
 " FUNCTION: vtd#WriteIfModified() {{{2
