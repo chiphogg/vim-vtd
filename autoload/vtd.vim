@@ -780,19 +780,21 @@ function! vtd#Done()
   elseif l:line =~# '\v\S'
     let l:type = 'Project'
   endif
-  let l:done = (l:line =~# '\v\(DONE.*\)')
+  let l:done_pattern = '\v\s*\(DONE.*\)'
+  let l:done = (l:line =~# l:done_pattern)
 
   if l:type ==? 'NextAction' || l:type ==? 'Project' || l:type ==? 'Reminder'
     if l:done
-      let l:done_regex = '\v\s*\(DONE.*\)'
-      let l:cmd = "normal! 0/".l:done_regex."\<CR>d%"
-      execute l:cmd
+      call cursor(0, 1)
+      call search(l:done_pattern)
+      normal! d%
     else
       execute "normal! A (DONE \<C-R>=strftime('%F %R')\<CR>)\<esc>"
     endif
   elseif l:type ==? 'Recurring' || l:type ==? 'Inbox'
-    let l:date_regex = '\v\d{4}-\d{2}-\d{2}'
-    let l:cmd = "normal! 0/".l:date_regex."\<CR>c".l:size."l\<C-R>=strftime('"
+    call cursor(0, 1)
+    call search('\v\d{4}-\d{2}-\d{2}')
+    let l:cmd = "normal! c".l:size."l\<C-R>=strftime('"
     let l:cmd = l:cmd . l:timedate_fmt . "')\<CR>\<esc>"
     execute l:cmd
   endif
