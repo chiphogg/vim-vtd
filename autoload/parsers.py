@@ -501,6 +501,22 @@ class Plate:
                 matches_context = True
         return matches_context or include_anon
 
+    def decorate_text(self, text, specials):
+        """Decorate text with, e.g., priority markers (in specials)
+
+        Args:
+            text:   The text of an action or reminder to display.
+            specials:   A dictionary containing special tags (such as priority,
+                time, etc.)
+
+        Returns:
+            The text, suitably decorated (if necessary) by the information in
+            specials.
+        """
+        if "p" in specials:
+            text = "[P%s:%s:P%s]" % (specials['p'], text, specials['p'])
+        return text
+
     def add_recur(self, linenum, line):
         """Parse 'line' and add a new RECUR to the list"""
         m = re.search(self._TS_recur, line)
@@ -521,7 +537,9 @@ class Plate:
         if not vis: vis = last_done + d_vis
         if not due: due = vis + d_due
         self.recurs[next_key(self.recurs)] = dict(
-                name = re.sub(self._TS_recur, '', line),
+                name = self.decorate_text(
+                        re.sub(self._TS_recur, '', line),
+                        specials),
                 TS_last = last_done,
                 TS_vis = vis,
                 TS_due = due,
@@ -538,7 +556,7 @@ class Plate:
         (line, vis, due) = parse_and_strip_dates(line)
         text = re.sub('^\s*@\s+', '', line)
         self.next_actions[next_key(self.next_actions)] = dict(
-                name = text,
+                name = self.decorate_text(text, specials),
                 TS_vis = vis,
                 TS_due = due,
                 jump_to = "p%d" % linenum,

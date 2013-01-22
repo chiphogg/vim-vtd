@@ -12,7 +12,7 @@ syntax match due '\v\(\s*Due\s*[^)]*\)'
 syntax match due '\vDue\s*\(\s*[^)]*\)'
 highlight link due Special
 
-syntax match jumpTo '<<[ipsc]\d\+>>'
+syntax match jumpTo '<<[ipsc]\d\+>>' conceal
 highlight link jumpTo Ignore
 
 syntax match messages '\v\S@<!#.*$'
@@ -33,5 +33,17 @@ syntax region contextsNo start='\v(^Exclude:\s*)@<=' end='\n' contains=contextSe
 highlight contextsNo ctermfg=LightRed guifg=LightRed
 syntax match contextSeparator '\v(or|,)\s+' contained
 highlight link contextSeparator Ignore
+
+" Priority-based highlighting
+syntax region priority0 matchgroup=pmark start='\v\[P0:' end='\v:P0\]' concealends
+syntax region priority1 matchgroup=pmark start='\v\[P1:' end='\v:P1\]' concealends
+syntax region priority2 matchgroup=pmark start='\v\[P2:' end='\v:P2\]' concealends
+syntax region priority3 matchgroup=pmark start='\v\[P3:' end='\v:P3\]' concealends
+syntax region priority4 matchgroup=pmark start='\v\[P4:' end='\v:P4\]' concealends
+highlight priority0 ctermfg=Red guifg=Red gui=bold term=bold
+highlight priority1 ctermfg=DarkYellow guifg=Orange gui=bold term=bold
+highlight priority2 ctermfg=Yellow guifg=Yellow
+highlight priority3 ctermfg=LightGreen guifg=DarkGreen
+highlight priority4 ctermfg=LightBlue guifg=DarkBlue
 
 let b:current_syntax = "vtdview"

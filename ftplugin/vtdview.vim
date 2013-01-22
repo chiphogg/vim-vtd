@@ -19,3 +19,8 @@ augroup vtd_view_buffer
   autocmd BufDelete __VTD_VIEW_BUFFER__ call vtd#ViewForget()
   autocmd BufEnter __VTD_VIEW_BUFFER__ call vtd#View_EnterAndRefresh()
 augroup END
+
+" Buffer-local settings {{{1
+
+setlocal conceallevel=3
+setlocal concealcursor=nc
