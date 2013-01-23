@@ -153,11 +153,16 @@ def next_day_month(date, match):
     new_date = new_date.replace(day=day_in_month)
     return new_date
 
-def sort_by_timestamp(i, items, field):
+def sort_by_urgency(i, items, time_field):
     """Sort collection of items by a timestamp field"""
-    key = lambda i: (time.mktime(items[i][field].timetuple())
-            if items[i][field] else float('inf'))
-    return sorted(i, key=key)
+    def poo(i):
+        (timestamp, priority) = (float('inf'), 2.5)
+        if items[i][time_field]:
+            timestamp = time.mktime(items[i][time_field].timetuple())
+        if "p" in items[i]["specials"]:
+            priority = items[i]["specials"]["p"]
+        return (timestamp, priority)
+    return sorted(i, key=poo)
 
 def time_window(window):
     """ The window of time (in days) specified by this string
@@ -714,7 +719,7 @@ class Plate:
             return "%d %s" % (len(indices), status)
         else:
             display = ''
-            i_sorted = sort_by_timestamp(indices, self.recurs, "TS_due")
+            i_sorted = sort_by_urgency(indices, self.recurs, "TS_due")
             for i in i_sorted:
                 due_diff = seconds_diff(self.recurs[i]["TS_due"], self.now)
                 display += "\n  - %s (%s %s) <<%s>>" % (self.recurs[i]["name"],
@@ -751,7 +756,7 @@ class Plate:
             return "%d %s" % (len(indices), status)
         else:
             display = ''
-            i_sorted = sort_by_timestamp(indices, self.inboxes, "TS_due")
+            i_sorted = sort_by_urgency(indices, self.inboxes, "TS_due")
             for i in i_sorted:
                 due_diff = seconds_diff(self.inboxes[i]["TS_due"], self.now)
                 display += "\n  - %s (%s %s) <<%s>>" % (self.inboxes[i]["name"],
@@ -817,7 +822,7 @@ class Plate:
             return "(%d items %s)  " % (len(indices), status)
         else:
             display = ''
-            i_sorted = sort_by_timestamp(indices, self.reminders, "TS")
+            i_sorted = sort_by_urgency(indices, self.reminders, "TS")
             for i in i_sorted:
                 due_tag = ''
                 if self.reminders[i]["TS"]:
@@ -834,7 +839,7 @@ class Plate:
             return "%d %s" % (len(indices), status)
         else:
             display = ''
-            i_sorted = sort_by_timestamp(indices, self.next_actions, "TS_due")
+            i_sorted = sort_by_urgency(indices, self.next_actions, "TS_due")
             for i in i_sorted:
                 due_tag = ''
                 if self.next_actions[i]["TS_due"]:

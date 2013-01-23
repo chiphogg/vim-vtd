@@ -40,10 +40,10 @@ syntax region priority1 matchgroup=pmark start='\v\[P1:' end='\v:P1\]' concealen
 syntax region priority2 matchgroup=pmark start='\v\[P2:' end='\v:P2\]' concealends
 syntax region priority3 matchgroup=pmark start='\v\[P3:' end='\v:P3\]' concealends
 syntax region priority4 matchgroup=pmark start='\v\[P4:' end='\v:P4\]' concealends
-highlight priority0 ctermfg=Red guifg=Red gui=bold term=bold
-highlight priority1 ctermfg=DarkYellow guifg=Orange gui=bold term=bold
-highlight priority2 ctermfg=Yellow guifg=Yellow
-highlight priority3 ctermfg=LightGreen guifg=DarkGreen
-highlight priority4 ctermfg=LightBlue guifg=DarkBlue
+highlight priority0 ctermfg=Yellow guifg=Yellow gui=bold,italic term=bold,italic
+highlight priority1 ctermfg=White guifg=White gui=bold term=bold
+highlight priority2 ctermfg=LightGrey guifg=#bbbbbb
+highlight priority3 ctermfg=DarkGrey guifg=#777777
+highlight priority4 ctermfg=DarkGreen guifg=#445544
 
 let b:current_syntax = "vtdview"
