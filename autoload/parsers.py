@@ -400,6 +400,7 @@ class Plate:
         self.dow_times = r"(((?P<dow_vis>\d{2}:\d{2})-)?(?P<dow_due>\d{2}:\d{2}))?"
         day_of_week = (r"((?P<w_num>\d+)\*)?" +
                 r"(?P<dow>(MON)|(TUE)|(WED)|(THU)|(FRI)|(SAT)|(SUN))" +
+                r"(,(?P<dow_days>\d+))?" +
                 r"(\(" + no_paren + dow_anchor + r"\s*" + self.dow_times + r"\))?")
                 #r"(\(" + no_paren + dow_anchor + r"\s*" + dow_times + r"\))?")
         # Day of month; negative numbers count from the end.
@@ -528,11 +529,14 @@ class Plate:
         (line, contexts, specials) = parse_and_strip_contexts(line)
         last_done = parse_datetime(m.group('datetime'))
         vis = due = None
+        d_due = timedelta(days=1)
         if m.group("break"):
             d_vis = timedelta(days=int(m.group("break")))
             d_due = timedelta(days=time_window(m.group("window")))
         elif m.group("dow"):
             (vis, due) = next_day_week(last_done, m)
+            if m.group("dow_days"):
+                due += timedelta(days=time_window(m.group("dow_days")) - 1)
         elif m.group("offset"):
             vis = next_day_month(last_done, m)
             d_due = timedelta(days=time_window(m.group("m_window")))
