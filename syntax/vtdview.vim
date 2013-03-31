@@ -42,7 +42,7 @@ syntax region priority3 matchgroup=pmark start='\v\[P3:' end='\v:P3\]' concealen
 syntax region priority4 matchgroup=pmark start='\v\[P4:' end='\v:P4\]' concealends
 highlight priority0 ctermfg=Yellow guifg=Yellow gui=bold,italic term=bold,italic
 highlight priority1 ctermfg=White guifg=White gui=bold term=bold
-highlight priority2 ctermfg=LightGrey guifg=#bbbbbb
+highlight priority2 ctermfg=LightGrey guifg=White
 highlight priority3 ctermfg=DarkGrey guifg=#777777
 highlight priority4 ctermfg=DarkGreen guifg=#445544
 
