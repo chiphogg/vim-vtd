@@ -1,4 +1,4 @@
-
+setlocal textwidth=0
 
 augroup vtd_wiki_files
   autocmd!

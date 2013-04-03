@@ -24,3 +24,4 @@ augroup END
 
 setlocal conceallevel=3
 setlocal concealcursor=nc
+setlocal textwidth=0
