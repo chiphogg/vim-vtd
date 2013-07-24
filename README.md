@@ -5,7 +5,16 @@ Vimming Things Done: a GTD-ish system which lives in vim, based on the
 
 ## Current status
 
-Not-even-remotely alpha yet.  Still hacking around.
+Early stages of development.
+
+`v0.0.1` is fully functional (I used it daily for almost a year). However, it
+was a bit of a dead end as far as future maintenance and extensibility.
+
+All subsequent versions are based on a separately-maintained python library,
+[libvtd](http://github.com/chiphogg/libvtd).  The advantage is that other
+software can use the same library and underlying `.vtd` text file; one could
+imagine, for instance, an Android app giving full access to your productivity
+system.
 
 ## Should _you_ use it?
 
