@@ -1,0 +1,3 @@
+[submodule "python/libvtd"]
+	path = python/libvtd
+	url = git@github.com:chiphogg/libvtd.git
