@@ -1,28 +1,18 @@
 " @section Common functions
 
-""
-" Put the VTD View buffer in the current window, creating it if necessary.
-function! vtd#view#Enter()
-  " Find a buffer with the exact name given below.  (Don't give another buffer
-  " this name; I don't know what would happen.)
-  let l:vtd_view_buffer_name = '__VTD_VIEW__'
-  let l:buffer_number = bufnr('^' . l:vtd_view_buffer_name . '$')
+" The buffer number of the VTD View buffer.
+let s:vtd_view_buffer_number = -1
 
-  if l:buffer_number > 0
-    " If the VTD View buffer already exists, simply go to it.
-    if bufwinnr(l:buffer_number) >= 0
-      " We prefer to simply go to a window which already has that buffer, if
-      " such a window exists.
-      execute bufwinnr(l:buffer_number) . 'wincmd w'
-    else
-      " Otherwise, just open it in the current window.
-      execute 'buffer' l:buffer_number
-    endif
-  else
-    " If the buffer does not exist, we must create it.
-    silent! execute 'badd' l:vtd_view_buffer_name
-    " Switch to the new buffer, and setup appropriate VTD view buffer options.
-    silent! execute 'buffer' bufnr(l:vtd_view_buffer_name)
+""
+" Enter the VTD View buffer (creating it if it does not exist).
+function! vtd#view#Enter()
+  " We keep track of the VTD View buffer solely by its buffer number.  First, we
+  " check whether the buffer already exists, and create it if it doesn't.
+  if !bufexists(s:vtd_view_buffer_number)
+    " Create a new buffer and capture its buffer number.
+    enew
+    let s:vtd_view_buffer_number = bufnr('$')
+    " Set appropriate VTD View buffer options.
     setlocal noswapfile
     setlocal buftype=nofile
     setlocal nofoldenable
@@ -30,5 +20,16 @@ function! vtd#view#Enter()
     setlocal nospell
     setlocal nowrap
     setlocal filetype=vtdview
+    return
+  endif
+
+  let l:vtd_view_window = bufwinnr(s:vtd_view_buffer_number)
+  if l:vtd_view_window >= 0
+    " We prefer to simply go to a window which already has that buffer,
+    " if such a window exists.
+    execute l:vtd_view_window . 'wincmd w'
+  else
+    " Otherwise, just open it in the current window.
+    execute 'buffer' s:vtd_view_buffer_number
   endif
 endfunction

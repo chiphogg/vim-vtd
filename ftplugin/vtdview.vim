@@ -2,5 +2,5 @@
 
 ""
 " Quit the VTD view window.
-nnoremap Q :bdelete<CR>
-nmap q Q
+nnoremap <silent> <buffer> Q :bwipeout<CR>
+nmap <silent> <buffer> q Q
