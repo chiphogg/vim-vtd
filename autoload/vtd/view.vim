@@ -14,6 +14,7 @@ function! vtd#view#Enter()
     let s:vtd_view_buffer_number = bufnr('$')
     " Set appropriate VTD View buffer options.
     setlocal noswapfile
+    setlocal nomodifiable
     setlocal buftype=nofile
     setlocal nofoldenable
     setlocal nobuflisted
@@ -32,4 +33,17 @@ function! vtd#view#Enter()
     " Otherwise, just open it in the current window.
     execute 'buffer' s:vtd_view_buffer_number
   endif
+endfunction
+
+""
+" Replace the VTD View window contents with the text in {lines}.
+function! s:FillView(lines)
+  call vtd#view#Enter()
+  let l:text = join(a:lines, "\n")
+
+  setlocal modifiable
+  silent! 1,$ delete _
+  silent! put =l:text
+  silent! 1,1 delete _
+  setlocal nomodifiable
 endfunction
