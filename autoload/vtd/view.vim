@@ -21,6 +21,9 @@ function! vtd#view#Enter()
     setlocal nospell
     setlocal nowrap
     setlocal filetype=vtdview
+
+    " A new buffer should be populated with the Summary content.
+    call s:FillWithSummary()
     return
   endif
 
@@ -46,4 +49,15 @@ function! s:FillView(lines)
   silent! put =l:text
   silent! 1,1 delete _
   setlocal nomodifiable
+endfunction
+
+" @subsection Summary view functions
+
+function! s:FillWithSummary()
+  let l:text = [
+      \ 'Contexts: <not implemented>',
+      \ '',
+      \ 'Next Actions: <not implemented>',
+      \ ]
+  call s:FillView(l:text)
 endfunction
