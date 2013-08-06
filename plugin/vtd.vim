@@ -38,3 +38,10 @@ if s:flags.DoesMappings()
   let s:prefix = s:flags.MapPrefix('t')
   execute 'nnoremap <unique> <silent>' s:prefix ':VtdView<CR>'
 endif
+
+
+" Add python libraries to sys.path so python knows how to import them.
+let s:python_path = expand('<sfile>:p:h:h') . '/python'
+let s:libvtd_path = s:python_path . '/libvtd'
+execute 'pyfile' join([s:python_path, 'sysutil.py'], '/') 
+execute 'python AddToSysPath("' . s:libvtd_path . '")'
