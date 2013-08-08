@@ -1,11 +1,16 @@
 " @section Common functions
 
+" This gives us access to all the python functions in vtd.py.
+call vtd#EnsurePythonLoaded()
+
 " The buffer number of the VTD View buffer.
 let s:vtd_view_buffer_number = -1
 
 ""
 " Enter the VTD View buffer (creating it if it does not exist).
 function! vtd#view#Enter()
+  call vtd#UpdateSystem()
+
   " We keep track of the VTD View buffer solely by its buffer number.  First, we
   " check whether the buffer already exists, and create it if it doesn't.
   if !bufexists(s:vtd_view_buffer_number)

@@ -4,7 +4,7 @@ let s:plugin_root = expand('<sfile>:p:h:h')
 let s:python_path = s:plugin_root . '/python'
 
 
-function! s:EnsurePythonScriptsLoaded()
+function! vtd#EnsurePythonLoaded()
   if !exists('s:loaded_python_scripts')
     execute 'pyfile' s:python_path . '/vtd.py'
     let s:loaded_python_scripts = 1
@@ -12,7 +12,7 @@ function! s:EnsurePythonScriptsLoaded()
 endfunction
 
 
-function! vtd#UpdatePython()
-  call s:EnsurePythonScriptsLoaded()
+function! vtd#UpdateSystem()
+  call vtd#EnsurePythonLoaded()
   execute 'python UpdateTrustedSystem(file_name="' . g:vtd_file .'")'
 endfunction
