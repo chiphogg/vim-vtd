@@ -1,3 +1,32 @@
+" @section Classes and objects
+
+""
+" A keymap particular to a specific kind of VTD view.
+"
+" Its constructor sets up the keymap; its destructor removes the keymap.
+let s:Keymap = {}
+
+""
+" Creates a keymap for {key} which performs {action}.  Caller can provide an
+" optional human-readable [description], and also change the keymap's [modes]
+" (see |:map-arguments|; defaults to "<buffer> <silent>").
+function! s:Keymap.New(key, action, ...)
+  " Optional parameters.
+  let l:description = (a:0 >= 1) ? a:1 : ''
+  let l:modes = (a:0 >= 2) ? a:2 : '<buffer> <silent>'
+
+  let l:new = copy(s:Keymap)
+  let l:new._key = a:key
+  let l:new._modes = l:modes
+  let l:new._description = l:description
+  execute 'nnoremap' l:new._modes a:key a:action
+  return l:new
+endfunction
+
+function! s:Keymap.delete()
+  execute 'nunmap' self._modes self._key
+endfunction
+
 " @section Common functions
 
 " This gives us access to all the python functions in vtd.py.
