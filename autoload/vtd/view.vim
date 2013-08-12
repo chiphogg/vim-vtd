@@ -230,6 +230,9 @@ endfunction
 " @section Common functions
 
 
+" @subsection API functions
+
+
 ""
 " Go into the VTD View buffer, making sure it is "valid".
 "
@@ -283,6 +286,9 @@ function! vtd#view#Exit()
   " exist.
   let s:vtd_view_buffer_number = -1
 endfunction
+
+
+" @subsection Helper functions
 
 
 ""
