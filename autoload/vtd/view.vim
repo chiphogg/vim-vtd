@@ -10,11 +10,29 @@ let s:current_vtd_view = {}
 
 " @section Classes and objects
 
+
+" Registered VTD View classes.  These can be accessed by their "name"
+" ("Contexts", "Next Actions", "Summary", etc.).
+" 
+" Populated by s:RegisterView().
+let s:ViewClasses = {}
+
+
+""
+" Registers {prototype} as a VTD View class, which can be accessed by the given
+" {name}.
+function! s:RegisterView(prototype, name)
+  let s:ViewClasses[a:name] = a:prototype
+  let a:prototype.type = a:name
+endfunction
+
+
 ""
 " A keymap particular to a specific kind of VTD view.
 "
 " Its constructor sets up the keymap; its destructor removes the keymap.
 let s:Keymap = {}
+
 
 ""
 " Creates a keymap for {key} which performs {action}.  Caller can provide an
@@ -33,9 +51,11 @@ function! s:Keymap.New(key, action, ...)
   return l:new
 endfunction
 
+
 function! s:Keymap.delete()
   execute 'nunmap' self._modes self._key
 endfunction
+
 
 " @subsection VTD View functions
 let s:VtdView = {}
