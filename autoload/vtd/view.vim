@@ -45,14 +45,25 @@ function! s:Keymap.New(key, action, ...)
 
   let l:new = copy(s:Keymap)
   let l:new._key = a:key
+  let l:new._action = a:action
   let l:new._modes = l:modes
   let l:new._description = l:description
-  execute 'nnoremap' l:new._modes a:key a:action
   return l:new
 endfunction
 
 
-function! s:Keymap.delete()
+""
+" Set up this keymapping in the current buffer.
+"
+" Should be idempotent, unless <unique> is in self._modes.
+function! s:Keymap.map()
+  execute 'nnoremap' self._modes self._key self._action
+endfunction
+
+
+""
+" Remove this keymapping from the current buffer.
+function! s:Keymap.unmap()
   execute 'nunmap' self._modes self._key
 endfunction
 
@@ -131,6 +142,15 @@ endfunction
 
 
 ""
+" Setup all view-type-specific keymaps from this buffer.
+function! s:VtdView.setupKeymaps()
+  for l:map in self._keymaps
+    call l:map.map()
+  endfor
+endfunction
+
+
+""
 " Remove all view-type-specific keymaps from this buffer.
 "
 " TODO(chiphogg): Document that this function sanity-checks the maps... after
@@ -139,7 +159,7 @@ function! s:VtdView.removeKeymaps()
   while len(self._keymaps) > 0
     let l:map = remove(self._keymaps, 0)
     " TODO(chiphogg): Add assertion using maparg().
-    call l:map.delete()
+    call l:map.unmap()
   endwhile
 endfunction
 
@@ -182,6 +202,7 @@ endfunction
 
 function! s:VtdViewSummary.setUp()
   call add(self._keymaps, s:Keymap.New('j', ':echomsg "FOO!"<CR>'))
+  call self.setupKeymaps()
 endfunction
 
 
