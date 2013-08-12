@@ -7,6 +7,8 @@ let s:vtd_view_buffer_number = -1
 " The current VTD View object.
 let s:current_vtd_view = {}
 
+" A list of keymapping objects which apply to every VTD View type.
+let s:universal_keymaps = []
 
 " @section Classes and objects
 
@@ -21,9 +23,21 @@ let s:ViewClasses = {}
 ""
 " Registers {prototype} as a VTD View class, which can be accessed by the given
 " {name}.
-function! s:RegisterView(prototype, name)
+"
+" If [keymapping] is supplied, it will switch to the given type of VTD view from
+" any other VTD view type.
+function! s:RegisterView(prototype, name, ...)
+  " Optional parameters.
+  let l:keymapping = (a:0 >= 1) ? a:1 : ''
+
   let s:ViewClasses[a:name] = a:prototype
   let a:prototype.type = a:name
+
+  if !empty(l:keymapping)
+    call add(s:universal_keymaps, s:Keymap.New(l:keymapping,
+        \ ':call vtd#view#Enter("' . a:name . '")<CR>',
+        \ 'Jump to ' . a:name))
+  endif
 endfunction
 
 
@@ -99,6 +113,7 @@ function! s:VtdView.switchToViewBuffer()
     setlocal nospell
     setlocal nowrap
     setlocal filetype=vtdview
+    call s:SetUniversalVtdViewMappings()
     return
   endif
 
@@ -183,7 +198,7 @@ endfunction
 " Inherits from s:VtdView in the constructor rather than here, so that
 " s:VtdView's constructor code will be executed for each new object.
 let s:VtdViewSummary = {}
-call s:RegisterView(s:VtdViewSummary, 'Summary')
+call s:RegisterView(s:VtdViewSummary, 'Summary', 'S')
 
 
 function! s:VtdViewSummary.New()
@@ -210,7 +225,7 @@ endfunction
 
 
 let s:VtdViewContexts = {}
-call s:RegisterView(s:VtdViewContexts, 'Contexts')
+call s:RegisterView(s:VtdViewContexts, 'Contexts', 'C')
 
 
 function! s:VtdViewContexts.New()
@@ -325,4 +340,15 @@ function! s:VtdViewTearDown()
     call s:current_vtd_view.tearDown()
     let s:current_vtd_view = {}
   endif
+endfunction
+
+
+""
+" Set up mappings which should be valid in *every* VTD view window.
+"
+" Mainly, these are navigational mappings.
+function! s:SetUniversalVtdViewMappings()
+  for l:map in s:universal_keymaps
+    call l:map.map()
+  endfor
 endfunction
