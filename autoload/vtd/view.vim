@@ -157,6 +157,55 @@ function! s:VtdView.fill(lines)
 endfunction
 
 
+" @subsection Summary view
+
+
+" Inherits from s:VtdView in the constructor rather than here, so that
+" s:VtdView's constructor code will be executed for each new object.
+let s:VtdViewSummary = {}
+call s:RegisterView(s:VtdViewSummary, 'Summary')
+
+
+function! s:VtdViewSummary.New()
+  " Call the parent constructor.
+  let l:new = s:VtdView.New()
+
+  call extend(l:new, copy(s:VtdViewSummary))
+  return l:new
+endfunction
+
+
+function! s:VtdViewSummary.display()
+  call self.fill(['Summary view (not yet implemented!)'])
+endfunction
+
+
+function! s:VtdViewSummary.setUp()
+  call add(self._keymaps, s:Keymap.New('j', ':echomsg "FOO!"<CR>'))
+endfunction
+
+
+" @subsection Contexts view
+
+
+let s:VtdViewContexts = {}
+call s:RegisterView(s:VtdViewContexts, 'Contexts')
+
+
+function! s:VtdViewContexts.New()
+  " Call the parent constructor.
+  let l:new = s:VtdView.New()
+
+  call extend(l:new, copy(s:VtdViewContexts))
+  return l:new
+endfunction
+
+
+function! s:VtdViewContexts.display()
+  call self.fill(['Contexts view (not yet implemented!)'])
+endfunction
+
+
 " @section Common functions
 
 
@@ -233,7 +282,7 @@ endfunction
 " Leaves the editor inside the newly-created buffer.
 function! s:VtdViewSetUp(view_type)
   " TODO(chiphogg): Assert that view_type is a valid VTD View class type.
-  let s:current_vtd_view = s:VtdView.New()
+  let s:current_vtd_view = s:ViewClasses[a:view_type].New()
   call s:current_vtd_view.enter()
   call s:current_vtd_view.setUp()
 endfunction
