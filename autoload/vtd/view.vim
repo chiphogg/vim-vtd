@@ -1,3 +1,9 @@
+" This gives us access to all the python functions in vtd.py.
+call vtd#EnsurePythonLoaded()
+
+" The buffer number of the VTD View buffer.
+let s:vtd_view_buffer_number = -1
+
 " @section Classes and objects
 
 ""
@@ -28,12 +34,6 @@ function! s:Keymap.delete()
 endfunction
 
 " @section Common functions
-
-" This gives us access to all the python functions in vtd.py.
-call vtd#EnsurePythonLoaded()
-
-" The buffer number of the VTD View buffer.
-let s:vtd_view_buffer_number = -1
 
 ""
 " Enter the VTD View buffer (creating it if it does not exist).
