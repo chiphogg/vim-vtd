@@ -47,6 +47,15 @@ function! s:CyclableOption.Next()
 endfunction
 
 
+""
+" Setting for a context: one of 'include', 'exclude', or 'clear'.
+let s:ContextSetting = s:CyclableOption.New(['clear', 'include', 'exclude'])
+function! s:ContextSetting.New()
+  let l:new = copy(s:ContextSetting)
+  return l:new
+endfunction
+
+
 " Registered VTD View classes.  These can be accessed by their "name"
 " ("Contexts", "Next Actions", "Summary", etc.).
 " 
@@ -337,6 +346,41 @@ function! vtd#view#Exit()
 endfunction
 
 
+""
+" Add the given {contexts} to the "included" list.  This means that Next Actions
+" having these contexts will be visible.  However, any such Next Actions which
+" also have a context from the "excluded" list will *not* be visible; the
+" "excluded" list takes priority.
+function! vtd#view#IncludeContexts(contexts)
+  for l:context in a:contexts
+    let l:setting = s:ContextSettingFor(l:context)
+    let l:setting.value = l:setting.options.include
+  endfor
+endfunction
+
+
+""
+" Add the given {contexts} to the "excluded" list.  This means that no Next
+" Actions having these contexts will be visible.
+function! vtd#view#ExcludeContexts(contexts)
+  for l:context in a:contexts
+    let l:setting = s:ContextSettingFor(l:context)
+    let l:setting.value = l:setting.options.exclude
+  endfor
+endfunction
+
+
+""
+" Clear the settings for the given {contexts}, removing them from both the
+" "included" and the "excluded" list.
+function! vtd#view#ClearContexts(contexts)
+  for l:context in a:contexts
+    let l:setting = s:ContextSettingFor(l:context)
+    let l:setting.value = l:setting.options.clear
+  endfor
+endfunction
+
+
 " @subsection Helper functions
 
 
@@ -385,4 +429,25 @@ function! s:SetUniversalVtdViewMappings()
   for l:map in s:universal_keymaps
     call l:map.map()
   endfor
+endfunction
+
+
+""
+" The ContextSetting for the given {context}.
+" 
+" Creates it if it doesn't exist.
+function! s:ContextSettingFor(context)
+  " Define it here: we only ever access it through this function as an
+  " interface.  Guarding it like this also makes the autoload script re-entrant
+  " (won't clobber the context settings).
+  if !exists('s:_context_settings')
+    let s:_context_settings = {}
+  endif
+
+  " Create a setting for this context if it doesn't already have one.
+  if !has_key(s:_context_settings, a:context)
+    let s:_context_settings[a:context] = s:ContextSetting.New()
+  endif
+
+  return s:_context_settings[a:context]
 endfunction

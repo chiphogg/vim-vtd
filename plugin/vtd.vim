@@ -32,6 +32,28 @@ if s:flags.DoesCommands()
   ""
   " Open the VTD view buffer.
   command! -nargs=0 VtdView :call vtd#view#Enter()
+
+  ""
+  " Add these {contexts} to the "included contexts" list: i.e., make actions
+  " from these {contexts} visible.
+  "
+  " Such an action can still be excluded if it has another context which is on
+  " the "excluded contexts" list.
+  command! -nargs=+ VtdContextsInclude
+      \ :call vtd#view#IncludeContexts([<f-args>])
+
+  ""
+  " Add these {contexts} to the "excluded contexts" list: i.e., don't show any
+  " actions from these contexts.
+  " 
+  " Overrides the "included contexts" list.
+  command! -nargs=+ VtdContextsExclude
+      \ :call vtd#view#ExcludeContexts([<f-args>])
+
+  ""
+  " Remove these {contexts} from both the "excluded contexts" and "included
+  " contexts" lists.
+  command! -nargs=+ VtdContextsClear :call vtd#view#ClearContexts([<f-args>])
 endif
 
 if s:flags.DoesMappings()
