@@ -271,7 +271,7 @@ function! vtd#view#Enter(...)
   if !empty(s:current_vtd_view)
     " If the existing view is valid, simply enter it directly, and we're done.
     if !l:specific_type_requested || l:view_type == s:CurrentViewType()
-      call s:current_vtd_view.switchToViewBuffer()
+      call s:current_vtd_view.enter()
       return
     endif
     " If the existing view is invalid, we need to clean it up before creating a
