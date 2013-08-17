@@ -13,6 +13,40 @@ let s:universal_keymaps = []
 " @section Classes and objects
 
 
+" An option with several values, which can be cycled through.
+let s:CyclableOption = {}
+
+
+""
+" Creates an option with the given {values}, in order.
+"
+" Can be given an index to the [initial_value] (defaults to the first option).
+function! s:CyclableOption.New(values, ...)
+  " Optional parameters.
+  let l:initial_value = (a:0 >= 1) ? a:1 : 0
+
+  let l:new = copy(s:CyclableOption)
+  let l:new._values = a:values
+  let l:new.value = l:initial_value
+
+  " self.options lets us refer to the options by name rather than index.
+  let l:new.options = {}
+  for l:value in a:values
+    let l:new.options[l:value] = index(a:values, l:value)
+  endfor
+
+  return l:new
+endfunction
+
+
+""
+" Advance this option to the next permissible value.  (After the last, it loops
+" around to the first.)
+function! s:CyclableOption.Next()
+  let self.value = (self.value + 1) % len(self._values)
+endfunction
+
+
 " Registered VTD View classes.  These can be accessed by their "name"
 " ("Contexts", "Next Actions", "Summary", etc.).
 " 
