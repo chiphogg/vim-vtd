@@ -156,6 +156,9 @@ function! s:VtdView.switchToViewBuffer()
     setlocal nospell
     setlocal nowrap
     setlocal filetype=vtdview
+    setlocal conceallevel=3
+    setlocal concealcursor=nc
+    setlocal textwidth=0
     call s:SetUniversalVtdViewMappings()
     return
   endif
@@ -280,8 +283,32 @@ function! s:VtdViewContexts.New()
 endfunction
 
 
+""
+" Display a {context} based on its current status.
+"
+" {context} is a list: the first element is the name of the context; the second
+" is the number of current Next Actions having that context.
+function! s:DisplayContextWithStatus(context)
+  let l:name = a:context[0]
+  let l:count = a:context[1]
+
+  " Mark this context according to its status (visible, 
+  let l:marker = ''
+  if s:ContextSettingFor(l:name).value ==# s:ContextSetting.options.include
+    let l:marker = '+'
+  elseif s:ContextSettingFor(l:name).value ==# s:ContextSetting.options.exclude
+    let l:marker = '-'
+  endif
+
+  return '[@' . l:marker . l:name . ' (' . l:count . ')]'
+endfunction
+
+
 function! s:VtdViewContexts.display()
-  call self.fill(['Contexts view (not yet implemented!)'])
+  let l:contexts = []
+  python vim.bindeval('l:contexts').extend(my_system.ContextList())
+  call map(l:contexts, 's:DisplayContextWithStatus(v:val)')
+  call self.fill(l:contexts)
 endfunction
 
 
