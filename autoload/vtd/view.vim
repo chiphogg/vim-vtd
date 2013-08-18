@@ -12,6 +12,8 @@ let s:universal_keymaps = []
 
 " @section Classes and objects
 
+" TODO(chiphogg): Split classes into separate files under lib/vtd after I have a
+" plugin-global variable.
 
 " An option with several values, which can be cycled through.
 let s:CyclableOption = {}
