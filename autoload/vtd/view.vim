@@ -62,21 +62,21 @@ endfunction
 " ("Contexts", "Next Actions", "Summary", etc.).
 " 
 " Populated by s:RegisterView().
-let s:ViewClasses = {}
+let s:ViewObjects = {}
 
 
 ""
-" Registers {prototype} as a VTD View class, which can be accessed by the given
+" Registers {object} as a VTD View object, which can be accessed by the given
 " {name}.
 "
 " If [keymapping] is supplied, it will switch to the given type of VTD view from
 " any other VTD view type.
-function! s:RegisterView(prototype, name, ...)
+function! s:RegisterView(object, name, ...)
   " Optional parameters.
   let l:keymapping = (a:0 >= 1) ? a:1 : ''
 
-  let s:ViewClasses[a:name] = a:prototype
-  let a:prototype.type = a:name
+  let s:ViewObjects[a:name] = a:object
+  let a:object.type = a:name
 
   if !empty(l:keymapping)
     call add(s:universal_keymaps, s:Keymap.New(l:keymapping,
@@ -243,19 +243,8 @@ endfunction
 " @subsection Summary view
 
 
-" Inherits from s:VtdView in the constructor rather than here, so that
-" s:VtdView's constructor code will be executed for each new object.
-let s:VtdViewSummary = {}
+let s:VtdViewSummary = s:VtdView.New()
 call s:RegisterView(s:VtdViewSummary, 'Summary', 'S')
-
-
-function! s:VtdViewSummary.New()
-  " Call the parent constructor.
-  let l:new = s:VtdView.New()
-
-  call extend(l:new, copy(s:VtdViewSummary))
-  return l:new
-endfunction
 
 
 function! s:VtdViewSummary.display()
@@ -266,17 +255,8 @@ endfunction
 " @subsection Contexts view
 
 
-let s:VtdViewContexts = {}
+let s:VtdViewContexts = s:VtdView.New()
 call s:RegisterView(s:VtdViewContexts, 'Contexts', 'C')
-
-
-function! s:VtdViewContexts.New()
-  " Call the parent constructor.
-  let l:new = s:VtdView.New()
-
-  call extend(l:new, copy(s:VtdViewContexts))
-  return l:new
-endfunction
 
 
 ""
@@ -512,7 +492,7 @@ endfunction
 " Leaves the editor inside the newly-created buffer.
 function! s:VtdViewSetUp(view_type)
   " TODO(chiphogg): Assert that view_type is a valid VTD View class type.
-  let s:current_vtd_view = s:ViewClasses[a:view_type].New()
+  let s:current_vtd_view = s:ViewObjects[a:view_type]
   call s:current_vtd_view.enter()
   call s:current_vtd_view.setUp()
 endfunction
