@@ -261,12 +261,6 @@ function! s:VtdViewSummary.display()
 endfunction
 
 
-function! s:VtdViewSummary.setUp()
-  call add(self._keymaps, s:Keymap.New('j', ':echomsg "FOO!"<CR>'))
-  call self.setupKeymaps()
-endfunction
-
-
 " @subsection Contexts view
 
 
@@ -309,6 +303,67 @@ function! s:VtdViewContexts.display()
   python vim.bindeval('l:contexts').extend(my_system.ContextList())
   call map(l:contexts, 's:DisplayContextWithStatus(v:val)')
   call self.fill(l:contexts)
+endfunction
+
+
+function! s:VtdViewContexts.setUp()
+  call add(self._keymaps, s:Keymap.New('+',
+      \ ':call <SID>IncludeNearestContext()<CR>',
+      \ 'Add the nearest context to the "included" list.'))
+  call add(self._keymaps, s:Keymap.New('-',
+      \ ':call <SID>ExcludeNearestContext()<CR>',
+      \ 'Add the nearest context to the "excluded" list.'))
+  call self.setupKeymaps()
+endfunction
+
+
+function! s:IncludeNearestContext()
+  let l:context = s:NearestContext()
+  if !empty(l:context)
+    call vtd#view#IncludeContexts([l:context])
+  endif
+  call vtd#view#Enter()
+endfunction
+
+
+function! s:ExcludeNearestContext()
+  let l:context = s:NearestContext()
+  if !empty(l:context)
+    call vtd#view#ExcludeContexts([l:context])
+  endif
+  call vtd#view#Enter()
+endfunction
+
+
+""
+" Move to the context "nearest" to the current cursor position, and return its
+" name.
+"
+" "Nearest" is intended to function similarly to the |*| search command: it
+" chooses the context under the cursor, if any; if none, it searches to the end
+" of the current line.
+"
+" If there is no nearest context, the cursor is unmoved.
+function! s:NearestContext()
+  " Search the current line for the next context.  We assume this looks like a
+  " ']' at the end of something like '[@...]', where the '...' is anything
+  " without any '[' or ']' characters.  This line also moves to the ']' if there
+  " is one; otherwise we return (and the cursor will be unmoved).
+  let l:context_opener = '\[\@'
+  let l:no_square_brackets = '[^][]*'
+  let l:line = search('\v(' . l:context_opener . l:no_square_brackets . ')@<='
+        \ .'\]', 'ce', line('.'))
+  if empty(l:line)
+    return ''
+  endif
+
+  " Move back to the '@' (including a following non-word character, if any).
+  " The next character is the first character of the context, so we move right
+  " by 1 column.
+  call search('\v\@\W?', 'be')
+  normal! l
+  " TODO(chiphogg): assert that this leaves us on the same line.
+  return expand('<cword>')
 endfunction
 
 
