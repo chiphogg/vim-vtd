@@ -178,6 +178,22 @@ endfunction
 
 
 ""
+" Save the current cursor position.
+function! s:VtdView.saveCursor()
+  let self._cursor = getpos('.')
+endfunction
+
+
+""
+" Restore the saved cursor position, if any.
+function! s:VtdView.restoreCursor()
+  if has_key(self, '_cursor')
+    call setpos('.', self._cursor)
+  endif
+endfunction
+
+
+""
 " Enter the VTD View buffer and display the contents.
 function! s:VtdView.enter()
   call self.switchToViewBuffer()
@@ -203,6 +219,9 @@ endfunction
 function! s:VtdView.tearDown()
   " Remove special keymaps from the buffer.
   call self.removeKeymaps()
+
+  " Save the cursor position for the next time we enter this view.
+  call self.saveCursor()
 
   " Any additional teardown tasks for this particular VTD View.
   call self.specialTearDown()
@@ -260,6 +279,7 @@ function! s:VtdView.fill(lines)
   silent! put =l:text
   silent! 1,1 delete _
   setlocal nomodifiable
+  call self.restoreCursor()
 endfunction
 
 
