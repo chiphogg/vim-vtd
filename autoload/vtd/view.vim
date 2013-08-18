@@ -186,21 +186,44 @@ endfunction
 
 
 ""
-" Special setup tasks specific to a particular type of VTD view window.
+" Perform setup tasks for a VTD view window.
 "
-" Since this is the (purely abstract) superclass, this function does nothing;
-" base classes should override it.
+" Tasks specific to a particular type may be performed in a .specialSetUp()
+" function.
 function! s:VtdView.setUp()
+  call self.specialSetUp()
+endfunction
+
+
+""
+" Teardown tasks common to all types of VTD view window.
+"
+" Tasks specific to a particular type may be performed in a .specialTearDown()
+" function.
+function! s:VtdView.tearDown()
+  " Remove special keymaps from the buffer.
+  call self.removeKeymaps()
+
+  " Any additional teardown tasks for this particular VTD View.
+  call self.specialTearDown()
+endfunction
+
+
+""
+" Setup tasks specific to a particular type of VTD View window.
+"
+" Intended to be overridden by specific instances.
+function! s:VtdView.specialSetUp()
   return
 endfunction
 
 
 ""
-" Special teardown tasks specific to a particular type of VTD view window.
+" Teardown tasks specific to a particular type of VTD View window.
 "
-" This default implementation simply deletes all the keymaps.
-function! s:VtdView.tearDown()
-  call self.removeKeymaps()
+" Intended to be overridden by specific instances.
+function! s:VtdView.specialTearDown()
+  return
 endfunction
 
 
@@ -288,7 +311,7 @@ function! s:VtdViewContexts.display()
 endfunction
 
 
-function! s:VtdViewContexts.setUp()
+function! s:VtdViewContexts.specialSetUp()
   call add(self._keymaps, s:Keymap.New('+',
       \ ':call <SID>IncludeNearestContext()<CR>',
       \ 'Add the nearest context to the "included" list.'))
