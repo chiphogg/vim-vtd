@@ -316,6 +316,10 @@ function! s:VtdViewContexts.setUp()
   call add(self._keymaps, s:Keymap.New('/',
       \ ':call <SID>ClearNearestContext()<CR>',
       \ 'Clear the nearest context from both "included" and "excluded" lists.'))
+  call add(self._keymaps, s:Keymap.New('*',
+      \ ':call <SID>ToggleNearestContext()<CR>',
+      \ 'Cycle setting for nearest context among "included", "excluded",'
+      \ . ' and neither.'))
   call self.setupKeymaps()
 endfunction
 
@@ -342,6 +346,16 @@ function! s:ClearNearestContext()
   let l:context = s:NearestContext()
   if !empty(l:context)
     call vtd#view#ClearContexts([l:context])
+  endif
+  call vtd#view#Enter()
+endfunction
+
+
+function! s:ToggleNearestContext()
+  let l:context = s:NearestContext()
+  if !empty(l:context)
+    let l:setting = s:ContextSettingFor(l:context)
+    call l:setting.Next()
   endif
   call vtd#view#Enter()
 endfunction
