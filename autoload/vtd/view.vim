@@ -417,10 +417,7 @@ function! s:NearestContext()
   endif
 
   " Move back to the '@' (including a following non-word character, if any).
-  " The next character is the first character of the context, so we move right
-  " by 1 column.
   call search('\v\@\W?', 'be')
-  normal! l
   " TODO(chiphogg): assert that this leaves us on the same line.
   return expand('<cword>')
 endfunction
