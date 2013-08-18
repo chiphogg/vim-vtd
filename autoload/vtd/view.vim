@@ -313,6 +313,9 @@ function! s:VtdViewContexts.setUp()
   call add(self._keymaps, s:Keymap.New('-',
       \ ':call <SID>ExcludeNearestContext()<CR>',
       \ 'Add the nearest context to the "excluded" list.'))
+  call add(self._keymaps, s:Keymap.New('/',
+      \ ':call <SID>ClearNearestContext()<CR>',
+      \ 'Clear the nearest context from both "included" and "excluded" lists.'))
   call self.setupKeymaps()
 endfunction
 
@@ -330,6 +333,15 @@ function! s:ExcludeNearestContext()
   let l:context = s:NearestContext()
   if !empty(l:context)
     call vtd#view#ExcludeContexts([l:context])
+  endif
+  call vtd#view#Enter()
+endfunction
+
+
+function! s:ClearNearestContext()
+  let l:context = s:NearestContext()
+  if !empty(l:context)
+    call vtd#view#ClearContexts([l:context])
   endif
   call vtd#view#Enter()
 endfunction
