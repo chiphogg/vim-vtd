@@ -136,6 +136,7 @@ let s:VtdView = {}
 function! s:VtdView.New()
   let l:new = copy(s:VtdView)
   let l:new._keymaps = []
+  let l:new.active = 0
   return l:new
 endfunction
 
@@ -207,6 +208,7 @@ endfunction
 " Tasks specific to a particular type may be performed in a .specialSetUp()
 " function.
 function! s:VtdView.setUp()
+  let self.active = 1
   call self.specialSetUp()
 endfunction
 
@@ -217,6 +219,8 @@ endfunction
 " Tasks specific to a particular type may be performed in a .specialTearDown()
 " function.
 function! s:VtdView.tearDown()
+  let self.active = 0
+
   " Remove special keymaps from the buffer.
   call self.removeKeymaps()
 
@@ -272,6 +276,10 @@ endfunction
 ""
 " Replace contents of current buffer with the given {lines} of text.
 function! s:VtdView.fill(lines)
+  if self.active
+    call self.saveCursor()
+  endif
+
   let l:text = join(a:lines, "\n")
 
   setlocal modifiable
