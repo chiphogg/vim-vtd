@@ -1,3 +1,4 @@
+" Context highlighting.
 syn region Context matchgroup=contextEnds start="\v\[\@[!#+-]?" end="\v\]"
     \ concealends
     \ contains=ContextInclude,ContextExclude,ContextOnly,ContextNone,
@@ -11,3 +12,7 @@ highlight ContextCount guifg=#aaaaaa
 highlight ContextBare guifg=LightBlue
 highlight ContextInclude guifg=Green
 highlight ContextExclude guifg=Red
+
+" Keymap highlighting for single-key maps.
+syn match Keymap "\v\[.\]"
+highlight Keymap guifg=LightYellow gui=bold term=bold ctermfg=14

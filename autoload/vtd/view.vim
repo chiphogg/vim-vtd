@@ -79,6 +79,7 @@ function! s:RegisterView(object, name, ...)
   let a:object.type = a:name
 
   if !empty(l:keymapping)
+    let a:object.key = l:keymapping
     call add(s:universal_keymaps, s:Keymap.New(l:keymapping,
         \ ':call vtd#view#Enter("' . a:name . '")<CR>',
         \ 'Jump to ' . a:name))
@@ -136,6 +137,7 @@ let s:VtdView = {}
 function! s:VtdView.New()
   let l:new = copy(s:VtdView)
   let l:new._keymaps = []
+  let l:new.key = ''
   let l:new.active = 0
   return l:new
 endfunction
@@ -279,8 +281,15 @@ function! s:VtdView.fill(lines)
   if self.active
     call self.saveCursor()
   endif
+  let l:lines = []
 
-  let l:text = join(a:lines, "\n")
+  " Basic content, common to all views.
+  call extend(l:lines, self.title())
+
+  " Additional lines specific to this particular view.
+  call extend(l:lines, a:lines)
+
+  let l:text = join(l:lines, "\n")
 
   setlocal modifiable
   silent! 1,$ delete _
@@ -288,6 +297,12 @@ function! s:VtdView.fill(lines)
   silent! 1,1 delete _
   setlocal nomodifiable
   call self.restoreCursor()
+endfunction
+
+
+function s:VtdView.title()
+  return !has_key(self, 'type') ? [] :
+      \ ['= ' . s:DecorateWithKeymapping(self.type, self.key) . ' =', '']
 endfunction
 
 
@@ -520,6 +535,32 @@ endfunction
 
 
 " @subsection Helper functions
+
+
+""
+" If {text} contains the given {key}, surround {key} in {text} with square
+" brackets to indicate that it is a mapping.
+"
+" Does nothing if {key} is empty.
+function! s:DecorateWithKeymapping(text, key)
+  if empty(a:key)
+    return a:text
+  endif
+  let l:key = '[' . a:key . ']'
+  let l:index = stridx(a:text, a:key)
+  if l:index == -1
+    " If the key doesn't appear in the text, tack it on to the end.
+    return a:text . ' (' . l:key . ')'
+  elseif l:index == 0
+    " Special case if the text begins with the key (otherwise we'll hit negative
+    " indices and it won't do what we expect).
+    return l:key . a:text[1:]
+  else
+    " If the key appears after the first character, replace it with the wrapped
+    " version.
+    return a:text[0:(l:index - 1)] . l:key . a:text[(l:index + 1):]
+  endif
+endfunction
 
 
 ""
