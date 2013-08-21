@@ -1,5 +1,5 @@
 " Context highlighting.
-syn region Context matchgroup=contextEnds start="\v\[\@[!#+-]?" end="\v\]"
+syn region Context matchgroup=contextEnds start="\v\[\@" end="\v\]"
     \ concealends
     \ contains=ContextInclude,ContextExclude,ContextOnly,ContextNone,
     \ ContextBare,ContextCount
