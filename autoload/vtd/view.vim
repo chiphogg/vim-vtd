@@ -509,6 +509,7 @@ function! vtd#view#IncludeContexts(contexts)
     let l:setting = s:ContextSettingFor(l:context)
     let l:setting.value = l:setting.options.include
   endfor
+  call s:UpdateSystemContexts()
 endfunction
 
 
@@ -520,6 +521,7 @@ function! vtd#view#ExcludeContexts(contexts)
     let l:setting = s:ContextSettingFor(l:context)
     let l:setting.value = l:setting.options.exclude
   endfor
+  call s:UpdateSystemContexts()
 endfunction
 
 
@@ -531,10 +533,20 @@ function! vtd#view#ClearContexts(contexts)
     let l:setting = s:ContextSettingFor(l:context)
     let l:setting.value = l:setting.options.clear
   endfor
+  call s:UpdateSystemContexts()
 endfunction
 
 
 " @subsection Helper functions
+
+
+""
+" Update the trusted system to use the contexts we've included.
+function! s:UpdateSystemContexts()
+  python ci = vim.eval('s:ContextsToInclude()')
+  python ce = vim.eval('s:ContextsToExclude()')
+  python my_system.SetContexts(include=ci, exclude=ce)
+endfunction
 
 
 ""
@@ -629,4 +641,26 @@ function! s:ContextSettingFor(context)
   endif
 
   return s:_context_settings[a:context]
+endfunction
+
+
+""
+" The list of contexts (having at least one visible NextAction) to include.
+function! s:ContextsToInclude()
+  let l:contexts = []
+  python vim.bindeval('l:contexts').extend(my_system.ContextList())
+  call filter(map(l:contexts, 'v:val[0]'),
+      \ 's:ContextSettingFor(v:val).value ==# s:ContextSetting.options.include')
+  return l:contexts
+endfunction
+
+
+""
+" The list of contexts (having at least one visible NextAction) to exclude.
+function! s:ContextsToExclude()
+  let l:contexts = []
+  python vim.bindeval('l:contexts').extend(my_system.ContextList())
+  call filter(map(l:contexts, 'v:val[0]'),
+      \ 's:ContextSettingFor(v:val).value ==# s:ContextSetting.options.exclude')
+  return l:contexts
 endfunction
