@@ -21,6 +21,9 @@ highlight link LateInterval Todo
 highlight link TimeDifference Type
 
 " Priority-based NextAction highlighting.
+syn region NextAction start="\v^\@" end="\v$" matchgroup=nextActionEnds
+    \ contains=ParentText,VtdPriority0,VtdPriority1,VtdPriority2,VtdPriority3,
+    \ VtdPriority4,VtdPriorityX
 
 ""
 " Declare a syntax-region between '[Pc:' and ':Pc]', where 'c' means a:char.
@@ -42,6 +45,10 @@ highlight VtdPriority2 guifg=LightGrey ctermfg=LightGrey
 highlight VtdPriority3 guifg=#777777 ctermfg=DarkGrey
 highlight VtdPriority4 guifg=#445544 ctermfg=DarkGreen
 highlight link VtdPriorityX WarningMsg
+
+" Parent text highlighting.
+syn region ParentText start="\v(\@ |:: )@<=[^[]" end="\v( ::)@="
+highlight link ParentText Comment
 
 " Keymap highlighting for single-key maps.
 syn match Keymap "\v\[.\]"
