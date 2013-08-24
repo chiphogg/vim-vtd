@@ -13,6 +13,13 @@ highlight ContextBare guifg=LightBlue
 highlight ContextInclude guifg=Green
 highlight ContextExclude guifg=Red
 
+" Due/late time interval highlighting.
+syn region TimeDifference start="\v\((Late|Due)@=" end="\v\)$"
+    \ contains=LateInterval
+syn match LateInterval "Late" contained
+highlight link LateInterval Todo
+highlight link TimeDifference Type
+
 " Keymap highlighting for single-key maps.
 syn match Keymap "\v\[.\]"
 highlight Keymap guifg=LightYellow gui=bold term=bold ctermfg=14
