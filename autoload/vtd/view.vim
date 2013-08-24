@@ -447,7 +447,7 @@ call s:RegisterView(s:VtdViewNextActions, 'Next Actions', 'N')
 
 function! s:VtdViewNextActions.display()
   let l:actions = []
-  python na = [x.text for x in my_system.NextActions()]
+  python na = [NextActionDisplayText(x) for x in my_system.NextActions()]
   python vim.bindeval('l:actions').extend(na)
   call self.fill(l:actions)
 endfunction
