@@ -22,8 +22,24 @@ def NextActionDisplayText(next_action):
         by the NextAction text, followed by an indication of how the current
         time compares to the due date (if any).
     """
-    return PrependParentProjectText(next_action, next_action.text) \
+    text = PriorityDecoratedText(next_action)
+    return '@ ' + PrependParentProjectText(next_action, text) \
         + DueDateIndication(next_action)
+
+
+def PriorityDecoratedText(node):
+    """node.text, appropriately decorated according to its priority.
+
+    Args:
+        node: A libvtd.node.Node object.
+
+    Returns:
+        node.text, wrapped in '[P#:', ':P#]' (where '#' is the priority level,
+        or else 'X' if no valid priority is set).
+    """
+    allowed_priorities = [x for x in range(5)]  # [0, ..., 4].
+    priority = node.priority if node.priority in allowed_priorities else 'X'
+    return '[P{0}:{1}:P{0}]'.format(priority, node.text)
 
 
 def PrependParentProjectText(node, text):
