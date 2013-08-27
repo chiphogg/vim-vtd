@@ -212,6 +212,7 @@ endfunction
 function! s:VtdView.setUp()
   let self.active = 1
   call self.specialSetUp()
+  call self.setupKeymaps()
 endfunction
 
 
@@ -368,7 +369,6 @@ function! s:VtdViewContexts.specialSetUp()
       \ ':call <SID>ToggleNearestContext()<CR>',
       \ 'Cycle setting for nearest context among "included", "excluded",'
       \ . ' and neither.'))
-  call self.setupKeymaps()
 endfunction
 
 
