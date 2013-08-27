@@ -10,6 +10,9 @@ let s:current_vtd_view = {}
 " A list of keymapping objects which apply to every VTD View type.
 let s:universal_keymaps = []
 
+" If set to a context, we show only that context.
+let s:exclusive_context = ''
+
 " @section Classes and objects
 
 " TODO(chiphogg): Split classes into separate files under lib/vtd after I have a
@@ -400,10 +403,15 @@ function! s:DisplayContextWithStatus(context)
 
   " Mark this context according to its status (visible, 
   let l:marker = ''
-  if s:ContextSettingFor(l:name).value ==# s:ContextSetting.options.include
-    let l:marker = '+'
-  elseif s:ContextSettingFor(l:name).value ==# s:ContextSetting.options.exclude
-    let l:marker = '-'
+  if empty(s:exclusive_context)
+    let l:setting = s:ContextSettingFor(l:name)
+    if l:setting.value ==# s:ContextSetting.options.include
+      let l:marker = '+'
+    elseif l:setting.value ==# s:ContextSetting.options.exclude
+      let l:marker = '-'
+    endif
+  else
+    let l:marker = (l:name == s:exclusive_context) ? '!' : '#'
   endif
 
   return '[@' . l:marker . l:name . ' (' . l:count . ')]'
@@ -775,9 +783,14 @@ endfunction
 " The list of contexts (having at least one visible NextAction) to include.
 function! s:ContextsToInclude()
   let l:contexts = []
-  python vim.bindeval('l:contexts').extend(my_system.ContextList())
-  call filter(map(l:contexts, 'v:val[0]'),
-      \ 's:ContextSettingFor(v:val).value ==# s:ContextSetting.options.include')
+  if empty(s:exclusive_context)
+    python vim.bindeval('l:contexts').extend(my_system.ContextList())
+    call filter(map(l:contexts, 'v:val[0]'),
+          \ 's:ContextSettingFor(v:val).value ==# '
+          \ . 's:ContextSetting.options.include')
+  else
+    call add(l:contexts, s:exclusive_context)
+  endif
   return l:contexts
 endfunction
 
@@ -786,9 +799,12 @@ endfunction
 " The list of contexts (having at least one visible NextAction) to exclude.
 function! s:ContextsToExclude()
   let l:contexts = []
-  python vim.bindeval('l:contexts').extend(my_system.ContextList())
-  call filter(map(l:contexts, 'v:val[0]'),
-      \ 's:ContextSettingFor(v:val).value ==# s:ContextSetting.options.exclude')
+  if empty(s:exclusive_context)
+    python vim.bindeval('l:contexts').extend(my_system.ContextList())
+    call filter(map(l:contexts, 'v:val[0]'),
+          \ 's:ContextSettingFor(v:val).value ==# '
+          \ . 's:ContextSetting.options.exclude')
+  endif
   return l:contexts
 endfunction
 
