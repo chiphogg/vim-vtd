@@ -679,3 +679,12 @@ function! s:ContextsToExclude()
       \ 's:ContextSettingFor(v:val).value ==# s:ContextSetting.options.exclude')
   return l:contexts
 endfunction
+
+
+""
+" Echo a warning message.
+function! s:Warn(message)
+  echohl WarningMsg
+  echomsg a:message
+  echohl none
+endfunction
