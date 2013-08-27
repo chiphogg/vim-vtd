@@ -288,6 +288,7 @@ function! s:VtdView.fill(lines)
   call extend(l:lines, self.title())
 
   " Additional lines specific to this particular view.
+  let self._first_content_line = len(l:lines) + 1
   call extend(l:lines, a:lines)
 
   let l:text = join(l:lines, "\n")
@@ -447,7 +448,9 @@ call s:RegisterView(s:VtdViewNextActions, 'Next Actions', 'N')
 
 function! s:VtdViewNextActions.display()
   let l:actions = []
-  python na = [NextActionDisplayText(x) for x in my_system.NextActions()]
+  python next_actions = my_system.NextActions()
+  python next_action_lines = next_actions
+  python na = [NextActionDisplayText(x) for x in next_actions]
   python vim.bindeval('l:actions').extend(na)
   call self.fill(l:actions)
 endfunction
