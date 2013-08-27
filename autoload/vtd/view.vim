@@ -128,6 +128,68 @@ function! s:Keymap.unmap()
 endfunction
 
 
+" @subsection History functions
+" For now, just make a single global history object.  If I ever decide I want
+" more than one, I can turn it into a class.
+let s:history = {}
+let s:history._index = 0
+let s:history._changes = []
+
+
+""
+" Apply {patch} to {file}, and save it in the undo history (along with optional
+" [description]).
+function! s:history.apply(patch, file, ...)
+  " Optional parameters.
+  let l:description = (a:0 >= 1) ? a:1 : ''
+  " Add the patch to the end of the undo history, and "redo" it.  (This way the
+  " index will be updated correctly.)
+  call self.forgetRedo()
+  call add(self._changes, {'patch': a:patch, 'file': a:file,
+        \ 'description': l:description })
+  call self.redo()
+endfunction
+
+
+""
+" Forget any undone changes.
+function! s:history.forgetRedo()
+  if len(self._changes) > self._index
+    call remove(self._changes, self._index, -1)
+  endif
+endfunction
+
+
+""
+" Redo the last change in the stack.
+function! s:history.redo()
+  if self._index >= len(self._changes)
+    call s:Warn('Nothing to redo!')
+    return
+  endif
+
+  let l:patch = self._changes[self._index]
+  if s:Patch(l:patch.patch, l:patch.file)
+    let self._index += 1
+  endif
+endfunction
+
+
+""
+" Undo the last change in the stack.
+function! s:history.undo()
+  if self._index < 1
+    call s:Warn('Nothing to undo!')
+    return
+  endif
+
+  let l:patch = self._changes[self._index - 1]
+  if s:Patch(l:patch.patch, l:patch.file, '-R')
+    let self._index -= 1
+  endif
+endfunction
+
+
 " @subsection VTD View functions
 let s:VtdView = {}
 
