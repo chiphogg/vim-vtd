@@ -447,6 +447,7 @@ endfunction
 
 
 function! s:IncludeNearestContext()
+  let s:exclusive_context = ''
   let l:context = s:NearestContext()
   if !empty(l:context)
     call vtd#view#IncludeContexts([l:context])
@@ -456,6 +457,7 @@ endfunction
 
 
 function! s:ExcludeNearestContext()
+  let s:exclusive_context = ''
   let l:context = s:NearestContext()
   if !empty(l:context)
     call vtd#view#ExcludeContexts([l:context])
@@ -465,6 +467,7 @@ endfunction
 
 
 function! s:ClearNearestContext()
+  let s:exclusive_context = ''
   let l:context = s:NearestContext()
   if !empty(l:context)
     call vtd#view#ClearContexts([l:context])
@@ -474,6 +477,7 @@ endfunction
 
 
 function! s:ToggleNearestContext()
+  let s:exclusive_context = ''
   let l:context = s:NearestContext()
   if !empty(l:context)
     let l:setting = s:ContextSettingFor(l:context)
