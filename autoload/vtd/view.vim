@@ -440,6 +440,9 @@ function! s:VtdViewContexts.specialSetUp()
       \ ':call <SID>ToggleNearestContext()<CR>',
       \ 'Cycle setting for nearest context among "included", "excluded",'
       \ . ' and neither.'))
+  call add(self._keymaps, s:Keymap.New('!',
+      \ ':call <SID>ToggleNearestContextExclusive()<CR>',
+      \ 'Include *only* the nearest context (press twice to cancel).'))
 endfunction
 
 
@@ -475,6 +478,16 @@ function! s:ToggleNearestContext()
   if !empty(l:context)
     let l:setting = s:ContextSettingFor(l:context)
     call l:setting.Next()
+  endif
+  call vtd#view#Enter()
+endfunction
+
+
+function! s:ToggleNearestContextExclusive()
+  let l:context = s:NearestContext()
+  if !empty(l:context)
+    let s:exclusive_context = (s:exclusive_context ==# l:context) ?
+        \ '' : l:context
   endif
   call vtd#view#Enter()
 endfunction
