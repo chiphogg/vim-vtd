@@ -7,11 +7,15 @@ syn match ContextCount "\v\(\d+\)" contained
 syn match ContextBare "\v\@@<=\I\i* " contained
 syn match ContextInclude "\v(\@\+)@<=\I\i* " contained
 syn match ContextExclude "\v(\@-)@<=\I\i* " contained
+syn match ContextOnly "\v(\@\!)@<=\I\i* " contained
+syn match ContextNone "\v(\@#)@<=\I\i* " contained
 
 highlight ContextCount guifg=#aaaaaa
 highlight ContextBare guifg=LightBlue
 highlight ContextInclude guifg=Green
 highlight ContextExclude guifg=Red
+highlight link ContextOnly VtdPriority0
+highlight link ContextNone Ignore
 
 " Due/late time interval highlighting.
 syn region TimeDifference start="\v\((Late|Due)@=" end="\v\)$"
