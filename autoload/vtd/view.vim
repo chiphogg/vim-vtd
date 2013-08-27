@@ -691,3 +691,15 @@ function! s:Warn(message)
   echomsg a:message
   echohl none
 endfunction
+
+
+""
+" Apply {patch} to {file}, with [options].  Returns the success status of the
+" patch operation.
+function! s:Patch(patch, file, ...)
+  let l:options = (a:0 >= 1) ? a:1 : ''
+  let l:command = join(['patch', l:options, shellescape(a:file)])
+  let l:result = system(l:command, a:patch)
+  call vtd#view#Enter()
+  return empty(v:shell_error)
+endfunction
