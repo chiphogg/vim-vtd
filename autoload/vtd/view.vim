@@ -518,6 +518,43 @@ function! s:VtdViewNextActions.display()
 endfunction
 
 
+""
+" Check off the NextAction on the current line.
+function! s:VtdViewNextActions.checkoff()
+  " Check that the current line holds a valid NextAction.
+  let l:index = line(".") - self._first_content_line
+  if l:index < 0
+    call s:Warn('No Next Action on line ' . line(".") . '.')
+    return
+  endif
+
+  " Find the NextAction object and retrieve the info we need: its patch, its
+  " text, and its file name.
+  let l:vars = []
+  python na = next_action_lines[int(vim.eval('l:index'))]
+  python patch = na.Patch(libvtd.node.Actions.MarkDONE)
+  python vim.bindeval('l:vars').extend([patch, na.text, na.file_name])
+  let l:patch = l:vars[0]
+  let l:text = 'Mark as "DONE": "' . l:vars[1] . '"'
+  let l:file = l:vars[2]
+
+  " Patch the file
+  call s:history.apply(l:patch, l:file, l:text)
+endfunction
+
+
+function! s:CheckoffNextAction()
+  call s:current_vtd_view.checkoff()
+endfunction
+
+
+function! s:VtdViewNextActions.specialSetUp()
+  call add(self._keymaps, s:Keymap.New('<C-Space>',
+      \ ':call <SID>CheckoffNextAction()<CR>',
+      \ 'Check off the NextAction on the current line as "DONE"'))
+endfunction
+
+
 " @section Common functions
 
 
