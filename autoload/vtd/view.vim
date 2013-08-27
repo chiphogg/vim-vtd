@@ -402,7 +402,7 @@ function! s:DisplayContextWithStatus(context)
   let l:count = a:context[1]
 
   " Mark this context according to its status (visible, 
-  let l:marker = ''
+  let l:marker = ' '
   if empty(s:exclusive_context)
     let l:setting = s:ContextSettingFor(l:name)
     if l:setting.value ==# s:ContextSetting.options.include

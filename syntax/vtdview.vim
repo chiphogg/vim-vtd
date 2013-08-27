@@ -4,7 +4,7 @@ syn region Context matchgroup=contextEnds start="\v\[\@" end="\v\]"
     \ contains=ContextInclude,ContextExclude,ContextOnly,ContextNone,
     \ ContextBare,ContextCount
 syn match ContextCount "\v\(\d+\)" contained
-syn match ContextBare "\v\@@<=\I\i* " contained
+syn match ContextBare "\v(\@ )@<=\I\i* " contained
 syn match ContextInclude "\v(\@\+)@<=\I\i* " contained
 syn match ContextExclude "\v(\@-)@<=\I\i* " contained
 syn match ContextOnly "\v(\@\!)@<=\I\i* " contained
