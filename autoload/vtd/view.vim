@@ -546,12 +546,24 @@ endfunction
 function! s:CheckoffNextAction()
   call s:current_vtd_view.checkoff()
 endfunction
+function! s:HistoryUndo()
+  call s:history.undo()
+endfunction
+function! s:HistoryRedo()
+  call s:history.redo()
+endfunction
 
 
 function! s:VtdViewNextActions.specialSetUp()
   call add(self._keymaps, s:Keymap.New('<C-Space>',
       \ ':call <SID>CheckoffNextAction()<CR>',
       \ 'Check off the NextAction on the current line as "DONE"'))
+  call add(self._keymaps, s:Keymap.New('u',
+      \ ':call <SID>HistoryUndo()<CR>',
+      \ 'Undo the previous change to the Trusted System'))
+  call add(self._keymaps, s:Keymap.New('<C-R>',
+      \ ':call <SID>HistoryRedo()<CR>',
+      \ 'Undo the previous change to the Trusted System'))
 endfunction
 
 
