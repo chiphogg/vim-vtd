@@ -591,6 +591,7 @@ function! vtd#view#Enter(...)
 
   " Make sure we're getting the latest tasks, etc.
   call vtd#UpdateSystem()
+  call s:UpdateSystemContexts()
 
   " Check whether a VTD View object already exists.
   if !empty(s:current_vtd_view)
@@ -638,7 +639,6 @@ function! vtd#view#IncludeContexts(contexts)
     let l:setting = s:ContextSettingFor(l:context)
     let l:setting.value = l:setting.options.include
   endfor
-  call s:UpdateSystemContexts()
 endfunction
 
 
@@ -650,7 +650,6 @@ function! vtd#view#ExcludeContexts(contexts)
     let l:setting = s:ContextSettingFor(l:context)
     let l:setting.value = l:setting.options.exclude
   endfor
-  call s:UpdateSystemContexts()
 endfunction
 
 
@@ -662,7 +661,6 @@ function! vtd#view#ClearContexts(contexts)
     let l:setting = s:ContextSettingFor(l:context)
     let l:setting.value = l:setting.options.clear
   endfor
-  call s:UpdateSystemContexts()
 endfunction
 
 
