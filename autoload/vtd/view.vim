@@ -140,6 +140,14 @@ function! s:Keymap.unmap()
 endfunction
 
 
+""
+" A human-readable description of the keymap and what it does.
+function! s:Keymap.display()
+  let l:key = '[' . self._key . ']'
+  return printf('%12s: %s', l:key, self._description)
+endfunction
+
+
 " @subsection History functions
 " For now, just make a single global history object.  If I ever decide I want
 " more than one, I can turn it into a class.
