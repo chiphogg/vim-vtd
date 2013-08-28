@@ -55,5 +55,5 @@ syn region ParentText start="\v(\@ |:: )@<=[^[]" end="\v( ::)@="
 highlight link ParentText Comment
 
 " Keymap highlighting for single-key maps.
-syn match Keymap "\v\[.\]"
+syn match Keymap "\v\[(.|\<C-\i+\>)\]"
 highlight Keymap guifg=LightYellow gui=bold term=bold ctermfg=14
