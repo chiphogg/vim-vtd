@@ -45,6 +45,15 @@ endfunction
 
 
 ""
+" The name of the option given by [index] (defaults to current).
+function! s:CyclableOption.Setting(...)
+  " Optional parameters.
+  let l:index = (a:0 >= 1) ? a:1 : self.value
+  return self._values[l:index % len(self._values)]
+endfunction
+
+
+""
 " Advance this option to the next permissible value.  (After the last, it loops
 " around to the first.)
 function! s:CyclableOption.Next()
