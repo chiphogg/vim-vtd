@@ -294,14 +294,6 @@ endfunction
 
 
 ""
-" Enter the VTD View buffer and display the contents.
-function! s:VtdView.enter()
-  call self.switchToViewBuffer()
-  call self.display()
-endfunction
-
-
-""
 " Perform setup tasks for a VTD view window.
 "
 " Tasks specific to a particular type may be performed in a .specialSetUp()
@@ -654,7 +646,8 @@ function! vtd#view#Enter(...)
   if !empty(s:current_vtd_view)
     " If the existing view is valid, simply enter it directly, and we're done.
     if !l:specific_type_requested || l:view_type == s:CurrentViewType()
-      call s:current_vtd_view.enter()
+      call s:current_vtd_view.switchToViewBuffer()
+      call s:current_vtd_view.display()
       return
     endif
     " If the existing view is invalid, we need to clean it up before creating a
@@ -778,8 +771,9 @@ endfunction
 function! s:VtdViewSetUp(view_type)
   " TODO(chiphogg): Assert that view_type is a valid VTD View class type.
   let s:current_vtd_view = s:ViewObjects[a:view_type]
-  call s:current_vtd_view.enter()
+  call s:current_vtd_view.switchToViewBuffer()
   call s:current_vtd_view.setUp()
+  call s:current_vtd_view.display()
 endfunction
 
 
