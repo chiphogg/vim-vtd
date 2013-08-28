@@ -70,6 +70,11 @@ function! s:ContextSetting.New()
 endfunction
 
 
+""
+" Whether or not to show the interactive help.
+let s:show_help = s:CyclableOption.New(['Hide', 'Show'])
+
+
 " Registered VTD View classes.  These can be accessed by their "name"
 " ("Contexts", "Next Actions", "Summary", etc.).
 " 
@@ -212,6 +217,16 @@ endfunction
 
 " @subsection VTD View functions
 let s:VtdView = {}
+
+
+" All VtdView objects should have a '?' keymap to show help.
+call add(s:universal_keymaps, s:Keymap.New('?',
+      \ ':call <SID>ToggleHelpDisplay()<CR>',
+      \ 'Toggle the "help" display'))
+function! s:ToggleHelpDisplay()
+  call s:show_help.Next()
+  call vtd#view#Enter()
+endfunction
 
 
 ""
