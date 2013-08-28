@@ -278,6 +278,30 @@ endfunction
 
 
 ""
+" Print an interactive help menu for the current View.
+function! s:VtdView.help()
+  let l:next_setting = s:show_help.Setting(s:show_help.value + 1)
+  let l:lines = ['= [?] ' . l:next_setting . ' interactive help =']
+  if s:show_help.value ==# s:show_help.options.Show
+    call extend(l:lines, ['', '== Global Keymaps =='])
+    for l:keymap in s:universal_keymaps
+      call add(l:lines, l:keymap.display())
+    endfor
+
+    if len(self._keymaps) > 0
+      call extend(l:lines, ['', '== Special Keymaps =='])
+      for l:keymap in self._keymaps
+        call add(l:lines, l:keymap.display())
+      endfor
+    endif
+
+    call add(l:lines, '')
+  endif
+  return l:lines
+endfunction
+
+
+""
 " Save the current cursor position.
 function! s:VtdView.saveCursor()
   let self._cursor = getpos('.')
@@ -374,6 +398,7 @@ function! s:VtdView.fill(lines)
   let l:lines = []
 
   " Basic content, common to all views.
+  call extend(l:lines, self.help())
   call extend(l:lines, self.title())
 
   " Additional lines specific to this particular view.
