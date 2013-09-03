@@ -17,6 +17,11 @@ highlight ContextExclude guifg=Red
 highlight link ContextOnly VtdPriority0
 highlight link ContextNone Ignore
 
+" Help regions.
+syn region VtdHelp matchgroup=vtdHelpEnds start="\v^\? ?" end="\v$" concealends
+    \ contains=Keymap,VtdHelpTitle
+highlight link VtdHelp Directory
+
 " Due/late time interval highlighting.
 syn region TimeDifference start="\v\((Late|Due)@=" end="\v\)$"
     \ contains=LateInterval
