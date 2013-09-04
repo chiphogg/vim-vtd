@@ -584,9 +584,11 @@ call s:RegisterView(s:VtdViewNextActions, 'Next Actions', 'N')
 
 function! s:VtdViewNextActions.display()
   let l:actions = []
-  python next_actions = my_system.NextActions()
-  python next_action_lines = next_actions
-  python na = [NextActionDisplayText(x) for x in next_actions]
+
+  " Populates the global python variable 'next_action_sections':
+  python MakeSectionedActions(my_system.NextActions())
+
+  python na = next_action_sections.Lines(NextActionDisplayText)
   python vim.bindeval('l:actions').extend(na)
   call self.fill(l:actions)
 endfunction
@@ -597,7 +599,9 @@ endfunction
 function! s:VtdViewNextActions.checkoff()
   " Check that the current line holds a valid NextAction.
   let l:index = line(".") - self._first_content_line
-  if l:index < 0
+  python na = next_action_sections.NodeAt(int(vim.eval('l:index')))
+  python vim.command('let l:none = {}'.format(0 if na else 1))
+  if l:none
     call s:Warn('No Next Action on line ' . line(".") . '.')
     return
   endif
@@ -605,7 +609,6 @@ function! s:VtdViewNextActions.checkoff()
   " Find the NextAction object and retrieve the info we need: its patch, its
   " text, and its file name.
   let l:vars = []
-  python na = next_action_lines[int(vim.eval('l:index'))]
   python patch = na.Patch(libvtd.node.Actions.MarkDONE)
   python vim.bindeval('l:vars').extend([patch, na.text, na.file_name])
   let l:patch = l:vars[0]

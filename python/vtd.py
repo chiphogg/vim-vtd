@@ -1,4 +1,6 @@
+import collections
 import datetime
+import libvtd.node
 import libvtd.trusted_system
 
 
@@ -126,3 +128,96 @@ def Quantity(number, singular, plural=None):
     plural = plural if plural else singular + 's'
     number = int(number)
     return '{} {}'.format(number, singular if number == 1 else plural)
+
+
+class Section(object):
+    """A titled, ordered collection of nodes."""
+    def __init__(self, title):
+        self.title = title
+        self.nodes = []
+
+    def Lines(self, text_function):
+        """A sequence of lines of text to display.
+
+        Args:
+            text_function: A function which accepts a Node and outputs the
+                string to display for that Node.
+
+        Returns:
+            A sequence of strings representing the text for this section.
+        """
+        lines = ['= {} ='.format(self.title)]
+        for node in self.nodes:
+            lines.append(text_function(node))
+        return lines
+
+
+class SectionedDisplay(object):
+    """Display text which is broken up into sections.
+
+    Can give a list of lines of text, and can associate lines of text with
+    Nodes.
+    """
+    def __init__(self):
+        self.sections = []
+
+    def Lines(self, text_function):
+        """A sequence of lines of text to display.
+
+        Args:
+            text_function: A function which accepts a Node and outputs the
+                string to display for that Node.
+
+        Returns:
+            A sequence of strings representing the text for all sections.
+        """
+        lines = []
+        self.first_line = []
+        for section in self.sections:
+            lines.append('')
+            self.first_line.append(len(lines) - 1)
+            lines.extend(section.Lines(text_function))
+        return lines[1:]
+
+    def NodeAt(self, num):
+        """Return the Node object at a given line.
+
+        Args:
+            num: The line number relative to the start of these sections.
+                (Title of first section is '0'.)
+
+        Returns:
+            The Node object corresponding to the given line.
+        """
+        indexed_lines = [x for x in enumerate(self.first_line)]
+        for index, first_line in reversed(indexed_lines):
+            if first_line < num:
+                section = self.sections[index]
+                node_index = num - first_line - 1
+                if (node_index < len(section.nodes)):
+                    return section.nodes[node_index]
+                else:
+                    return None
+        return None
+
+
+def MakeSectionedActions(actions):
+    """Store an updated NextActions list in next_action_sections variable."""
+    global next_action_sections
+
+    # Categorize into sections ("late", "due", "ready", ...).
+    categorized_actions = collections.defaultdict(list)
+    now = datetime.datetime.now()
+    for action in actions:
+        categorized_actions[action.DateState(now)].append(action)
+
+    # Make a section for each category.
+    next_action_sections = SectionedDisplay()
+    types = categorized_actions.keys()
+    types.sort(reverse=True)
+    for type in types:
+        section = Section('{} ({})'.format(
+            libvtd.node.DateStates[type].title(),
+            len(categorized_actions[type])))
+        section.nodes.extend(categorized_actions[type])
+        next_action_sections.sections.append(section)
