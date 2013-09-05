@@ -211,6 +211,12 @@ def MakeSectionedActions(actions):
     for action in actions:
         categorized_actions[action.DateState(now)].append(action)
 
+    # Sorter based on [priority (increasing), due date (increasing)]
+    max_date = datetime.datetime(datetime.MAXYEAR, 12, 31, 23, 59, 59)
+    date_key = lambda x: x.due_date if x.due_date else max_date
+    priority_key = lambda x: -1 if x.priority is None else x.priority
+    key = lambda x: (priority_key(x), date_key(x))
+
     # Make a section for each category.
     next_action_sections = SectionedDisplay()
     types = categorized_actions.keys()
@@ -219,5 +225,6 @@ def MakeSectionedActions(actions):
         section = Section('{} ({})'.format(
             libvtd.node.DateStates[type].title(),
             len(categorized_actions[type])))
+        categorized_actions[type].sort(key=key)
         section.nodes.extend(categorized_actions[type])
         next_action_sections.sections.append(section)
