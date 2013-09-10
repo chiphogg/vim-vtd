@@ -13,6 +13,6 @@ nmap <silent> <buffer> q Q
 
 augroup vtd_view
   autocmd!
-  autocmd FocusLost,BufLeave,FocusGained,BufEnter,CursorHold,CursorMoved
+  autocmd FocusLost,BufLeave,FocusGained,BufEnter,CursorHold
       \ <buffer> call vtd#view#Enter()
 augroup END
