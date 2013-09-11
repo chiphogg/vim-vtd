@@ -696,24 +696,17 @@ function! s:VtdViewRecurs.putPatchTypeInPythonVariable()
 endfunction
 
 
+" @subsection Waiting view
+
+
+let s:VtdViewWaiting = copy(s:VtdViewNextActions)
+call s:RegisterView(s:VtdViewWaiting, 'Waiting', 'W')
+
+
 ""
 " Put list of recurring actions in 'actions' variable.
-function! s:VtdViewRecurs.putActionsInPythonVariable()
-  python actions = my_system.RecurringActions()
-endfunction
-
-
-""
-" A format string for the checkoff() patch.
-function! s:VtdViewRecurs.CheckoffPatchFormat()
-  return 'Update "LASTDONE": "%s"'
-endfunction
-
-
-""
-" Puts the patch type in the 'patch_type' variable.
-function! s:VtdViewRecurs.putPatchTypeInPythonVariable()
-  python patch_type = libvtd.node.Actions.UpdateLASTDONE
+function! s:VtdViewWaiting.putActionsInPythonVariable()
+  python actions = my_system.Waiting()
 endfunction
 
 
