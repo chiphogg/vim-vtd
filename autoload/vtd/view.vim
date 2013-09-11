@@ -656,7 +656,7 @@ endfunction
 
 
 function! s:VtdViewNextActions.specialSetUp()
-  call add(self._keymaps, s:Keymap.New('<C-Space>',
+  call add(self._keymaps, s:Keymap.New('<Space>',
       \ ':call <SID>CheckoffNextAction()<CR>',
       \ 'Check off the NextAction on the current line as "DONE"'))
   call add(self._keymaps, s:Keymap.New('u',
