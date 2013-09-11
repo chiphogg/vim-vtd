@@ -585,12 +585,21 @@ call s:RegisterView(s:VtdViewNextActions, 'Next Actions', 'N')
 function! s:VtdViewNextActions.display()
   let l:actions = []
 
-  " Populates the global python variable 'next_action_sections':
-  python MakeSectionedActions(my_system.NextActions())
+  " Make python variable 'actions' hold the list of actions to display.
+  call self.putActionsInPythonVariable()
+  " Populate the global python variable 'next_action_sections'.
+  python MakeSectionedActions(actions)
 
   python na = next_action_sections.Lines(NextActionDisplayText)
   python vim.bindeval('l:actions').extend(na)
   call self.fill(l:actions)
+endfunction
+
+
+""
+" Put list of actions in 'actions' variable.
+function! s:VtdViewNextActions.putActionsInPythonVariable()
+  python actions = my_system.NextActions()
 endfunction
 
 
