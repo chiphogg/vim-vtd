@@ -704,7 +704,7 @@ call s:RegisterView(s:VtdViewWaiting, 'Waiting', 'W')
 
 
 ""
-" Put list of recurring actions in 'actions' variable.
+" Put list of 'waiting-for' actions in 'actions' variable.
 function! s:VtdViewWaiting.putActionsInPythonVariable()
   python actions = my_system.Waiting()
 endfunction
