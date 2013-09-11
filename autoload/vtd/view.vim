@@ -668,6 +668,55 @@ function! s:VtdViewNextActions.specialSetUp()
 endfunction
 
 
+" @subsection Recurring Actions view
+
+
+let s:VtdViewRecurs = copy(s:VtdViewNextActions)
+call s:RegisterView(s:VtdViewRecurs, 'Recurring Actions', 'R')
+
+
+""
+" Put list of recurring actions in 'actions' variable.
+function! s:VtdViewRecurs.putActionsInPythonVariable()
+  python actions = my_system.RecurringActions()
+endfunction
+
+
+""
+" A format string for the checkoff() patch.
+function! s:VtdViewRecurs.CheckoffPatchFormat()
+  return 'Update "LASTDONE": "%s"'
+endfunction
+
+
+""
+" Puts the patch type in the 'patch_type' variable.
+function! s:VtdViewRecurs.putPatchTypeInPythonVariable()
+  python patch_type = libvtd.node.Actions.UpdateLASTDONE
+endfunction
+
+
+""
+" Put list of recurring actions in 'actions' variable.
+function! s:VtdViewRecurs.putActionsInPythonVariable()
+  python actions = my_system.RecurringActions()
+endfunction
+
+
+""
+" A format string for the checkoff() patch.
+function! s:VtdViewRecurs.CheckoffPatchFormat()
+  return 'Update "LASTDONE": "%s"'
+endfunction
+
+
+""
+" Puts the patch type in the 'patch_type' variable.
+function! s:VtdViewRecurs.putPatchTypeInPythonVariable()
+  python patch_type = libvtd.node.Actions.UpdateLASTDONE
+endfunction
+
+
 " @section Common functions
 
 
