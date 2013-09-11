@@ -618,14 +618,29 @@ function! s:VtdViewNextActions.checkoff()
   " Find the NextAction object and retrieve the info we need: its patch, its
   " text, and its file name.
   let l:vars = []
-  python patch = na.Patch(libvtd.node.Actions.MarkDONE)
+  call self.putPatchTypeInPythonVariable()
+  python patch = na.Patch(patch_type)
   python vim.bindeval('l:vars').extend([patch, na.text, na.file_name])
   let l:patch = l:vars[0]
-  let l:text = 'Mark as "DONE": "' . l:vars[1] . '"'
+  let l:text = printf(self.CheckoffPatchFormat(), l:vars[1])
   let l:file = l:vars[2]
 
   " Patch the file
   call s:history.apply(l:patch, l:file, l:text)
+endfunction
+
+
+""
+" A format string for the checkoff() patch.
+function! s:VtdViewNextActions.CheckoffPatchFormat()
+  return 'Mark as "DONE": "%s"'
+endfunction
+
+
+""
+" Puts the patch type in the 'patch_type' variable.
+function! s:VtdViewNextActions.putPatchTypeInPythonVariable()
+  python patch_type = libvtd.node.Actions.MarkDONE
 endfunction
 
 
