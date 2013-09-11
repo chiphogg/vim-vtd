@@ -710,6 +710,20 @@ function! s:VtdViewWaiting.putActionsInPythonVariable()
 endfunction
 
 
+" @subsection Inboxes view
+
+
+let s:VtdViewInboxes = copy(s:VtdViewRecurs)
+call s:RegisterView(s:VtdViewInboxes, 'Inboxes', 'I')
+
+
+""
+" Put list of inboxes in 'actions' variable.
+function! s:VtdViewInboxes.putActionsInPythonVariable()
+  python actions = my_system.Inboxes()
+endfunction
+
+
 " @section Common functions
 
 
