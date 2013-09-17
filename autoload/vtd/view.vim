@@ -695,6 +695,24 @@ function! s:VtdViewInboxes.putActionsInPythonVariable()
 endfunction
 
 
+" @subsection 'All' view (NextActions, RecurringActions, Inboxes)
+
+
+let s:VtdViewInboxes = copy(s:VtdViewRecurs)
+call s:RegisterView(s:VtdViewInboxes,
+    \ 'All (Next Actions; Recurring Actions; Inboxes)', 'A')
+
+
+""
+" Put list of doable actions in 'actions' variable.
+function! s:VtdViewInboxes.putActionsInPythonVariable()
+  python actions = []
+  python actions.extend(my_system.Inboxes())
+  python actions.extend(my_system.RecurringActions())
+  python actions.extend(my_system.NextActions())
+endfunction
+
+
 " @subsection Waiting view
 
 
