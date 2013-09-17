@@ -681,20 +681,6 @@ function! s:VtdViewRecurs.CheckoffPatchFormat()
 endfunction
 
 
-" @subsection Waiting view
-
-
-let s:VtdViewWaiting = copy(s:VtdViewNextActions)
-call s:RegisterView(s:VtdViewWaiting, 'Waiting', 'W')
-
-
-""
-" Put list of 'waiting-for' actions in 'actions' variable.
-function! s:VtdViewWaiting.putActionsInPythonVariable()
-  python actions = my_system.Waiting()
-endfunction
-
-
 " @subsection Inboxes view
 
 
@@ -706,6 +692,20 @@ call s:RegisterView(s:VtdViewInboxes, 'Inboxes', 'I')
 " Put list of inboxes in 'actions' variable.
 function! s:VtdViewInboxes.putActionsInPythonVariable()
   python actions = my_system.Inboxes()
+endfunction
+
+
+" @subsection Waiting view
+
+
+let s:VtdViewWaiting = copy(s:VtdViewNextActions)
+call s:RegisterView(s:VtdViewWaiting, 'Waiting', 'W')
+
+
+""
+" Put list of 'waiting-for' actions in 'actions' variable.
+function! s:VtdViewWaiting.putActionsInPythonVariable()
+  python actions = my_system.Waiting()
 endfunction
 
 
