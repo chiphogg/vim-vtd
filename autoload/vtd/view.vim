@@ -618,8 +618,7 @@ function! s:VtdViewNextActions.checkoff()
   " Find the NextAction object and retrieve the info we need: its patch, its
   " text, and its file name.
   let l:vars = []
-  call self.putPatchTypeInPythonVariable()
-  python patch = na.Patch(patch_type)
+  python patch = na.Patch(libvtd.node.Actions.DefaultCheckoff)
   python vim.bindeval('l:vars').extend([patch, na.text, na.file_name])
   let l:patch = l:vars[0]
   let l:text = printf(self.CheckoffPatchFormat(), l:vars[1])
@@ -634,13 +633,6 @@ endfunction
 " A format string for the checkoff() patch.
 function! s:VtdViewNextActions.CheckoffPatchFormat()
   return 'Mark as "DONE": "%s"'
-endfunction
-
-
-""
-" Puts the patch type in the 'patch_type' variable.
-function! s:VtdViewNextActions.putPatchTypeInPythonVariable()
-  python patch_type = libvtd.node.Actions.MarkDONE
 endfunction
 
 
@@ -686,13 +678,6 @@ endfunction
 " A format string for the checkoff() patch.
 function! s:VtdViewRecurs.CheckoffPatchFormat()
   return 'Update "LASTDONE": "%s"'
-endfunction
-
-
-""
-" Puts the patch type in the 'patch_type' variable.
-function! s:VtdViewRecurs.putPatchTypeInPythonVariable()
-  python patch_type = libvtd.node.Actions.UpdateLASTDONE
 endfunction
 
 
