@@ -62,3 +62,15 @@ highlight link ParentText Comment
 " Keymap highlighting for single-key maps.
 syn match Keymap "\v\[(.|\<C-\i+\>|\<Space\>)\]"
 highlight Keymap guifg=LightYellow gui=bold term=bold ctermfg=14
+
+" Highlighting VTD View sections (Ready, Due, ...).
+syntax match VtdViewSectionLate '\vLate \(\d+\)'
+highlight VtdViewSectionLate gui=bold,italic guifg=LightRed guibg=DarkRed
+    \ term=bold,italic ctermfg=LightRed ctermbg=DarkRed
+syntax match VtdViewSectionDue '\vDue \(\d+\)'
+highlight VtdViewSectionDue gui=bold guifg=Yellow
+    \ term=bold ctermfg=Yellow
+syntax match VtdViewSectionReady '\vReady \(\d+\)'
+highlight VtdViewSectionReady gui=bold guifg=Green term=bold ctermfg=Green
+syntax match VtdViewSectionNew '\vNew \(\d+\)'
+highlight VtdViewSectionNew gui=bold guifg=LightBlue term=bold ctermfg=LightBlue
