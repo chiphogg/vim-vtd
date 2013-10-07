@@ -604,13 +604,22 @@ endfunction
 
 
 ""
+" Set python variable 'na' to the Node on the current line, if any.  Returns
+" 1 if successful, 0 otherwise.
+function! s:VtdViewNextActions.CurrentNodeTo_na()
+  let l:index = line(".") - self._first_content_line
+  python na = next_action_sections.NodeAt(int(vim.eval('l:index')))
+  python vim.command('let l:success = {}'.format(1 if na else 0))
+  return l:success
+endfunction
+
+
+""
 " Check off the NextAction on the current line.
 function! s:VtdViewNextActions.checkoff()
   " Check that the current line holds a valid NextAction.
-  let l:index = line(".") - self._first_content_line
-  python na = next_action_sections.NodeAt(int(vim.eval('l:index')))
-  python vim.command('let l:none = {}'.format(0 if na else 1))
-  if l:none
+  let l:found_node = self.CurrentNodeTo_na()
+  if !l:found_node
     call s:Warn('No Next Action on line ' . line(".") . '.')
     return
   endif
