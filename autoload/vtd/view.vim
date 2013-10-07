@@ -657,8 +657,9 @@ function! s:VtdViewNextActions.jump()
   " Go to the file.
   execute 'edit' . escape(l:vars[0], ' ')
 
-  " Go to the line number.
+  " Go to the line number and ensure the fold is open.
   execute "normal!" l:vars[1] . 'G'
+  normal! zv
 endfunction
 
 
