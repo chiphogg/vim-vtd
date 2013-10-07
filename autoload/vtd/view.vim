@@ -639,6 +639,30 @@ endfunction
 
 
 ""
+" Jump to the line in the original file which corresponds to the Node on the
+" current line.
+function! s:VtdViewNextActions.jump()
+  let l:found_node = self.CurrentNodeTo_na()
+  if !l:found_node
+    call s:Warn('No Next Action on line ' . line(".") . '.')
+    return
+  endif
+
+  " Find the NextAction object and retrieve the info we need: its file name and
+  " line number.
+  let l:vars = []
+  python (file, line) = na.Source()
+  python vim.bindeval('l:vars').extend([file, line])
+
+  " Go to the file.
+  execute 'edit' . escape(l:vars[0], ' ')
+
+  " Go to the line number.
+  execute "normal!" l:vars[1] . 'G'
+endfunction
+
+
+""
 " A format string for the checkoff() patch.
 function! s:VtdViewNextActions.CheckoffPatchFormat()
   return 'Mark as "DONE": "%s"'
@@ -647,6 +671,9 @@ endfunction
 
 function! s:CheckoffNextAction()
   call s:current_vtd_view.checkoff()
+endfunction
+function! s:JumpToFile()
+  call s:current_vtd_view.jump()
 endfunction
 function! s:HistoryUndo()
   call s:history.undo()
@@ -660,6 +687,9 @@ function! s:VtdViewNextActions.specialSetUp()
   call add(self._keymaps, s:Keymap.New('<Space>',
       \ ':call <SID>CheckoffNextAction()<CR>',
       \ 'Check off the NextAction on the current line as "DONE"'))
+  call add(self._keymaps, s:Keymap.New('gf',
+      \ ':call <SID>JumpToFile()<CR>',
+      \ 'Open the underlying VTD file at the corresponding line'))
   call add(self._keymaps, s:Keymap.New('u',
       \ ':call <SID>HistoryUndo()<CR>',
       \ 'Undo the previous change to the Trusted System'))
