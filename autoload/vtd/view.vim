@@ -659,7 +659,7 @@ function! s:VtdViewNextActions.jump()
 
   " Go to the line number and ensure the fold is open.
   execute "normal!" l:vars[1] . 'G'
-  normal! zv
+  normal! zvzt
 endfunction
 
 
