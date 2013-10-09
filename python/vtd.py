@@ -135,6 +135,7 @@ class Section(object):
     def __init__(self, title):
         self.title = title
         self.nodes = []
+        self.node_at_line = {}
 
     def Lines(self, text_function):
         """A sequence of lines of text to display.
@@ -147,9 +148,29 @@ class Section(object):
             A sequence of strings representing the text for this section.
         """
         lines = ['= {} ='.format(self.title)]
+        last_priority = -1
         for node in self.nodes:
+            if last_priority != -1 and last_priority != node.priority:
+                lines.append('')
+            last_priority = node.priority
             lines.append(text_function(node))
+            self.node_at_line[len(lines) - 1] = node
         return lines
+
+    def NodeAt(self, num):
+        """Return the Node object at a given line.
+
+        Args:
+            num: The line number relative to the start of this section.
+                (Title is '0'.)
+
+        Returns:
+            The Node object corresponding to the given line.
+        """
+        try:
+            return self.node_at_line[num]
+        except KeyError:
+            return None
 
 
 class SectionedDisplay(object):
@@ -191,13 +212,10 @@ class SectionedDisplay(object):
         """
         indexed_lines = [x for x in enumerate(self.first_line)]
         for index, first_line in reversed(indexed_lines):
-            if first_line < num:
+            if first_line <= num:
                 section = self.sections[index]
-                node_index = num - first_line - 1
-                if (node_index < len(section.nodes)):
-                    return section.nodes[node_index]
-                else:
-                    return None
+                node_index = num - first_line
+                return section.NodeAt(node_index)
         return None
 
 
