@@ -25,7 +25,7 @@ def NextActionDisplayText(next_action):
         time compares to the due date (if any).
     """
     text = PriorityDecoratedText(next_action)
-    return '@ ' + PrependParentProjectText(next_action, text) \
+    return '  @ ' + PrependParentProjectText(next_action, text) \
         + DueDateIndication(next_action)
 
 
