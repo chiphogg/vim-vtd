@@ -25,8 +25,14 @@ def NextActionDisplayText(next_action):
         time compares to the due date (if any).
     """
     text = PriorityDecoratedText(next_action)
-    return '  @ ' + PrependParentProjectText(next_action, text) \
+    action_text = '  @ ' + PrependParentProjectText(next_action, text) \
         + DueDateIndication(next_action)
+
+    comment_text = ''
+    for comment in next_action.children:
+        comment_text += '\n' + CommentText(comment, indent=4)
+
+    return action_text + comment_text
 
 
 def PriorityDecoratedText(node):
@@ -59,6 +65,26 @@ def PrependParentProjectText(node, text):
         return PrependParentProjectText(node.parent,
                                         node.parent.text + ' :: ' + text)
     return text
+
+
+def CommentText(comment, indent):
+    """The text to display for a comment (and its children) at a given indent.
+
+    Args:
+        comment: A libvtd.node.Comment (returns empty string if not).
+        indent: The amount of whitespace to preface this comment with.
+
+    Returns:
+        A string: '*', indented by 'indent', followed by comment.text.  Also
+        includes subsequent lines for comment children, appropriately indented.
+    """
+    if not isinstance(comment, libvtd.node.Comment):
+        return ''
+
+    lines = [' ' * indent + '* ' + comment.text]
+    for child in comment.children:
+        lines.append(CommentText(child, indent + 2))
+    return '\n'.join(lines)
 
 
 def DueDateIndication(node):
