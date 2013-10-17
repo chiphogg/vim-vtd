@@ -157,8 +157,10 @@ class Section(object):
             if last_priority != -1 and last_priority != node.priority:
                 lines.append('')
             last_priority = node.priority
-            lines.append(text_function(node))
-            self.node_at_line[len(lines) - 1] = node
+            text_lines = text_function(node).split('\n')
+            for text_line in text_lines:
+                lines.append(text_line)
+                self.node_at_line[len(lines) - 1] = node
         return lines
 
     def NodeAt(self, num):
