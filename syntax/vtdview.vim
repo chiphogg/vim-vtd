@@ -74,3 +74,6 @@ syntax match VtdViewSectionReady '\vReady \(\d+\)'
 highlight VtdViewSectionReady gui=bold guifg=Green term=bold ctermfg=Green
 syntax match VtdViewSectionNew '\vNew \(\d+\)'
 highlight VtdViewSectionNew gui=bold guifg=LightBlue term=bold ctermfg=LightBlue
+
+syntax region vtdComment start='^\z(\s*\)\* ' skip='^\v(\z1\s|$)' end='^'me=e-1
+highlight link vtdComment Comment
