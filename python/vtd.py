@@ -148,7 +148,11 @@ class Section(object):
             A sequence of strings representing the text for this section.
         """
         lines = ['= {} ='.format(self.title)]
+
+        # last_priority is the priority of the previous Node we saw.  We use it
+        # to insert a blank line between sections of different priority.
         last_priority = -1
+
         for node in self.nodes:
             if last_priority != -1 and last_priority != node.priority:
                 lines.append('')
