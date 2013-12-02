@@ -579,7 +579,7 @@ endfunction
 
 
 let s:VtdViewNextActions = s:VtdView.New()
-call s:RegisterView(s:VtdViewNextActions, 'Next Actions', 'N')
+call s:RegisterView(s:VtdViewNextActions, 'Next Actions', 'X')
 
 
 function! s:VtdViewNextActions.display()
@@ -757,7 +757,7 @@ endfunction
 
 
 let s:VtdViewWaiting = copy(s:VtdViewNextActions)
-call s:RegisterView(s:VtdViewWaiting, 'Waiting', 'W')
+call s:RegisterView(s:VtdViewWaiting, 'Waiting/Delegated', 'D')
 
 
 ""
