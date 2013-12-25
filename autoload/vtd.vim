@@ -1,7 +1,6 @@
 let s:plugin_root = expand('<sfile>:p:h:h')
 
-" TODO(chiphogg): Write a "join paths" function and use that instead.
-let s:python_path = s:plugin_root . '/python'
+let s:python_path = maktaba#path#Join([s:plugin_root, 'python'])
 
 
 function! vtd#EnsurePythonLoaded()
