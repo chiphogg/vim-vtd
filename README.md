@@ -18,15 +18,10 @@ system.
 
 ## Should _you_ use it?
 
-Rule #1 to keep in mind: __this is written to be *my personal* productivity
-system__.  I'm mainly writing it for me.
+It's still in a very experimental state, and will be for the foreseeable future.
 
-_Mainly._
-
-But lots of hackers use GTD, and lots use Vim, so I'm making this available in
-case others find it useful.  It's also a good way to practice writing vim plugins.
-
-As long as you keep rule #1 in mind, I'd love to hear any feedback.
+If you can tolerate upheaval (punctuated by long periods of stasis), then be my
+guest!  And please send me any feedback you have.
 
 # Acknowledgements
 
@@ -41,7 +36,7 @@ As long as you keep rule #1 in mind, I'd love to hear any feedback.
   - I got the "Thoughts" inbox from
      [Thinking Rock GTD software](http://www.trgtd.com.au/),
      which I explored a few years ago.
-     
+
 ## Coding
 
   - [Steve Losh](http://stevelosh.com/).
