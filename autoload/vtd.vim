@@ -15,3 +15,13 @@ function! vtd#UpdateSystem()
   call vtd#EnsurePythonLoaded()
   execute 'python UpdateTrustedSystem(file_name="' . g:vtd_file .'")'
 endfunction
+
+
+" Here's a list of reasons we might not want to load this script:
+"   1) "compatible" mode (a.k.a. "crippled" mode) is set
+"   2) Vim too old (autoload was introduced in Vim 7)
+"   3) No python support
+function! vtd#Compatible()
+  let l:incompatible = &cp || v:version < 700 || !has('python')
+  return !l:incompatible
+endfunction
