@@ -23,6 +23,31 @@ It's still in a very experimental state, and will be for the foreseeable future.
 If you can tolerate upheaval (punctuated by long periods of stasis), then be my
 guest!  And please send me any feedback you have.
 
+# Installation
+
+If you don't have a favourite vim plugin manager, I suggest
+[Vundle](https://github.com/gmarik/vundle) or
+[NeoBundle](https://github.com/Shougo/neobundle.vim).
+Simply add the appropriate line to your `.vimrc`.
+
+**Note that VTD requires [maktaba](https://github.com/google/maktaba).**  You
+will also need to install maktaba if you haven't already.
+
+## Specific instructions for Vundle and NeoBundle
+
+### Vundle
+
+```vim
+Bundle 'chiphogg/vim-vtd'
+Bundle 'google/maktaba'
+```
+
+### NeoBundle
+```vim
+NeoBundle 'chiphogg/vim-vtd'
+NeoBundle 'google/maktaba'
+```
+
 # Acknowledgements
 
 ## GTD
