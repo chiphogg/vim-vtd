@@ -1,3 +1,5 @@
+let s:plugin = maktaba#plugin#Get('vim_vtd')
+
 " This gives us access to all the python functions in vtd.py.
 call vtd#EnsurePythonLoaded()
 
@@ -326,6 +328,22 @@ function! s:VtdView.setUp()
   let self.active = 1
   call self.specialSetUp()
   call self.setupKeymaps()
+  call self.setupDefaultContexts()
+endfunction
+
+
+""
+" Set the default contexts (if any) according to the 'contexts' flag.
+function! s:VtdView.setupDefaultContexts()
+  let l:default_contexts = maktaba#ensure#IsList(s:plugin.Flag('contexts'))
+  for l:context in l:default_contexts
+    call maktaba#ensure#IsString(l:context)
+    if l:context[0] ==# '-'
+      execute 'VtdContextsExclude' l:context[1:]
+    else
+      execute 'VtdContextsInclude' l:context
+    endif
+  endfor
 endfunction
 
 
