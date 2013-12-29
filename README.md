@@ -33,19 +33,47 @@ Simply add the appropriate line to your `.vimrc`.
 **Note that VTD requires [maktaba](https://github.com/google/maktaba).**  You
 will also need to install maktaba if you haven't already.
 
+_Optional, but recommended_: install [glaive](https://github.com/google/glaive)
+for easy configuration.
+
 ## Specific instructions for Vundle and NeoBundle
 
 ### Vundle
 
 ```vim
-Bundle 'chiphogg/vim-vtd'
+" Install maktaba (required).
 Bundle 'google/maktaba'
+" Glaive is optional, but recommended.
+Bundle 'google/glaive'
+call glaive#Install()
+
+" Install VTD.
+Bundle 'chiphogg/vim-vtd'
 ```
 
 ### NeoBundle
 ```vim
-NeoBundle 'chiphogg/vim-vtd'
+" Install maktaba (required).
 NeoBundle 'google/maktaba'
+" Glaive is optional, but recommended.
+NeoBundle 'google/glaive'
+call glaive#Install()
+
+" Install VTD.
+NeoBundle 'chiphogg/vim-vtd'
+```
+
+## Optional configuration using Glaive
+
+This part works with any plugin manager, but it has to come _after_ the lines
+which add your bundles to the RTP.  (i.e., after the lines from the previous
+section.)
+
+This example shows how to enable VTD's keymapping (and set it to ",t"), and how
+to include the 'home' context and exclude the 'work' context by default.
+
+```vim
+Glaive vim_vtd plugin[mappings]=',t' contexts=`['home', '-work']`
 ```
 
 # Acknowledgements
