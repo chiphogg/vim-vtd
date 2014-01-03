@@ -5,4 +5,5 @@ if !s:enter || !vtd#Compatible()
 endif
 
 
+call s:plugin.Flag('files', [])
 call s:plugin.Flag('contexts', [])

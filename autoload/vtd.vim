@@ -1,3 +1,5 @@
+let s:plugin = maktaba#plugin#Get('vtd')
+
 let s:plugin_root = expand('<sfile>:p:h:h')
 
 let s:python_path = maktaba#path#Join([s:plugin_root, 'python'])
@@ -13,7 +15,9 @@ endfunction
 
 function! vtd#UpdateSystem()
   call vtd#EnsurePythonLoaded()
-  execute 'python UpdateTrustedSystem(file_name="' . g:vtd_file .'")'
+  let l:files = copy(maktaba#ensure#IsList(s:plugin.Flag('files')))
+  call map(l:files, 'expand(v:val)')
+  execute 'python UpdateTrustedSystem(files=' . string(l:files) .')'
 endfunction
 
 
