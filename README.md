@@ -116,7 +116,7 @@ Glaive vtd plugin[mappings]='qwer'
 ```
 (This sets a mapping for `qwer` to enter the VTD View buffer.)
 
-### contexts
+### `contexts`
 
 (**Type**: `List` of `string`s)
 
