@@ -138,9 +138,6 @@ Glaive vtd contexts=`['work', '-home']`
   - [Leo Babauta](http://leobabauta.com/), for
      [making GTD more accessible]
      (http://zenhabits.net/zen-to-done-ztd-the-ultimate-simple-productivity-system/)
-  - I got the "Thoughts" inbox from
-     [Thinking Rock GTD software](http://www.trgtd.com.au/),
-     which I explored a few years ago.
 
 ## Coding
 
