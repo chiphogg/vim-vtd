@@ -73,7 +73,7 @@ This example shows how to enable VTD's keymapping (and set it to ",t"), and how
 to include the 'home' context and exclude the 'work' context by default.
 
 ```vim
-Glaive vim_vtd plugin[mappings]=',t' contexts=`['home', '-work']`
+Glaive vtd plugin[mappings]=',t' contexts=`['home', '-work']`
 ```
 
 # Acknowledgements

@@ -1,4 +1,4 @@
-let s:plugin = maktaba#plugin#Get('vim_vtd')
+let s:plugin = maktaba#plugin#Get('vtd')
 
 " This gives us access to all the python functions in vtd.py.
 call vtd#EnsurePythonLoaded()
