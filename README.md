@@ -28,12 +28,13 @@ guest!  And please send me any feedback you have.
 If you don't have a favourite vim plugin manager, I suggest
 [Vundle](https://github.com/gmarik/vundle) or
 [NeoBundle](https://github.com/Shougo/neobundle.vim).
-Simply add the appropriate line to your `.vimrc`.
+Simply add the appropriate line(s) to your `.vimrc`.
 
-**Note that VTD requires [maktaba](https://github.com/google/maktaba).**  You
-will also need to install maktaba if you haven't already.
+**Note that VTD is a [maktaba](https://github.com/google/maktaba)-based
+plugin.**  If your plugin manager isn't maktaba-enabled -- and right now, _none_
+of them are -- you will also need to install maktaba if you haven't already.
 
-_Optional, but recommended_: install [glaive](https://github.com/google/glaive)
+_Optional, but highly recommended_: install [glaive](https://github.com/google/glaive)
 for easy configuration.
 
 ## Specific instructions for Vundle and NeoBundle
@@ -41,9 +42,7 @@ for easy configuration.
 ### Vundle
 
 ```vim
-" Install maktaba (required).
 Bundle 'google/maktaba'
-" Glaive is optional, but recommended.
 Bundle 'google/glaive'
 call glaive#Install()
 
@@ -53,9 +52,7 @@ Bundle 'chiphogg/vim-vtd'
 
 ### NeoBundle
 ```vim
-" Install maktaba (required).
 NeoBundle 'google/maktaba'
-" Glaive is optional, but recommended.
 NeoBundle 'google/glaive'
 call glaive#Install()
 
@@ -63,17 +60,72 @@ call glaive#Install()
 NeoBundle 'chiphogg/vim-vtd'
 ```
 
-## Optional configuration using Glaive
+# Settings
 
-This part works with any plugin manager, but it has to come _after_ the lines
-which add your bundles to the RTP.  (i.e., after the lines from the previous
-section.)
+VTD uses maktaba settings.  There are two ways to tweak these settings: the easy
+way (with Glaive), and the hard way.  For example, let's see how to enable
+keymappings and set the `files` setting to `['~/todo.vtd']`.
 
-This example shows how to enable VTD's keymapping (and set it to ",t"), and how
-to include the 'home' context and exclude the 'work' context by default.
-
+_Without_ Glaive, you must access maktaba directly, adding the following clunky
+lines to your `~/.vimrc`:
 ```vim
-Glaive vtd plugin[mappings]=',t' contexts=`['home', '-work']`
+call maktaba#plugin#Install('/full/path/to/vim-vtd')
+call maktaba#plugin#Get('vtd').Flag('plugin[mappings]', 1)
+call maktaba#plugin#Get('vtd').Flag('files', ['~/todo.vtd'])
+```
+You need one line to install the plugin, and an additional line for every
+setting you want to change.
+
+_With_ Glaive, you can do all that in a single line.
+```vim
+Glaive vtd plugin[mappings] files=`['~/todo.vtd']`
+```
+Note that we don't have to install the plugin (and worry about the path); glaive
+does this for us.
+
+The following sections list the available VTD settings.
+
+## Required
+
+### `files`
+
+(**Type**: `List` of `string`s)
+
+The names of the VTD files to read.
+
+Example:
+```vim
+Glaive vtd files=`['~/todo.vtd', '~/extra.vtd']`
+```
+
+## Optional
+
+### `plugin[mappings]`
+
+**Highly recommended.**
+
+Defines a keymapping to enter the VTD View buffer.
+
+With no arguments, this defaults to `<Leader>t` (see `:help <Leader>`).
+
+If a string argument is supplied, that string will be the keymapping.
+
+Example:
+```vim
+Glaive vtd plugin[mappings]='qwer'
+```
+(This sets a mapping for `qwer` to enter the VTD View buffer.)
+
+### contexts
+
+(**Type**: `List` of `string`s)
+
+Contexts to include or exclude by default.
+(To exclude a context, preface it with a minus sign.)
+
+Example:
+```vim
+Glaive vtd contexts=`['work', '-home']`
 ```
 
 # Acknowledgements
