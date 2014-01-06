@@ -714,7 +714,7 @@ function! s:VtdViewNextActions.specialSetUp()
       \ 'Undo the previous change to the Trusted System'))
   call add(self._keymaps, s:Keymap.New('<C-R>',
       \ ':call <SID>HistoryRedo()<CR>',
-      \ 'Undo the previous change to the Trusted System'))
+      \ 'Redo the most-recently-undone change to the Trusted System'))
 endfunction
 
 
