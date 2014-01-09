@@ -328,7 +328,6 @@ function! s:VtdView.setUp()
   let self.active = 1
   call self.specialSetUp()
   call self.setupKeymaps()
-  call self.setupDefaultContexts()
 endfunction
 
 
@@ -812,7 +811,8 @@ function! vtd#view#Enter(...)
   call s:UpdateSystemContexts()
 
   " Check whether a VTD View object already exists.
-  if !empty(s:current_vtd_view)
+  let l:view_already_existed = empty(s:current_vtd_view)
+  if !l:view_already_existed
     " If the existing view is valid, simply enter it directly, and we're done.
     if !l:specific_type_requested || l:view_type == s:CurrentViewType()
       call s:current_vtd_view.switchToViewBuffer()
@@ -828,6 +828,12 @@ function! vtd#view#Enter(...)
   " one.
   " TODO(chiphogg): add an assertion to that effect.
   call s:VtdViewSetUp(l:view_type)
+
+  " If there wasn't already an existing view object, we need to set the contexts
+  " to their default values.
+  if l:view_already_existed
+    call s:current_vtd_view.setupDefaultContexts()
+  endif
 endfunction
 
 
