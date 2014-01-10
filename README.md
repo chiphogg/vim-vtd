@@ -1,7 +1,6 @@
 # VTD
 
-Vimming Things Done: a GTD-ish system which lives in vim, based on the
-`vimwiki` plugin.
+Vimming Things Done: a GTD-ish system which lives in vim.
 
 ## Current status
 
