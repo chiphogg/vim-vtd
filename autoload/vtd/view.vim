@@ -881,8 +881,18 @@ endfunction
 ""
 " Clear the settings for the given {contexts}, removing them from both the
 " "included" and the "excluded" list.
+"
+" If {contexts} is an empty list, all context settings will be cleared.
 function! vtd#view#ClearContexts(contexts)
-  for l:context in a:contexts
+  " Either use the list of supplied contexts, or use *all* contexts if none were
+  " supplied.
+  let l:contexts = maktaba#ensure#IsList(a:contexts)
+  if len(l:contexts) == 0
+    let l:contexts = keys(get(s:, '_context_settings', {}))
+  endif
+
+  " Clear each context in the list.
+  for l:context in l:contexts
     let l:setting = s:ContextSettingFor(l:context)
     let l:setting.value = l:setting.options.clear
   endfor
