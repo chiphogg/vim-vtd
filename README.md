@@ -1,28 +1,67 @@
 # VTD
 
-Vimming Things Done: a GTD-ish system which lives in vim.
+Vimming Things Done:
+a [GTD](http://gettingthingsdone.com/)-ish system which lives in vim.
 
-## Current status
+## What's the big idea?
 
-Early stages of development.
+Text files are great for writing down your projects and tasks.  They're crappy
+for figuring out your TODO list at any given moment.  What you need is _software
+to parse your text file_ and show you **the things you could be working on
+right now**, starting with the most relevant.
 
-`v0.0.1` is fully functional (I used it daily for almost a year). However, it
-was a bit of a dead end as far as future maintenance and extensibility.
+VTD is this software.
 
-All subsequent versions are based on a separately-maintained python library,
-[libvtd](http://github.com/chiphogg/libvtd).  The advantage is that other
-software can use the same library and underlying `.vtd` text file; one could
-imagine, for instance, an Android app giving full access to your productivity
-system.
+It creates a special buffer for your TODO list -- the "VTD View" -- whose
+contents are based on an underlying text file.  This buffer skips irrelevant
+items  -- such as tasks blocked by other tasks, "home" tasks while you're at
+work (or vice versa), or tasks you've hidden until a future date.  And the items
+it _does_ show are sorted by importance: "Late" before "Due" before "Ready",
+with higher-priority items first in each category.
 
-## Should _you_ use it?
+### VTD View: "feels like a file"
 
-It's still in a very experimental state, and will be for the foreseeable future.
+The VTD View buffer is designed to mimic regular files (wherever it makes
+sense). Interacting with the buffer should feel very natural to longtime vim
+users.
 
-If you can tolerate upheaval (punctuated by long periods of stasis), then be my
-guest!  And please send me any feedback you have.
+You check off a task by pressing "spacebar" in the VTD View.  Behind the scenes,
+this constructs a `patch` command which alters the underlying file, marking the
+corresponding line as `DONE`.  VTD then re-reads the file and re-displays your
+system, making it feel as if you altered the View buffer directly.
 
-# Installation
+If you made a mistake or changed your mind, you can hit `u` to undo and
+`<Ctrl-R>` to redo.  VTD keeps infinite levels of undo and redo.  The choice of
+`u` and `<Ctrl-R>` is an example of how VTD is designed to feel natural to
+longtime vim users.
+
+A key goal before hitting 1.0 is that **users should never need to edit the
+underlying text file**. (Admittedly, I am pretty far from that goal at the
+moment...)
+
+### Current status
+
+The following things are _awesome_.
+
+- Priorities, due dates, "hide-until" dates, and contexts are _all inheritable_.
+  - e.g., if a project is priority 1, all its tasks will be too by default.
+- Checking off a task with `<Space>` is very smooth -- one never has to edit
+  the underlying file!
+- Undo and redo work flawlessly
+- Support for recurring actions (daily, weekly, and monthly), inboxes, and the
+  "waiting/delegated" list
+- Projects without actions show up in the action list, as `{MISSING Next
+  Action}`
+
+The following are the _biggest pain points_.
+- Doesn't support a "project-focused" workflow very well (#3)
+  - This is often downright confusing.
+- Task display: sometimes gives too much information, sometimes too little (#4)
+- Haven't figured out how to add/edit from the View (only checkoffs so far) (#5)
+
+# How to use
+
+## Installation
 
 If you don't have a favourite vim plugin manager, I suggest
 [Vundle](https://github.com/gmarik/vundle) or
@@ -36,9 +75,9 @@ of them are -- you will also need to install maktaba if you haven't already.
 _Optional, but highly recommended_: install [glaive](https://github.com/google/glaive)
 for easy configuration.
 
-## Specific instructions for Vundle and NeoBundle
+### Specific instructions for Vundle and NeoBundle
 
-### Vundle
+#### Vundle
 
 ```vim
 Bundle 'google/maktaba'
@@ -49,7 +88,7 @@ call glaive#Install()
 Bundle 'chiphogg/vim-vtd'
 ```
 
-### NeoBundle
+#### NeoBundle
 ```vim
 NeoBundle 'google/maktaba'
 NeoBundle 'google/glaive'
@@ -59,7 +98,7 @@ call glaive#Install()
 NeoBundle 'chiphogg/vim-vtd'
 ```
 
-# Settings
+## Settings
 
 VTD uses maktaba settings.  There are two ways to tweak these settings: the easy
 way (with Glaive), and the hard way.  For example, let's see how to enable
@@ -84,9 +123,9 @@ does this for us.
 
 The following sections list the available VTD settings.
 
-## Required
+### Required
 
-### `files`
+#### `files`
 
 (**Type**: `List` of `string`s)
 
@@ -97,9 +136,9 @@ Example:
 Glaive vtd files=`['~/todo.vtd', '~/extra.vtd']`
 ```
 
-## Optional
+### Optional
 
-### `plugin[mappings]`
+#### `plugin[mappings]`
 
 **Highly recommended.**
 
@@ -115,7 +154,7 @@ Glaive vtd plugin[mappings]='qwer'
 ```
 (This sets a mapping for `qwer` to enter the VTD View buffer.)
 
-### `contexts`
+#### `contexts`
 
 (**Type**: `List` of `string`s)
 
@@ -127,43 +166,3 @@ Example:
 Glaive vtd contexts=`['work', '-home']`
 ```
 
-# Acknowledgements
-
-## GTD
-
-  - Obviously, 
-     [David Allen's original book]
-     (https://secure.davidco.com/store/catalog/GETTING-THINGS-DONE-PAPERBACK-p-16175.php)
-  - [Leo Babauta](http://leobabauta.com/), for
-     [making GTD more accessible]
-     (http://zenhabits.net/zen-to-done-ztd-the-ultimate-simple-productivity-system/)
-
-## Coding
-
-  - [Steve Losh](http://stevelosh.com/).
-    Vimscript was always impenetrable to me.  Then I found Steve's 
-    [advice for Writing Vim Plugins]
-    (http://stevelosh.com/blog/2011/09/writing-vim-plugins/),
-    and his thorough tutorial,
-    ["Learn Vimscript the Hard Way"]
-    (http://learnvimscriptthehardway.stevelosh.com/).
-    Finally, a foothold!
-  - [Tim Pope](http://tpo.pe/).
-    I must use about a million of his plugins;
-    they make life easier in so many little ways.
-    Not to mention, he *saved Vim plugins* when he wrote
-    [pathogen](https://github.com/tpope/vim-pathogen/).
-    I use [vundle](https://github.com/gmarik/vundle/) instead
-    (it handles synchronization better),
-    but even vundle was inspired by pathogen.
-  - [scrooloose](https://github.com/scrooloose).
-    Reading through his code was a revelatory experience:
-    nicely sectioned and thoroughly commented,
-    this is vimscript that _looks good_.
-    It's certainly helped the code for VTD;
-    my code for the view window draws *heavily*
-    from his code for the tree window.
-    I wish I'd found the
-    [NERDtree](https://github.com/scrooloose/nerdtree)
-    source sooner!
-    
