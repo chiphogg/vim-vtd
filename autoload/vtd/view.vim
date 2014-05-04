@@ -756,14 +756,14 @@ endfunction
 " @subsection 'All' view (NextActions, RecurringActions, Inboxes)
 
 
-let s:VtdViewInboxes = copy(s:VtdViewRecurs)
-call s:RegisterView(s:VtdViewInboxes,
+let s:VtdViewAll = copy(s:VtdViewRecurs)
+call s:RegisterView(s:VtdViewAll,
     \ 'All (Next Actions; Recurring Actions; Inboxes)', 'A')
 
 
 ""
 " Put list of doable actions in 'actions' variable.
-function! s:VtdViewInboxes.putActionsInPythonVariable()
+function! s:VtdViewAll.putActionsInPythonVariable()
   python actions = []
   python actions.extend(my_system.Inboxes())
   python actions.extend(my_system.RecurringActions())
