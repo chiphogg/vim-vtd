@@ -13,11 +13,16 @@ function! vtd#EnsurePythonLoaded()
 endfunction
 
 
-function! vtd#UpdateSystem()
-  call vtd#EnsurePythonLoaded()
+function! vtd#Files()
   let l:files = copy(maktaba#ensure#IsList(s:plugin.Flag('files')))
   call map(l:files, 'expand(v:val)')
-  execute 'python UpdateTrustedSystem(files=' . string(l:files) .')'
+  return l:files
+endfunction
+
+
+function! vtd#UpdateSystem()
+  call vtd#EnsurePythonLoaded()
+  execute 'python UpdateTrustedSystem(files=' . string(vtd#Files()) .')'
 endfunction
 
 
