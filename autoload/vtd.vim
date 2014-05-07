@@ -25,6 +25,17 @@ endfunction
 
 
 ""
+" The epoch timestamp for the most recent time the system was modified.
+function! vtd#SystemModificationTime()
+  let l:time = 0
+  for l:file in vtd#Files()
+    let l:time = max([l:time, getftime(l:file)])
+  endfor
+  return l:time
+endfunction
+
+
+""
 " Reread the vtd files and update the trusted system.
 function! vtd#UpdateSystem()
   call vtd#EnsurePythonLoaded()
