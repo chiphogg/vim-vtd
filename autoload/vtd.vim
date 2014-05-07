@@ -5,6 +5,8 @@ let s:plugin_root = expand('<sfile>:p:h:h')
 let s:python_path = maktaba#path#Join([s:plugin_root, 'python'])
 
 
+""
+" Ensure that the VTD python utility scripts have been loaded.
 function! vtd#EnsurePythonLoaded()
   if !exists('s:loaded_python_scripts')
     execute 'pyfile' s:python_path . '/vtd.py'
@@ -13,6 +15,8 @@ function! vtd#EnsurePythonLoaded()
 endfunction
 
 
+""
+" The list of filenames which back the trusted system.
 function! vtd#Files()
   let l:files = copy(maktaba#ensure#IsList(s:plugin.Flag('files')))
   call map(l:files, 'expand(v:val)')
@@ -20,6 +24,8 @@ function! vtd#Files()
 endfunction
 
 
+""
+" Reread the vtd files and update the trusted system.
 function! vtd#UpdateSystem()
   call vtd#EnsurePythonLoaded()
   execute 'python UpdateTrustedSystem(files=' . string(vtd#Files()) .')'
