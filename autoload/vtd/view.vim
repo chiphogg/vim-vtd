@@ -901,6 +901,18 @@ function! vtd#view#ClearContexts(...)
 endfunction
 
 
+""
+" Return the VTD View object with the given keymap.
+function! vtd#view#ObjectWhoseKeymapIs(keymap)
+  for l:key in keys(s:ViewObjects)
+    if s:ViewObjects[l:key].key == a:keymap
+      return s:ViewObjects[l:key]
+    endif
+  endfor
+  return 0
+endfunction
+
+
 " @subsection Helper functions
 
 
