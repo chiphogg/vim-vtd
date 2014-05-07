@@ -272,6 +272,23 @@ def SortByDateState(actions, now=None):
     return categorized_actions
 
 
+def CountCategories(new_actions, identifier, category_counts):
+    """Extend category_counts by the counts in new_actions.
+
+    Args:
+        new_actions:  A list of NextAction objects.
+        identifier:  A string which identifies new_actions (e.g., 'Inboxes').
+        category_counts:  A dict of dicts: mapping "date state" (i.e., Late,
+            Due, etc.) to "identifier" to "count".
+    """
+    categorized_actions = SortByDateState(new_actions)
+    for k in categorized_actions.keys():
+        key = libvtd.node.DateStates[k]
+        if key not in category_counts.keys():
+            category_counts[key] = {}
+        category_counts[key][identifier] = len(categorized_actions[k])
+
+
 def MakeSectionedActions(actions):
     """Store an updated NextActions list in next_action_sections variable."""
     global next_action_sections
