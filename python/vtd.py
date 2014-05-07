@@ -252,15 +252,31 @@ class SectionedDisplay(object):
         return None
 
 
+def SortByDateState(actions, now=None):
+    """Sort these actions into categories for Late, Due, etc.
+
+    Args:
+        actions: A list of NextAction objects.
+        now: The time to treat as current (defaults to the current time).
+
+    Returns:
+        A dictionary mapping the "date state" (Late, Due, etc.) to a list of
+        actions with that state.
+    """
+    # Categorize into sections ("late", "due", "ready", ...).
+    categorized_actions = collections.defaultdict(list)
+    if not now:
+        now = datetime.datetime.now()
+    for action in actions:
+        categorized_actions[action.DateState(now)].append(action)
+    return categorized_actions
+
+
 def MakeSectionedActions(actions):
     """Store an updated NextActions list in next_action_sections variable."""
     global next_action_sections
 
-    # Categorize into sections ("late", "due", "ready", ...).
-    categorized_actions = collections.defaultdict(list)
-    now = datetime.datetime.now()
-    for action in actions:
-        categorized_actions[action.DateState(now)].append(action)
+    categorized_actions = SortByDateState(actions)
 
     # Sorter based on [priority (increasing), due date (increasing)]
     max_date = datetime.datetime(datetime.MAXYEAR, 12, 31, 23, 59, 59)
