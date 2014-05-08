@@ -28,9 +28,16 @@ endfunction
 " The epoch timestamp for the most recent time the system was modified.
 function! vtd#SystemModificationTime()
   let l:time = 0
+  
+  " Check when any vtd file was last modified.
   for l:file in vtd#Files()
     let l:time = max([l:time, getftime(l:file)])
   endfor
+
+  " Check when we last changed contexts.
+  let l:context_timestamp = get(s:plugin.globals, 'context_timestamp', 0)
+  let l:time = max([l:time, l:context_timestamp])
+
   return l:time
 endfunction
 
