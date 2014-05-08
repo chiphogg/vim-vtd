@@ -545,6 +545,7 @@ function! s:ToggleNearestContextExclusive()
         \ '' : l:context
   endif
   call vtd#view#Enter()
+  call s:MarkContextsAsChanged()
 endfunction
 
 
@@ -846,6 +847,7 @@ function! vtd#view#IncludeContexts(contexts)
     let l:setting = s:ContextSettingFor(l:context)
     let l:setting.value = l:setting.options.include
   endfor
+  call s:MarkContextsAsChanged()
 endfunction
 
 
@@ -857,6 +859,7 @@ function! vtd#view#ExcludeContexts(contexts)
     let l:setting = s:ContextSettingFor(l:context)
     let l:setting.value = l:setting.options.exclude
   endfor
+  call s:MarkContextsAsChanged()
 endfunction
 
 
@@ -879,6 +882,7 @@ function! vtd#view#ClearContexts(...)
     let l:setting = s:ContextSettingFor(l:context)
     let l:setting.value = l:setting.options.clear
   endfor
+  call s:MarkContextsAsChanged()
 endfunction
 
 
@@ -895,6 +899,7 @@ function! vtd#view#DefaultContexts()
       execute 'VtdContextsInclude' l:context
     endif
   endfor
+  call s:MarkContextsAsChanged()
 endfunction
 
 
@@ -919,6 +924,12 @@ function! s:UpdateSystemContexts()
   python ci = vim.eval('s:ContextsToInclude()')
   python ce = vim.eval('s:ContextsToExclude()')
   python my_system.SetContexts(include=ci, exclude=ce)
+endfunction
+
+
+function! s:MarkContextsAsChanged()
+  call s:UpdateSystemContexts()
+  let s:plugin.globals['context_timestamp'] = localtime()
 endfunction
 
 
