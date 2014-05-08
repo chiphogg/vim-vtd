@@ -843,10 +843,7 @@ endfunction
 " also have a context from the "excluded" list will *not* be visible; the
 " "excluded" list takes priority.
 function! vtd#view#IncludeContexts(contexts)
-  for l:context in a:contexts
-    let l:setting = s:ContextSettingFor(l:context)
-    let l:setting.value = l:setting.options.include
-  endfor
+  call s:IncludeContextsInternal(a:contexts)
   call s:MarkContextsAsChanged()
 endfunction
 
@@ -855,10 +852,7 @@ endfunction
 " Add the given {contexts} to the "excluded" list.  This means that no Next
 " Actions having these contexts will be visible.
 function! vtd#view#ExcludeContexts(contexts)
-  for l:context in a:contexts
-    let l:setting = s:ContextSettingFor(l:context)
-    let l:setting.value = l:setting.options.exclude
-  endfor
+  call s:ExcludeContextsInternal(a:contexts)
   call s:MarkContextsAsChanged()
 endfunction
 
@@ -870,18 +864,7 @@ endfunction
 " If [contexts] is an empty list (or not supplied), all context settings will be
 " cleared.
 function! vtd#view#ClearContexts(...)
-  " Either use the list of supplied contexts, or use *all* contexts if none were
-  " supplied.
-  let l:contexts = maktaba#ensure#IsList(get(a:, 1, []))
-  if len(l:contexts) == 0
-    let l:contexts = keys(get(s:, '_context_settings', {}))
-  endif
-
-  " Clear each context in the list.
-  for l:context in l:contexts
-    let l:setting = s:ContextSettingFor(l:context)
-    let l:setting.value = l:setting.options.clear
-  endfor
+  call call('s:ClearContextsInternal', a:000)
   call s:MarkContextsAsChanged()
 endfunction
 
@@ -889,16 +872,24 @@ endfunction
 ""
 " Set the default contexts (if any) according to the 'contexts' flag.
 function! vtd#view#DefaultContexts()
+  call s:ClearContextsInternal()
   let l:default_contexts = maktaba#ensure#IsList(s:plugin.Flag('contexts'))
-  call vtd#view#ClearContexts()
+  let l:included = []
+  let l:excluded = []
   for l:context in l:default_contexts
     call maktaba#ensure#IsString(l:context)
     if l:context[0] ==# '-'
-      execute 'VtdContextsExclude' l:context[1:]
+      call add(l:excluded, l:context[1:])
     else
-      execute 'VtdContextsInclude' l:context
+      call add(l:included, l:context)
     endif
   endfor
+  if len(l:excluded)
+    call s:ExcludeContextsInternal(l:excluded)
+  endif
+  if len(l:included)
+    call s:IncludeContextsInternal(l:included)
+  endif
   call s:MarkContextsAsChanged()
 endfunction
 
@@ -930,6 +921,38 @@ endfunction
 function! s:MarkContextsAsChanged()
   call s:UpdateSystemContexts()
   let s:plugin.globals['context_timestamp'] = localtime()
+endfunction
+
+
+function! s:IncludeContextsInternal(contexts)
+  for l:context in a:contexts
+    let l:setting = s:ContextSettingFor(l:context)
+    let l:setting.value = l:setting.options.include
+  endfor
+endfunction
+
+
+function! s:ExcludeContextsInternal(contexts)
+  for l:context in a:contexts
+    let l:setting = s:ContextSettingFor(l:context)
+    let l:setting.value = l:setting.options.exclude
+  endfor
+endfunction
+
+
+function! s:ClearContextsInternal(...)
+  " Either use the list of supplied contexts, or use *all* contexts if none were
+  " supplied.
+  let l:contexts = maktaba#ensure#IsList(get(a:, 1, []))
+  if len(l:contexts) == 0
+    let l:contexts = keys(get(s:, '_context_settings', {}))
+  endif
+
+  " Clear each context in the list.
+  for l:context in l:contexts
+    let l:setting = s:ContextSettingFor(l:context)
+    let l:setting.value = l:setting.options.clear
+  endfor
 endfunction
 
 
