@@ -47,6 +47,11 @@ endfunction
 function! vtd#UpdateSystem()
   call vtd#EnsurePythonLoaded()
   execute 'python UpdateTrustedSystem(files=' . string(vtd#Files()) .')'
+
+  " If this is the initial run, set the default contexts.
+  if !has_key(s:plugin.globals, 'context_timestamp')
+    VtdContextsDefault
+  endif
 endfunction
 
 

@@ -811,12 +811,6 @@ function! vtd#view#Enter(...)
   " one.
   " TODO(chiphogg): add an assertion to that effect.
   call s:VtdViewSetUp(l:view_type)
-
-  " If there wasn't already an existing view object, we need to set the contexts
-  " to their default values.
-  if l:view_already_existed
-    call vtd#view#DefaultContexts()
-  endif
 endfunction
 
 
