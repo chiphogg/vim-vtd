@@ -27,8 +27,13 @@ endfunction
 " Ensure the variable s:task_counts contains up-to-date task counts for each
 " state ('Late', 'Due', etc.).
 let s:task_counts = {}
+let s:force_update_time = 15
 function! s:EnsureTaskCountsUpdated()
-  if vtd#SystemModificationTime() >= get(s:, 'task_count_update_time', 0)
+  let l:changed = vtd#SystemModificationTime() >= get(
+      \ s:, 'task_count_update_time', 0)
+  let l:stale = localtime() > get(
+      \ s:, 'last_updated_task_counts', 0) + s:force_update_time
+  if l:changed || l:stale
     call s:UpdateTaskCounts()
     let s:task_count_update_time = localtime()
   endif
@@ -47,6 +52,7 @@ function! s:UpdateTaskCounts()
     python CountCategories(
         \ actions, vim.eval('l:keymap'), vim.bindeval('s:task_counts'))
   endfor
+  let s:last_updated_task_counts = localtime()
 endfunction
 
 
