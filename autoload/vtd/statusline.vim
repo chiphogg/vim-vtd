@@ -4,17 +4,22 @@ let s:plugin = maktaba#plugin#Get('vtd')
 call vtd#EnsurePythonLoaded()
 
 
+function! s:SurroundBySpaceIfNonEmpty(string)
+  return len(a:string) ? '  ' . a:string . ' ' : ''
+endfunction
+
+
 ""
 " The statusline text for Late actions.
 function! vtd#statusline#Late()
-  return s:StatuslineText('late')
+  return s:SurroundBySpaceIfNonEmpty(s:StatuslineText('late'))
 endfunction
 
 
 ""
 " The statusline text for Late actions.
 function! vtd#statusline#Due()
-  return s:StatuslineText('due')
+  return s:SurroundBySpaceIfNonEmpty(s:StatuslineText('due'))
 endfunction
 
 
