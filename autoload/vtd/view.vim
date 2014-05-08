@@ -758,16 +758,13 @@ endfunction
 
 let s:VtdViewAll = copy(s:VtdViewRecurs)
 call s:RegisterView(s:VtdViewAll,
-    \ 'All (Next Actions; Recurring Actions; Inboxes)', 'A')
+    \ 'All Do-able Actions (Next Actions; Recurring Actions; Inboxes)', 'A')
 
 
 ""
 " Put list of doable actions in 'actions' variable.
 function! s:VtdViewAll.putActionsInPythonVariable()
-  python actions = []
-  python actions.extend(my_system.Inboxes())
-  python actions.extend(my_system.RecurringActions())
-  python actions.extend(my_system.NextActions())
+  python actions = my_system.AllActions()
 endfunction
 
 
