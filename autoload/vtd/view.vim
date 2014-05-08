@@ -332,22 +332,6 @@ endfunction
 
 
 ""
-" Set the default contexts (if any) according to the 'contexts' flag.
-function! s:VtdView.setupDefaultContexts()
-  let l:default_contexts = maktaba#ensure#IsList(s:plugin.Flag('contexts'))
-  call vtd#view#ClearContexts()
-  for l:context in l:default_contexts
-    call maktaba#ensure#IsString(l:context)
-    if l:context[0] ==# '-'
-      execute 'VtdContextsExclude' l:context[1:]
-    else
-      execute 'VtdContextsInclude' l:context
-    endif
-  endfor
-endfunction
-
-
-""
 " Teardown tasks common to all types of VTD view window.
 "
 " Tasks specific to a particular type may be performed in a .specialTearDown()
@@ -830,7 +814,7 @@ function! vtd#view#Enter(...)
   " If there wasn't already an existing view object, we need to set the contexts
   " to their default values.
   if l:view_already_existed
-    call s:current_vtd_view.setupDefaultContexts()
+    call vtd#view#DefaultContexts()
   endif
 endfunction
 
@@ -894,6 +878,22 @@ function! vtd#view#ClearContexts(...)
   for l:context in l:contexts
     let l:setting = s:ContextSettingFor(l:context)
     let l:setting.value = l:setting.options.clear
+  endfor
+endfunction
+
+
+""
+" Set the default contexts (if any) according to the 'contexts' flag.
+function! vtd#view#DefaultContexts()
+  let l:default_contexts = maktaba#ensure#IsList(s:plugin.Flag('contexts'))
+  call vtd#view#ClearContexts()
+  for l:context in l:default_contexts
+    call maktaba#ensure#IsString(l:context)
+    if l:context[0] ==# '-'
+      execute 'VtdContextsExclude' l:context[1:]
+    else
+      execute 'VtdContextsInclude' l:context
+    endif
   endfor
 endfunction
 
