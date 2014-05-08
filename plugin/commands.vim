@@ -30,3 +30,8 @@ command -nargs=+ VtdContextsExclude
 " Remove these {contexts} from both the "excluded contexts" and "included
 " contexts" lists.  Clears all contexts if no argument is supplied.
 command -nargs=* VtdContextsClear :call vtd#view#ClearContexts([<f-args>])
+
+
+""
+" Set the contexts to the defaults.
+command -nargs=0 VtdContextsDefault :call vtd#view#DefaultContexts()
