@@ -1,4 +1,5 @@
 let s:plugin = maktaba#plugin#Get('vtd')
+let s:action_keymaps = ['I', 'R', 'X', 'D']
 
 " This gives us access to all the python functions in vtd.py.
 call vtd#EnsurePythonLoaded()
@@ -46,7 +47,7 @@ function! s:UpdateTaskCounts()
   " [A] is for 'All'; [D] is for 'Delegated'.
   let s:task_counts = {}
   call vtd#UpdateSystem()
-  for l:keymap in ['A', 'D']
+  for l:keymap in s:action_keymaps
     let l:view_object = vtd#view#ObjectWhoseKeymapIs(l:keymap)
     call l:view_object.putActionsInPythonVariable()
     python CountCategories(
@@ -62,9 +63,18 @@ function! s:StatuslineText(state)
   call s:EnsureTaskCountsUpdated()
   if has_key(s:task_counts, a:state)
     return toupper(a:state) . ': ' . join(
-        \ values(map(copy(s:task_counts[a:state]),
-        \            'v:val . "[" . v:key . "]"')),
+        \ filter(map(copy(s:action_keymaps),
+        \            's:StatuslineSnippetForKeymap("' . a:state . '", v:val)'),
+        \        'len(v:val) > 0'),
         \ ', ')
+  endif
+  return ''
+endfunction
+
+
+function! s:StatuslineSnippetForKeymap(state, keymap)
+  if has_key(s:task_counts[a:state], a:keymap)
+    return printf('%d[%s]', s:task_counts[a:state][a:keymap], a:keymap)
   endif
   return ''
 endfunction
