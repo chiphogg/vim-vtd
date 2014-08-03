@@ -1,0 +1,35 @@
+*vtd.txt*	A GTD Trusted System which lives in vim
+                                                                         *vtd*
+
+==============================================================================
+CONTENTS                                                        *vtd-contents*
+  1. Commands...................................................|vtd-commands|
+
+==============================================================================
+COMMANDS                                                        *vtd-commands*
+
+:VtdView                                                            *:VtdView*
+  Open the VTD view buffer.
+
+:VtdContextsInclude {contexts}                           *:VtdContextsInclude*
+  Add these {contexts} to the "included contexts" list: i.e., make actions
+  from these {contexts} visible.
+
+  Such an action can still be excluded if it has another context which is on
+  the "excluded contexts" list.
+
+:VtdContextsExclude {contexts}                           *:VtdContextsExclude*
+  Add these {contexts} to the "excluded contexts" list: i.e., don't show any
+  actions from these contexts.
+
+  Overrides the "included contexts" list.
+
+:VtdContextsClear {contexts}                               *:VtdContextsClear*
+  Remove these {contexts} from both the "excluded contexts" and "included
+  contexts" lists.  Clears all contexts if no argument is supplied.
+
+:VtdContextsDefault                                      *:VtdContextsDefault*
+  Set the contexts to the defaults.
+
+
+vim:tw=78:ts=8:ft=help:norl:
