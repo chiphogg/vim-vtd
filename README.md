@@ -19,6 +19,38 @@ work (or vice versa), or tasks you've hidden until a future date.  And the items
 it _does_ show are sorted by importance: "Late" before "Due" before "Ready",
 with higher-priority items first in each category.
 
+### VTD's syntax
+
+Here are a few VTD syntax basics. For more, see `example.vtd` in this
+repository, or the unit tests in
+[`chiphogg/libvtd`](https://github.com/chiphogg/libvtd).
+
+```
+= A section =
+
+@ An action
+
+# An ordered project: priority one! @p:1
+  @ A sub-action (also priority one due to inheritance)
+  @ The next sub-action (which is blocked until the first action is done)
+
+- An unordered project
+  @ A priority 2 action @p:2
+  @ An action with no priority
+
+@ This needs to get done soon! Kind of. <2015-05-15
+@ This will be marked as "due" 30 days before the due date <2015-01-01(30)
+@ And this can only be done in a long while. >2100-02-14
+
+= More advanced features =
+
+@ Finish reading docs. #readthedocs
+@ :vi intro.vtd @after:readthedocs
+
+@ Make some espresso EVERY day [07:00 - 07:45]
+  * Comments begin with a '*'.
+```
+
 ### VTD View: "feels like a file"
 
 The VTD View buffer is designed to mimic regular files (wherever it makes
