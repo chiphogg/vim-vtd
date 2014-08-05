@@ -1,0 +1,116 @@
+= Actions =
+
+@ Learn how to use VTD @home
+@ @@waiting for Amazon Prime delivery
+@ Run 351589 test cases @@work
+@ A finished action gets marked with (DONE)
+
+= Ordered projects =
+
+# Ordered project
+  @ Create an ordered project by prefixing with a hash
+  @ And then do the actions in the project in order!
+
+# Ordered @@work project
+  @ First step, which is unblocked
+  @ Second step, which is blocked (by the first step)
+
+= Prioritized sections, projects, and actions @p:4 =
+
+@ This task inherits the section's priority -- which is 4
+
+- This (unordered) project overrides the section's priority @p:2
+  @ So this task has priority 2
+  @ But this task has prioty 0 @p:0
+
+# Ordered projects also inherit the section's priority
+  @ As do its actions
+
+= Creating a project with a due date =
+
+- Project with due date <2013-08-25
+  @ Inherits due date
+  @ Has own due date <2013-08-23
+  @ Use earliest of all due dates <2013-08-27
+
+= This section has a due date <2013-07-25 =
+
+@ Actions inherit the section's due date
+
+- A project without an explicit due date inherits the section's due date
+  @ And so do all its actions!
+
+@ As do actions in the section outside of a project
+
+@ But you can set an earlier due date <2013-07-01
+
+= Section with visible date >2013-07-25 =
+
+@ Get section's visible date
+
+- Project without explicit visible date
+  @ Multi-level visible date inheritance
+
+- But you can override the visible date >2013-08-25
+  @ Actions inherit the project's date
+  @ But they can have their own visible date >2013-08-27
+  @ Except that the **latest** of all visible dates is used >2013-08-21
+
+@ This action is invisible, because it's far in the future >2113-09-05
+@ Recurring actions inherit the section's visible date, and only start then
+  EVERY day
+
+= Project waiting for next action =
+
+# Project
+  * This project doesn't, technically, have a "next action".
+    (But it won't show up in projects without next actions,
+    because it's waiting.)
+  @ @@waiting for Godot
+
+= Recurring actions =
+
+@ Check calendar EVERY day
+  (LASTDONE 2013-09-11 23:04),  # (Wednesday.)
+
+@ Take out garbage EVERY week [Thu 17:00 - Fri 07:00]
+  (LASTDONE 2013-09-06 07:10),  # (Friday.)
+
+@ Scrub toilets EVERY 4-6 weeks
+  (LASTDONE 2013-08-16 21:00),  # (Friday.)
+
+@ Fix obscure boundary bug EVERY day [09:00]
+  (LASTDONE 2013-09-12 09:00)
+
+@ Empty @@home @@inbox EVERY 3-5 days
+
+- Change passwords EVERY 2 months
+  @ Google (LASTDONE 2013-11-04 06:00)
+  @ Facebook
+  @ Bank (LASTDONE 2013-10-28 11:00)
+
+@ @@Waiting for Godot
+@ Get code review @waiting <2013-10-10(30)
+@ @waiting Good GTD system in vim
+  (DONE 2013-10-01 01:23)
+@ @@home @@inbox EVERY 3-5 days
+@ Google Keep @@inbox EVERY day
+  (LASTDONE 2013-09-11 09:30)
+@ Email @@inbox EVERY 2-3 days
+  (LASTDONE 2013-09-11 09:40)
+@ @@work @@inbox EVERY 3-7 days
+'All' combines NextActions, Inboxes, and RecurringActions.
+@ @@home @@inbox EVERY 3-5 days
+@ Check calendar EVERY day
+
+@ Second action @after:firstAction
+@ First action #firstAction
+
+= Tagging actions =
+
+@ You can tag actions with a hash tag #learnhowtotag
+@ And then block until you do them @after:learnhowtotag @after:cptsymmetry
+@ Even if you forget to write them down in the right order #cptsymmetry
+
+- Blocked project @after:learnhowtotag
+  @ An action that you won't see until you learn how to tag

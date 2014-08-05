@@ -1,7 +1,7 @@
 # VTD
 
-Vimming Things Done:
-a [GTD](http://gettingthingsdone.com/)-ish system which lives in vim.
+Vimming Things Done: a [GTD](http://gettingthingsdone.com/)-ish system
+which lives in vim.
 
 ## What's the big idea?
 
@@ -18,6 +18,34 @@ items  -- such as tasks blocked by other tasks, "home" tasks while you're at
 work (or vice versa), or tasks you've hidden until a future date.  And the items
 it _does_ show are sorted by importance: "Late" before "Due" before "Ready",
 with higher-priority items first in each category.
+
+### VTD's syntax
+
+VTD basics:
+
+```
+= A section =
+
+@ An action
+
+# An ordered project
+  @ A sub-action
+  @ The next sub-action (which is blocked on the first action)
+
+- An unordered project
+  @ A priority 2 action @p:2
+  @ An action with no priority
+
+@ This needs to get done soon! Kind of. <2015-05-15
+@ And this can only be done in a long while. >2100-02-14
+
+= More advanced features =
+
+@ Finish reading docs. #readthedocs
+@ :vi intro.vtd @after:readthedocs
+
+@ Make some espresso EVERY morning [07:45]
+```
 
 ### VTD View: "feels like a file"
 
