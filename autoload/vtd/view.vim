@@ -1095,3 +1095,11 @@ function! s:Patch(patch, file, ...)
   call vtd#view#Enter()
   return empty(v:shell_error)
 endfunction
+
+
+" Whenever we change the default contexts, also set them as the current
+" contexts.
+function! s:SetDefaults(unused_value) abort
+  call vtd#view#DefaultContexts()
+endfunction
+call s:plugin.flags['contexts'].AddCallback(function('s:SetDefaults'))
