@@ -1,10 +1,6 @@
 let s:plugin = maktaba#plugin#Get('vtd')
 let s:action_keymaps = ['I', 'R', 'X', 'D']
 
-" This gives us access to all the python functions in vtd.py.
-call vtd#EnsurePythonLoaded()
-
-
 function! s:SurroundBySpaceIfNonEmpty(string)
   return len(a:string) ? '  ' . a:string . ' ' : ''
 endfunction
@@ -50,6 +46,7 @@ endfunction
 ""
 " Update s:task_counts with the latest task counts per state.
 function! s:UpdateTaskCounts()
+  call vtd#EnsurePythonLoaded()
   " [A] is for 'All'; [D] is for 'Delegated'.
   let s:task_counts = {}
   call vtd#UpdateSystem()
