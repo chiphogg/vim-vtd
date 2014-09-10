@@ -9,8 +9,9 @@ def UpdateTrustedSystem(files):
     global my_system
     if 'my_system' not in globals():
         my_system = libvtd.trusted_system.TrustedSystem()
-        for file_name in files:
-            my_system.AddFile(file_name)
+    my_system.ClearFiles()
+    for file_name in files:
+        my_system.AddFile(file_name)
     my_system.Refresh()
 
 
