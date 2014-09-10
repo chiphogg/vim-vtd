@@ -13,14 +13,20 @@ endfunction
 ""
 " The statusline text for Late actions.
 function! vtd#statusline#Late()
-  return s:SurroundBySpaceIfNonEmpty(s:StatuslineText('late'))
+  if vtd#Compatible()
+    return s:SurroundBySpaceIfNonEmpty(s:StatuslineText('late'))
+  endif
+  return ''
 endfunction
 
 
 ""
 " The statusline text for Late actions.
 function! vtd#statusline#Due()
-  return s:SurroundBySpaceIfNonEmpty(s:StatuslineText('due'))
+  if vtd#Compatible()
+    return s:SurroundBySpaceIfNonEmpty(s:StatuslineText('due'))
+  endif
+  return ''
 endfunction
 
 
