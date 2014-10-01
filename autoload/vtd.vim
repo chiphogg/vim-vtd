@@ -55,27 +55,11 @@ function! vtd#UpdateSystem()
 endfunction
 
 
-function! s:HasDateutil()
-  let l:ok = 1
-  python << EOF
-import vim
-try:
-  import dateutil
-except ImportError, e:
-  vim.command('let l:ok = 0')
-  vim.command('echomsg "vtd requires python\'s \'dateutil\' module."')
-EOF
-  return l:ok
-endfunction
-
-
 " Here's a list of reasons we might not want to load this script:
 "   1) "compatible" mode (a.k.a. "crippled" mode) is set
 "   2) Vim too old (autoload was introduced in Vim 7)
 "   3) No python support
-"   4) Python doesn't have dateutil installed
 function! vtd#Compatible()
-  let l:incompatible = &cp || v:version < 700 || !has('python') ||
-      \ !s:HasDateutil()
+  let l:incompatible = &cp || v:version < 700 || !has('python')
   return !l:incompatible
 endfunction
