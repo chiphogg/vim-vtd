@@ -1102,4 +1102,5 @@ endfunction
 function! s:SetDefaults(unused_value) abort
   call vtd#view#DefaultContexts()
 endfunction
+call vtd#UpdateSystem()
 call s:plugin.flags['contexts'].AddCallback(function('s:SetDefaults'))
