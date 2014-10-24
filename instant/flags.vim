@@ -4,6 +4,11 @@ if !s:enter || !vtd#Compatible()
   finish
 endif
 
-
+""
+" VTD files to use. E.g., ['~/todo.vtd', '~/personal.vtd'].
 call s:plugin.Flag('files', [])
+""
+
+""
+" Contexts to display.
 call s:plugin.Flag('contexts', [])
