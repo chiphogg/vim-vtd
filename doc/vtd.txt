@@ -1,0 +1,70 @@
+*vtd.txt*	A GTD Trusted System which lives in vim
+                                                                         *vtd*
+
+==============================================================================
+CONTENTS                                                        *vtd-contents*
+  1. Configuration................................................|vtd-config|
+  2. Commands...................................................|vtd-commands|
+
+==============================================================================
+CONFIGURATION                                                     *vtd-config*
+
+This plugin uses maktaba flags for configuration. Install Glaive
+(https://github.com/google/glaive) and use the |:Glaive| command to configure
+them.
+
+                                                                   *vtd:files*
+The .vtd files to load into the trusted system.  A list of strings, where each
+string is the fully qualified pathname for a .vtd file.
+Default: [] `
+
+                                                                *vtd:contexts*
+Default contexts.  These contexts will be set by default when vim starts, and
+will be restored when the |:VtdContextsDefault| command is called.
+
+If a context name begins with a '-', that context is excluded.  For example,
+setting contexts to ['-home'] will show all tasks except those in the 'home'
+context.  Specifying excluded contexts is often more useful in practice than
+specifying included contexts.
+Default: [] `
+
+                                                        *vtd:plugin[commands]*
+Configures whether plugin/commands.vim should be loaded.
+Default: 1 `
+
+                                                        *vtd:plugin[mappings]*
+Configures whether plugin/mappings.vim should be loaded.
+Default: 0 `
+
+                                                             *vtd:plugin[vtd]*
+Configures whether plugin/vtd.vim should be loaded.
+Default: 1 `
+
+==============================================================================
+COMMANDS                                                        *vtd-commands*
+
+:VtdView                                                            *:VtdView*
+  Open the VTD view buffer.
+
+:VtdContextsInclude {contexts}                           *:VtdContextsInclude*
+  Add these {contexts} to the "included contexts" list: i.e., make actions
+  from these {contexts} visible.
+
+  Such an action can still be excluded if it has another context which is on
+  the "excluded contexts" list.
+
+:VtdContextsExclude {contexts}                           *:VtdContextsExclude*
+  Add these {contexts} to the "excluded contexts" list: i.e., don't show any
+  actions from these contexts.
+
+  Overrides the "included contexts" list.
+
+:VtdContextsClear {contexts}                               *:VtdContextsClear*
+  Remove these {contexts} from both the "excluded contexts" and "included
+  contexts" lists.  Clears all contexts if no argument is supplied.
+
+:VtdContextsDefault                                      *:VtdContextsDefault*
+  Set the contexts to the defaults.
+
+
+vim:tw=78:ts=8:ft=help:norl:
