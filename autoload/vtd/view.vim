@@ -79,7 +79,7 @@ let s:show_help = s:CyclableOption.New(['Hide', 'Show'])
 
 " Registered VTD View classes.  These can be accessed by their "name"
 " ("Contexts", "Next Actions", "Summary", etc.).
-" 
+"
 " Populated by s:RegisterView().
 let s:ViewObjects = {}
 
@@ -452,7 +452,7 @@ function! s:DisplayContextWithStatus(context)
   let l:name = a:context[0]
   let l:count = a:context[1]
 
-  " Mark this context according to its status (visible, 
+  " Mark this context according to its status (visible,
   let l:marker = ' '
   if empty(s:exclusive_context)
     let l:setting = s:ContextSettingFor(l:name)
@@ -658,7 +658,7 @@ function! s:VtdViewNextActions.jump()
   python vim.bindeval('l:vars').extend([file, line])
 
   " Go to the file.
-  execute 'edit' . escape(l:vars[0], ' ')
+  execute 'edit ' . escape(l:vars[0], ' ')
 
   " Go to the line number and ensure the fold is open.
   execute "normal!" l:vars[1] . 'G'
@@ -1027,7 +1027,7 @@ endfunction
 
 ""
 " The ContextSetting for the given {context}.
-" 
+"
 " Creates it if it doesn't exist.
 function! s:ContextSettingFor(context)
   " Define it here: we only ever access it through this function as an
