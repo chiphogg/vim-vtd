@@ -658,7 +658,7 @@ function! s:VtdViewNextActions.jump()
   python vim.bindeval('l:vars').extend([file, line])
 
   " Go to the file.
-  execute 'edit' . escape(l:vars[0], ' ')
+  execute 'edit' escape(l:vars[0], ' ')
 
   " Go to the line number and ensure the fold is open.
   execute "normal!" l:vars[1] . 'G'
