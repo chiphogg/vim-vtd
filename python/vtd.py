@@ -29,6 +29,23 @@ def UpdateTrustedSystem(files):
     my_system.Refresh()
 
 
+def ActionTypeCharacter(next_action):
+    """A character to indicate the type of NextAction (waiting, recur, ...).
+
+    Args:
+        next_action:  A NextAction object.
+    """
+    # Ellipsis character.
+    if next_action.waiting:
+        return '\xe2\x80\xa6'
+
+    # A circular arrow.
+    if next_action.recurring:
+        return '\xe2\x86\xba'
+
+    # Default value: '@' for 'action'.
+    return '@'
+
 def NextActionDisplayText(next_action):
     """The text to display in the NextActions view.
 
@@ -41,7 +58,8 @@ def NextActionDisplayText(next_action):
         time compares to the due date (if any).
     """
     text = PriorityDecoratedText(next_action)
-    action_text = '  @ ' + PrependParentProjectText(next_action, text) \
+    action_text = '  {} '.format(ActionTypeCharacter(next_action)) \
+        + PrependParentProjectText(next_action, text) \
         + DueDateIndication(next_action)
 
     comment_text = ''
