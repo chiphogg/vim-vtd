@@ -70,7 +70,7 @@ highlight VtdPriority4 guifg=#445544 ctermfg=DarkGreen
 highlight link VtdPriorityX WarningMsg
 
 " Parent text highlighting.
-syn region ParentText start="\v(\@ |:: )@<=[^[]" end="\v( ::)@="
+syn region ParentText start="\v([@↺…] |:: )@<=[^[]" end="\v( ::)@="
 highlight link ParentText Comment
 
 " Keymap highlighting for single-key maps.
