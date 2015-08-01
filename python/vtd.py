@@ -16,6 +16,7 @@ import collections
 import datetime
 import libvtd.node
 import libvtd.trusted_system
+import vim
 
 
 def UpdateTrustedSystem(files):
