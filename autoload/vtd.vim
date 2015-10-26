@@ -33,7 +33,7 @@ endfunction
 " The list of filenames which back the trusted system.
 function! vtd#Files()
   let l:files = copy(maktaba#ensure#IsList(s:plugin.Flag('files')))
-  call map(l:files, 'expand(v:val)')
+  call map(l:files, 'resolve(expand(v:val))')
   return l:files
 endfunction
 
