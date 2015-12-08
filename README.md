@@ -111,22 +111,25 @@ for easy configuration.
 #### Vundle
 
 ```vim
+" These lines go after vundle#begin(), and before vundle#end().
 Bundle 'google/maktaba'
 Bundle 'google/glaive'
-call glaive#Install()
-
-" Install VTD.
 Bundle 'chiphogg/vim-vtd'
+
+" This line needs to go after vundle#end().
+call glaive#Install()
 ```
 
 #### NeoBundle
+
 ```vim
+" These lines go after neobundle#begin(), and before neobundle#end().
 NeoBundle 'google/maktaba'
 NeoBundle 'google/glaive'
-call glaive#Install()
-
-" Install VTD.
 NeoBundle 'chiphogg/vim-vtd'
+
+" This line needs to go after neobundle#end().
+call glaive#Install()
 ```
 
 ## Settings
