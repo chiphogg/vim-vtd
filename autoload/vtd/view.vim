@@ -485,7 +485,7 @@ endfunction
 
 function! s:VtdViewContexts.display()
   let l:contexts = []
-  python vim.bindeval('l:contexts').extend(my_system.ContextList())
+  pythonx vim.bindeval('l:contexts').extend(my_system.ContextList())
   call map(l:contexts, 's:DisplayContextWithStatus(v:val)')
   call self.fill(l:contexts)
 endfunction
@@ -605,10 +605,10 @@ function! s:VtdViewNextActions.display()
   " Make python variable 'actions' hold the list of actions to display.
   call self.putActionsInPythonVariable()
   " Populate the global python variable 'next_action_sections'.
-  python MakeSectionedActions(actions)
+  pythonx MakeSectionedActions(actions)
 
-  python na = next_action_sections.Lines(NextActionDisplayText)
-  python vim.bindeval('l:actions').extend(na)
+  pythonx na = next_action_sections.Lines(NextActionDisplayText)
+  pythonx vim.bindeval('l:actions').extend(na)
   call self.fill(l:actions)
 endfunction
 
@@ -616,7 +616,7 @@ endfunction
 ""
 " Put list of actions in 'actions' variable.
 function! s:VtdViewNextActions.putActionsInPythonVariable()
-  python actions = my_system.NextActions()
+  pythonx actions = my_system.NextActions()
 endfunction
 
 
@@ -625,8 +625,8 @@ endfunction
 " 1 if successful, 0 otherwise.
 function! s:VtdViewNextActions.CurrentNodeTo_na()
   let l:index = line(".") - self._first_content_line
-  python na = next_action_sections.NodeAt(int(vim.eval('l:index')))
-  python vim.command('let l:success = {}'.format(1 if na else 0))
+  pythonx na = next_action_sections.NodeAt(int(vim.eval('l:index')))
+  pythonx vim.command('let l:success = {}'.format(1 if na else 0))
   return l:success
 endfunction
 
@@ -644,8 +644,8 @@ function! s:VtdViewNextActions.checkoff()
   " Find the NextAction object and retrieve the info we need: its patch, its
   " text, and its file name.
   let l:vars = []
-  python patch = na.Patch(libvtd.node.Actions.DefaultCheckoff)
-  python vim.bindeval('l:vars').extend([patch, na.text, na.file_name])
+  pythonx patch = na.Patch(libvtd.node.Actions.DefaultCheckoff)
+  pythonx vim.bindeval('l:vars').extend([patch, na.text, na.file_name])
   let l:patch = l:vars[0]
   let l:text = printf(self.CheckoffPatchFormat(), l:vars[1])
   let l:file = l:vars[2]
@@ -668,8 +668,8 @@ function! s:VtdViewNextActions.jump()
   " Find the NextAction object and retrieve the info we need: its file name and
   " line number.
   let l:vars = []
-  python (file, line) = na.Source()
-  python vim.bindeval('l:vars').extend([file, line])
+  pythonx (file, line) = na.Source()
+  pythonx vim.bindeval('l:vars').extend([file, line])
 
   " Go to the file.
   execute 'edit' escape(l:vars[0], ' ')
@@ -727,7 +727,7 @@ call s:RegisterView(s:VtdViewRecurs, 'Recurring Actions', 'R')
 ""
 " Put list of recurring actions in 'actions' variable.
 function! s:VtdViewRecurs.putActionsInPythonVariable()
-  python actions = my_system.RecurringActions()
+  pythonx actions = my_system.RecurringActions()
 endfunction
 
 
@@ -748,7 +748,7 @@ call s:RegisterView(s:VtdViewInboxes, 'Inboxes', 'I')
 ""
 " Put list of inboxes in 'actions' variable.
 function! s:VtdViewInboxes.putActionsInPythonVariable()
-  python actions = my_system.Inboxes()
+  pythonx actions = my_system.Inboxes()
 endfunction
 
 
@@ -763,7 +763,7 @@ call s:RegisterView(s:VtdViewAll,
 ""
 " Put list of doable actions in 'actions' variable.
 function! s:VtdViewAll.putActionsInPythonVariable()
-  python actions = my_system.AllActions()
+  pythonx actions = my_system.AllActions()
 endfunction
 
 
@@ -777,7 +777,7 @@ call s:RegisterView(s:VtdViewWaiting, 'Waiting/Delegated', 'D')
 ""
 " Put list of 'waiting-for' actions in 'actions' variable.
 function! s:VtdViewWaiting.putActionsInPythonVariable()
-  python actions = my_system.Waiting()
+  pythonx actions = my_system.Waiting()
 endfunction
 
 
@@ -920,9 +920,9 @@ endfunction
 ""
 " Update the trusted system to use the contexts we've included.
 function! s:UpdateSystemContexts()
-  python ci = vim.eval('s:ContextsToInclude()')
-  python ce = vim.eval('s:ContextsToExclude()')
-  python my_system.SetContexts(include=ci, exclude=ce)
+  pythonx ci = vim.eval('s:ContextsToInclude()')
+  pythonx ce = vim.eval('s:ContextsToExclude()')
+  pythonx my_system.SetContexts(include=ci, exclude=ce)
 endfunction
 
 
@@ -1065,7 +1065,7 @@ endfunction
 function! s:ContextsToInclude()
   let l:contexts = []
   if empty(s:exclusive_context)
-    python vim.bindeval('l:contexts').extend(my_system.ContextList())
+    pythonx vim.bindeval('l:contexts').extend(my_system.ContextList())
     call filter(map(l:contexts, 'v:val[0]'),
           \ 's:ContextSettingFor(v:val).value ==# '
           \ . 's:ContextSetting.options.include')
@@ -1081,7 +1081,7 @@ endfunction
 function! s:ContextsToExclude()
   let l:contexts = []
   if empty(s:exclusive_context)
-    python vim.bindeval('l:contexts').extend(my_system.ContextList())
+    pythonx vim.bindeval('l:contexts').extend(my_system.ContextList())
     call filter(map(l:contexts, 'v:val[0]'),
           \ 's:ContextSettingFor(v:val).value ==# '
           \ . 's:ContextSetting.options.exclude')

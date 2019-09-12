@@ -23,7 +23,7 @@ let s:python_path = maktaba#path#Join([s:plugin_root, 'python'])
 " Ensure that the VTD python utility scripts have been loaded.
 function! vtd#EnsurePythonLoaded()
   if !exists('s:loaded_python_scripts')
-    execute 'pyfile' s:python_path . '/vtd.py'
+    execute 'pyxfile' s:python_path . '/vtd.py'
     let s:loaded_python_scripts = 1
   endif
 endfunction
@@ -60,7 +60,7 @@ endfunction
 " Reread the vtd files and update the trusted system.
 function! vtd#UpdateSystem()
   call vtd#EnsurePythonLoaded()
-  execute 'python UpdateTrustedSystem(files=' . string(vtd#Files()) .')'
+  execute 'pythonx UpdateTrustedSystem(files=' . string(vtd#Files()) .')'
 
   " If this is the initial run, set the default contexts.
   if !has_key(s:plugin.globals, 'context_timestamp')
@@ -74,6 +74,6 @@ endfunction
 "   2) Vim too old (autoload was introduced in Vim 7)
 "   3) No python support
 function! vtd#Compatible()
-  let l:incompatible = &cp || v:version < 700 || !has('python')
+  let l:incompatible = &cp || v:version < 700 || !has('pythonx')
   return !l:incompatible
 endfunction

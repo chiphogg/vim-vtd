@@ -27,5 +27,5 @@ endif
 " Add python libraries to sys.path so python knows how to import them.
 let s:python_path = maktaba#path#Join([expand('<sfile>:p:h:h'), 'python'])
 let s:libvtd_path = maktaba#path#Join([s:python_path, 'libvtd'])
-execute 'pyfile' maktaba#path#Join([s:python_path, 'sysutil.py']) 
-execute 'python AddToSysPath(r"' . s:libvtd_path . '")'
+execute 'pyxfile' maktaba#path#Join([s:python_path, 'sysutil.py']) 
+execute 'pythonx AddToSysPath(r"' . s:libvtd_path . '")'
