@@ -67,7 +67,7 @@ function! s:UpdateTaskCounts()
   for l:keymap in s:action_keymaps
     let l:view_object = vtd#view#ObjectWhoseKeymapIs(l:keymap)
     call l:view_object.putActionsInPythonVariable()
-    python CountCategories(
+    pythonx CountCategories(
         \ actions, vim.eval('l:keymap'), vim.bindeval('s:task_counts'))
   endfor
   let s:last_updated_task_counts = localtime()
