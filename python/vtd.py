@@ -47,6 +47,7 @@ def ActionTypeCharacter(next_action):
     # Default value: '@' for 'action'.
     return '@'
 
+
 def NextActionDisplayText(next_action):
     """The text to display in the NextActions view.
 
