@@ -40,6 +40,10 @@ def ActionTypeCharacter(next_action):
     if next_action.waiting:
         return b'\xe2\x80\xa6'.decode('UTF-8')
 
+    # Double rightward arrows.
+    if next_action.inbox:
+        return b'\xe2\x87\x89'.decode('UTF-8')
+
     # A circular arrow.
     if next_action.recurring:
         return b'\xe2\x86\xba'.decode('UTF-8')
