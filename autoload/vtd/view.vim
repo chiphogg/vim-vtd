@@ -285,7 +285,7 @@ function! s:VtdView.switchToViewBuffer()
   if l:vtd_view_window >= 0
     " We prefer to simply go to a window which already has that buffer,
     " if such a window exists.
-    execute l:vtd_view_window . 'wincmd w'
+    call s:GotoWindow(l:vtd_view_window)
   else
     " Otherwise, just open it in the current window.
     execute 'buffer' s:vtd_view_buffer_number
@@ -1096,6 +1096,13 @@ function! s:Warn(message)
   echohl WarningMsg
   echomsg a:message
   echohl none
+endfunction
+
+
+""
+" Switch to the given window number.
+function! s:GotoWindow(win_num)
+  execute a:win_num . 'wincmd w'
 endfunction
 
 
