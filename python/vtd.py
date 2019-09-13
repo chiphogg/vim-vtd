@@ -38,11 +38,11 @@ def ActionTypeCharacter(next_action):
     """
     # Ellipsis character.
     if next_action.waiting:
-        return '\xe2\x80\xa6'
+        return b'\xe2\x80\xa6'.decode('UTF-8')
 
     # A circular arrow.
     if next_action.recurring:
-        return '\xe2\x86\xba'
+        return b'\xe2\x86\xba'.decode('UTF-8')
 
     # Default value: '@' for 'action'.
     return '@'
