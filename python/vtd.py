@@ -318,7 +318,7 @@ def CountCategories(new_actions, identifier, category_counts):
     categorized_actions = SortByDateState(new_actions)
     for k in categorized_actions.keys():
         key = libvtd.node.DateStates[k]
-        if key not in category_counts.keys():
+        if key.encode('UTF-8') not in category_counts.keys():
             category_counts[key] = {}
         category_counts[key][identifier] = len(categorized_actions[k])
 
