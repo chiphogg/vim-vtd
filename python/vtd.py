@@ -338,11 +338,9 @@ def MakeSectionedActions(actions):
     # Make a section for each category.
     next_action_sections = SectionedDisplay()
     types = categorized_actions.keys()
-    types.sort(reverse=True)
-    for type in types:
+    for type in sorted(types, reverse=True):
         section = Section('{} ({})'.format(
             libvtd.node.DateStates[type].title(),
             len(categorized_actions[type])))
-        categorized_actions[type].sort(key=key)
-        section.nodes.extend(categorized_actions[type])
+        section.nodes.extend(sorted(categorized_actions[type], key=key))
         next_action_sections.sections.append(section)
