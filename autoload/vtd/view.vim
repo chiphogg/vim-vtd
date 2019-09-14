@@ -837,7 +837,7 @@ function! vtd#view#Exit()
   if !empty(s:current_vtd_view)
     call vtd#view#Enter()
     call s:VtdViewTearDown()
-    bwipeout
+    call s:BwipeoutPreservingWindows()
   endif
   " TODO(chiphogg): Add an assertion that the vtd view buffer number doesn't
   " exist.
@@ -1096,6 +1096,52 @@ function! s:Warn(message)
   echohl WarningMsg
   echomsg a:message
   echohl none
+endfunction
+
+
+""
+" A replacement for bwipeout that avoids closing any windows.
+"
+" The trick is to switch each window that is showing this buffer to a separate
+" buffer, before deleting the buffer.
+function! s:BwipeoutPreservingWindows()
+  let l:current_buffer_num = bufnr('%')
+  call s:SwitchEveryWindowAwayFromBuffer(l:current_buffer_num)
+  execute 'bwipeout' l:current_buffer_num
+endfunction
+
+
+function! s:SwitchEveryWindowAwayFromBuffer(buffer_num)
+  for l:win_num in s:WinNumsDisplayingBuffer(a:buffer_num)
+    call s:SwitchWindow(l:win_num)
+  endfor
+endfunction
+
+
+""
+" Get a list of the window numbers that are currently displaying this buffer.
+function! s:WinNumsDisplayingBuffer(buffer_num)
+  return map(win_findbuf(a:buffer_num), 'win_id2win(v:val)')
+endfunction
+
+
+function! s:SwitchWindow(win_num)
+  let l:old_num = winnr()
+  call s:GotoWindow(a:win_num)
+  call s:SwitchAwayFromBuffer()
+  call s:GotoWindow(l:old_num)
+endfunction
+
+
+""
+" Switch this window to some other buffer, creating a new one if necessary.
+function! s:SwitchAwayFromBuffer()
+  let l:old_buffer_num = bufnr('%')
+  buffer #
+  let l:new_buffer_num = bufnr('%')
+  if l:old_buffer_num == l:new_buffer_num
+    enew
+  endif
 endfunction
 
 
