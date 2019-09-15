@@ -2,7 +2,7 @@
 
 ## Submodule errors on updating
 
-> NOTE: This problem should never occur unless your first clone was before Sept. 15, 2019 (55771bc).
+> NOTE: This problem **should never occur** unless your first clone was before Sept. 15, 2019 ([55771bc](https://github.com/chiphogg/vim-vtd/commit/55771bc)).
 
 When you try to update `vim-vtd`, you may find that the submodules fail to update.  Here's an example error message, based on the commands that vundle runs under the hood:
 
@@ -18,7 +18,7 @@ $ cd '/home/chogg/.vim/bundle/vim-vtd' && git pull && git submodule update --ini
 > Failed to recurse into submodule path 'python/libvtd'
 ```
 
-This is tracked in VundleVim/Vundle.vim#911.
+This is tracked in [VundleVim/Vundle.vim#911](https://github.com/VundleVim/Vundle.vim/911).
 
 ### The fix
 
