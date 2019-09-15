@@ -3,6 +3,8 @@
 Vimming Things Done:
 a [GTD](http://gettingthingsdone.com/)-ish system which lives in vim.
 
+> **NOTE: see the [troubleshooting page](troubleshooting.md) for known issues.**
+
 ## What's the big idea?
 
 Text files are great for writing down your projects and tasks.  They're crappy
