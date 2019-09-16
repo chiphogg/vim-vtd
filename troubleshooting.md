@@ -18,7 +18,7 @@ $ cd '/home/chogg/.vim/bundle/vim-vtd' && git pull && git submodule update --ini
 > Failed to recurse into submodule path 'python/libvtd'
 ```
 
-This is tracked in [VundleVim/Vundle.vim#911](https://github.com/VundleVim/Vundle.vim/911).
+This is tracked in [VundleVim/Vundle.vim#911](https://github.com/VundleVim/Vundle.vim/issues/911).
 
 ### The fix
 
